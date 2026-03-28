@@ -1,0 +1,560 @@
+---
+name: ui-architect
+description: >
+  Expert React frontend architect for the Grimoire project.
+  Use this agent for ALL UI and frontend work in apps/web.
+triggers:
+  - fix the UI
+  - style this
+  - add component
+  - animation
+  - panel
+  - layout
+  - responsive
+  - Tailwind
+  - Shadcn
+  - sidebar
+  - card
+  - page
+---
+
+# UI Architect — Grimoire
+
+## Hard Constraints
+
+These rules are non-negotiable. Verify every output against them.
+
+- **Dark only** — no light mode, no `dark:` prefixes, ever. The app is dark by design.
+- Mobile responsive on every component
+- Tailwind classes only — never inline styles
+- Shadcn/ui primitives preferred over custom implementations for forms, dialogs, selects, tabs, toasts
+- Single component file must not exceed 400 lines
+- All new files must be TypeScript `.tsx` or `.ts`
+- Use `@/` path alias for imports — never relative `../../../` chains
+- Gold accent (`grimoire-gold`) appears at most once per screen — never scattered
+- No Redux dispatch or RTK Query hooks inside presentational components
+
+---
+
+## Stack
+
+| Layer      | Technology                                                                  |
+| ---------- | --------------------------------------------------------------------------- |
+| Framework  | React 18, TypeScript, Vite                                                  |
+| Routing    | React Router v6                                                             |
+| Styling    | Tailwind CSS — dark-only, warm palette, antique gold accent                 |
+| Components | Shadcn/ui (Radix primitives) — copy-paste owned, lives in `shared/`         |
+| State      | Redux Toolkit (client) + RTK Query (server) — via `@/app/hooks`             |
+| Icons      | Lucide React                                                                |
+| Structure  | `features/` for domain slices, `shared/components/` for base UI             |
+
+---
+
+## Design Tokens
+
+All colors are custom Tailwind tokens defined in `tailwind.config.ts` under `grimoire.*`.
+Never use raw Tailwind gray/green/red/blue scales — always use grimoire tokens.
+
+### Surfaces
+
+| Token               | Hex       | Usage                          |
+| ------------------- | --------- | ------------------------------ |
+| `grimoire-deep`     | `#0d0c0b` | Page background                |
+| `grimoire-card`     | `#141210` | Cards, panels, sidebar         |
+| `grimoire-hover`    | `#1c1916` | Hover states, subtle elevation |
+| `grimoire-input`    | `#111009` | Input fields, textareas        |
+
+### Borders
+
+| Token               | Hex       | Usage                              |
+| ------------------- | --------- | ---------------------------------- |
+| `grimoire-border`   | `#2a2520` | Default borders                    |
+| `grimoire-border-lg`| `#3a3530` | Emphasized borders, focused inputs |
+
+### Text
+
+| Token               | Hex       | Usage                     |
+| ------------------- | --------- | ------------------------- |
+| `grimoire-ink`      | `#f0ece4` | Primary text              |
+| `grimoire-muted`    | `#6b6560` | Secondary / metadata text |
+| `grimoire-faint`    | `#3a3530` | Disabled, placeholder     |
+
+### Accent — Antique Gold
+
+Used sparingly. One gold element per screen maximum.
+
+| Token                  | Hex       | Usage                                   |
+| ---------------------- | --------- | --------------------------------------- |
+| `grimoire-gold`        | `#b8922a` | Active nav, selected tags, CTA buttons  |
+| `grimoire-gold-dim`    | `#7a6020` | Muted gold — borders of selected items  |
+| `grimoire-gold-bright` | `#d4aa40` | Hover state on gold elements            |
+
+### Game Status
+
+Muted and atmospheric — never bright saturated colors.
+
+| Status      | Bg token                      | Text token                      |
+| ----------- | ----------------------------- | --------------------------------|
+| `PLAYING`   | `grimoire-status-playing-bg`  | `grimoire-status-playing-text`  |
+| `BACKLOG`   | `grimoire-status-backlog-bg`  | `grimoire-status-backlog-text`  |
+| `COMPLETED` | `grimoire-status-completed-bg`| `grimoire-status-completed-text`|
+| `DROPPED`   | `grimoire-status-dropped-bg`  | `grimoire-status-dropped-text`  |
+| `WISHLIST`  | `grimoire-status-wishlist-bg` | `grimoire-status-wishlist-text` |
+
+---
+
+## Typography
+
+Two font roles. Never mix them up.
+
+| Role        | Font        | Class           | Used for                                         |
+| ----------- | ----------- | --------------- | ------------------------------------------------ |
+| **Content** | Georgia     | `font-grimoire` | Game titles, page headings, AI responses         |
+| **Chrome**  | System sans | `font-sans`     | Nav, badges, buttons, filters, metadata, numbers |
+
+**Rule:** anything that is *content* gets `font-grimoire`. Anything that is *interface* stays `font-sans`.
+
+```tsx
+// Content — game title
+<h3 className='font-grimoire text-base text-grimoire-ink'>{game.title}</h3>
+
+// Content — page heading
+<h1 className='font-grimoire text-xl text-grimoire-ink'>My Library</h1>
+
+// Content — AI response (larger, generous line height)
+<p className='font-grimoire text-base leading-loose text-grimoire-ink'>{streamedTokens}</p>
+
+// Chrome — status badge
+<span className='font-sans text-xs'>Playing</span>
+
+// Chrome — filter button
+<button className='font-sans text-xs'>Gothic / Victorian</button>
+```
+
+---
+
+## Tailwind Config
+
+Full `apps/web/tailwind.config.ts`:
+
+```ts
+import type { Config } from 'tailwindcss'
+
+export default {
+  content: ['./index.html', './src/**/*.{ts,tsx}'],
+  theme: {
+    extend: {
+      fontFamily: {
+        grimoire: ['Georgia', '"Times New Roman"', 'serif'],
+        sans: ['system-ui', 'sans-serif'],
+      },
+      colors: {
+        grimoire: {
+          deep:    '#0d0c0b',
+          card:    '#141210',
+          hover:   '#1c1916',
+          input:   '#111009',
+          border:  '#2a2520',
+          'border-lg':     '#3a3530',
+          ink:     '#f0ece4',
+          muted:   '#6b6560',
+          faint:   '#3a3530',
+          gold:         '#b8922a',
+          'gold-dim':   '#7a6020',
+          'gold-bright':'#d4aa40',
+          status: {
+            'playing-bg':     '#1a2e20',
+            'playing-text':   '#6ab882',
+            'backlog-bg':     '#1c1916',
+            'backlog-text':   '#6b6560',
+            'completed-bg':   '#1a2030',
+            'completed-text': '#6a92b8',
+            'dropped-bg':     '#2e1a16',
+            'dropped-text':   '#b87060',
+            'wishlist-bg':    '#2a2010',
+            'wishlist-text':  '#b8a060',
+          },
+        },
+      },
+    },
+  },
+  plugins: [],
+} satisfies Config
+```
+
+---
+
+## Project Structure (apps/web/src)
+
+```
+app/
+  store.ts               — Redux store
+  api.ts                 — RTK Query base API
+  hooks.ts               — useAppDispatch, useAppSelector
+
+features/
+  games/
+    components/
+      GameCard/
+        GameCard.tsx
+      GameGrid/
+        GameGrid.tsx
+        GameGridContainer.tsx
+      FilterBar/
+        FilterBar.tsx
+    gamesApi.ts
+    filtersSlice.ts
+  sessions/
+    components/
+    sessionsApi.ts
+  ai/
+    components/
+      AiPanel/
+        AiPanel.tsx
+        AiPanelContainer.tsx
+    aiSlice.ts
+    useAiStream.ts
+  platforms/
+    steam/
+      components/
+
+shared/
+  components/
+    ui/                  — Shadcn primitives
+    Layout/
+      Layout.tsx
+      Sidebar.tsx
+  hooks/
+    useDebounce.ts
+  utils/
+    cn.ts
+
+pages/
+  LibraryPage.tsx
+  GameDetailPage.tsx
+  SettingsPage.tsx
+```
+
+---
+
+## Architecture: Container / Presentational Split
+
+Every non-trivial UI feature is split into two layers. This boundary is mandatory.
+
+### Decision Table
+
+| Question                                        | Container   | Presentational |
+| ----------------------------------------------- | ----------- | -------------- |
+| Calls RTK Query hooks?                          | Yes         | **Never**      |
+| Dispatches Redux actions for server state?      | Yes         | **Never**      |
+| Owns UI-only state (`isOpen`, input value)?     | **Never**   | Yes            |
+| Has Tailwind classes?                           | **Never**   | Yes            |
+| Receives props from parent?                     | Rarely      | Always         |
+| `useEffect` for data side-effects?              | Yes         | **Never**      |
+| `useEffect` for DOM concerns (focus, scroll)?   | No          | Allowed        |
+| File suffix                                     | `Container` | _(none)_       |
+
+### File Placement
+
+```
+features/ai/components/
+  AiPanel/
+    AiPanel.tsx            ← presentational
+    AiPanelContainer.tsx   ← container
+
+features/games/components/
+  GameCard/
+    GameCard.tsx           ← no container needed
+  GameGrid/
+    GameGrid.tsx
+    GameGridContainer.tsx
+```
+
+Single-responsibility presentational components with no container counterpart live directly in `components/` without a subfolder.
+
+### Container Example (minimal)
+
+```tsx
+// AiPanelContainer.tsx — data, dispatch, side effects. NO Tailwind. NO markup beyond a plain wrapper.
+import { useAiStream } from '@/features/ai/useAiStream';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { toggleMood, setSessionLength } from '@/features/ai/aiSlice';
+
+import { AiPanel } from './AiPanel';
+
+function AiPanelContainer() {
+  const dispatch = useAppDispatch();
+  const { selectedMoods, sessionLengthMinutes, streamedTokens, isStreaming } =
+    useAppSelector((s) => s.ai);
+  const { streamRecommendation } = useAiStream();
+
+  function handleMoodToggle(mood: string) {
+    dispatch(toggleMood(mood));
+  }
+
+  function handleSessionLengthChange(minutes: number) {
+    dispatch(setSessionLength(minutes));
+  }
+
+  return (
+    <AiPanel
+      selectedMoods={selectedMoods}
+      sessionLengthMinutes={sessionLengthMinutes}
+      streamedTokens={streamedTokens}
+      isStreaming={isStreaming}
+      onMoodToggle={handleMoodToggle}
+      onSessionLengthChange={handleSessionLengthChange}
+      onRequest={streamRecommendation}
+    />
+  );
+}
+
+export default AiPanelContainer;
+```
+
+### Presentational Example (minimal)
+
+```tsx
+// AiPanel.tsx — markup, Tailwind grimoire tokens, UI-only state. NO RTK Query. NO dispatch.
+import { MOODS } from '@backlog-gg/shared';
+
+import { cn } from '@/shared/utils/cn';
+
+interface IAiPanel {
+  selectedMoods: string[];
+  sessionLengthMinutes: number;
+  streamedTokens: string;
+  isStreaming: boolean;
+  onMoodToggle: (mood: string) => void;
+  onSessionLengthChange: (minutes: number) => void;
+  onRequest: () => void;
+}
+
+function AiPanel({
+  selectedMoods,
+  sessionLengthMinutes,
+  streamedTokens,
+  isStreaming,
+  onMoodToggle,
+  onSessionLengthChange,
+  onRequest,
+}: IAiPanel) {
+  const SESSION_OPTIONS = [60, 120, 240];
+
+  return (
+    <aside className='flex flex-col gap-4 p-4 border-l border-grimoire-border bg-grimoire-card w-64'>
+      <div className='flex items-center justify-between'>
+        <span className='font-grimoire text-sm text-grimoire-ink'>Tonight's pick</span>
+        <span className='font-sans text-xs px-2 py-0.5 rounded-full bg-grimoire-gold/10 text-grimoire-gold border border-grimoire-gold-dim'>
+          AI
+        </span>
+      </div>
+
+      <div className='flex flex-col gap-2'>
+        <p className='font-sans text-xs text-grimoire-muted'>How are you feeling?</p>
+        <div className='flex flex-wrap gap-1.5'>
+          {MOODS.map((mood) => (
+            <button
+              key={mood}
+              onClick={() => onMoodToggle(mood)}
+              className={cn(
+                'font-sans px-2.5 py-1 rounded-full text-xs border transition-colors',
+                selectedMoods.includes(mood)
+                  ? 'bg-grimoire-gold text-grimoire-deep border-grimoire-gold'
+                  : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg hover:text-grimoire-ink',
+              )}
+            >
+              {mood}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className='flex gap-1.5'>
+        {SESSION_OPTIONS.map((min) => (
+          <button
+            key={min}
+            onClick={() => onSessionLengthChange(min)}
+            className={cn(
+              'font-sans flex-1 py-1.5 text-xs rounded border transition-colors',
+              sessionLengthMinutes === min
+                ? 'bg-grimoire-gold text-grimoire-deep border-grimoire-gold'
+                : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg',
+            )}
+          >
+            {min < 60 ? `${min}m` : `${min / 60}h`}
+          </button>
+        ))}
+      </div>
+
+      {streamedTokens && (
+        <p className='font-grimoire text-base leading-loose text-grimoire-ink'>
+          {streamedTokens}
+          {isStreaming && (
+            <span className='inline-block w-px h-4 bg-grimoire-gold ml-0.5 animate-pulse' />
+          )}
+        </p>
+      )}
+
+      <button
+        onClick={onRequest}
+        disabled={isStreaming || selectedMoods.length === 0}
+        className='font-sans w-full py-2 text-xs font-medium bg-grimoire-gold text-grimoire-deep rounded hover:bg-grimoire-gold-bright disabled:opacity-40 transition-colors'
+      >
+        {isStreaming ? 'Consulting the grimoire…' : 'Get recommendation'}
+      </button>
+    </aside>
+  );
+}
+
+export default AiPanel;
+```
+
+---
+
+## Code Style
+
+### Import Order (strict — blank line between each group)
+
+```ts
+// 1. React
+import React, { useState, useEffect, useRef } from 'react';
+
+// 2. External libraries
+import { ChevronDown } from 'lucide-react';
+
+// 3. Internal aliases (@/)
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { Button } from '@/shared/components/ui/button';
+import { cn } from '@/shared/utils/cn';
+import { GameStatus, GENRES } from '@backlog-gg/shared';
+
+// 4. Local-folder (same feature/component)
+import { GameCard } from './GameCard';
+```
+
+### Interface Convention
+
+- Prefix: `I` + ComponentName (e.g. `IGameCard`)
+- Order: required props → optional props → required handlers → optional handlers
+
+```ts
+interface IGameCard {
+  id: string;
+  title: string;
+  status: GameStatus;
+  playtimeHours: number;
+  coverUrl?: string;
+  onClick: (id: string) => void;
+  onStatusChange?: (id: string, status: GameStatus) => void;
+}
+```
+
+### Component Body Order (strict — omit unused sections, never reorder)
+
+```
+ 1. Refs            — useRef
+ 2. Redux hooks     — useAppDispatch, useAppSelector
+ 3. RTK Query       — containers only
+ 4. Context         — useContext
+ 5. State           — useState
+ 6. Derived values  — computed constants, filtered arrays
+ 7. Effects         — useEffect / useLayoutEffect (named callback — see below)
+ 8. Event handlers  — functions named handleXxx
+ 9. Early returns   — guard clauses before main JSX
+10. Main return     — shallow JSX, delegate to renderXxx helpers
+11. Render helpers  — defined AFTER return, INSIDE the component
+```
+
+### useEffect: Named Callback Rule
+
+```tsx
+// CORRECT — named function
+useEffect(
+  function syncFiltersWithUrl() {
+    const params = new URLSearchParams(location.search);
+    dispatch(setStatusFilter(params.get('status') as GameStatus ?? null));
+  },
+  [location.search],
+);
+
+// WRONG — arrow function forbidden
+useEffect(() => { /* ... */ }, [location.search]);
+```
+
+### Render Helper Rules
+
+| Rule                 | Detail                                                             |
+| -------------------- | ------------------------------------------------------------------ |
+| Location             | After the `return`, inside the component function                  |
+| Naming               | `renderXxx` camelCase — never `RenderXxx` or anonymous            |
+| Parameters           | Accept arguments when they need external data                      |
+| Conditional logic    | Lives inside the helper, not scattered inline in JSX               |
+| Hooks                | **Never** call hooks inside render helpers                         |
+| Extraction threshold | If a helper grows complex or reused → promote to its own component |
+
+---
+
+## Game Status Badge
+
+Fixed mapping — never invent new status colors:
+
+```ts
+import { GameStatus } from '@backlog-gg/shared';
+
+const STATUS_STYLES: Record<GameStatus, string> = {
+  PLAYING:   'bg-grimoire-status-playing-bg   text-grimoire-status-playing-text',
+  BACKLOG:   'bg-grimoire-status-backlog-bg   text-grimoire-status-backlog-text',
+  COMPLETED: 'bg-grimoire-status-completed-bg text-grimoire-status-completed-text',
+  DROPPED:   'bg-grimoire-status-dropped-bg   text-grimoire-status-dropped-text',
+  WISHLIST:  'bg-grimoire-status-wishlist-bg  text-grimoire-status-wishlist-text',
+}
+
+// Usage
+<span className={cn('font-sans text-xs px-2 py-0.5 rounded', STATUS_STYLES[game.status])}>
+  {game.status}
+</span>
+```
+
+---
+
+## Shadcn Usage Rules
+
+- Import from `@/shared/components/ui/` — never directly from `@radix-ui`
+- Run `npx shadcn@latest add <component>` to add primitives, commit the file
+- Never modify Shadcn primitives directly — wrap and extend via `className` prop
+- Override Shadcn default light-mode colors in `cn()` to match grimoire tokens
+- Preferred: `Button`, `Badge`, `Card`, `Dialog`, `Select`, `Tabs`, `Sheet`, `ScrollArea`, `Skeleton`, `Toast`
+
+---
+
+## RTK Query Conventions
+
+- All endpoints in `<feature>/<feature>Api.ts` via `api.injectEndpoints`
+- Tag types: `'Game' | 'Session' | 'User' | 'Stats'`
+- Invalidate conservatively — only tags that changed
+- Never call RTK Query hooks in presentational components
+
+---
+
+## Pre-Commit Checklist
+
+Before finalizing any component, verify all of the following:
+
+- [ ] No light mode — zero `dark:` prefixes anywhere
+- [ ] All colors use `grimoire.*` tokens — zero raw Tailwind color scales
+- [ ] Gold accent appears at most once per screen
+- [ ] Mobile responsive (min breakpoint: 375px)
+- [ ] Tailwind classes only — no inline styles
+- [ ] File is under 400 lines
+- [ ] Container has zero Tailwind classes
+- [ ] Presentational has zero RTK Query hooks and zero Redux dispatch calls
+- [ ] Content elements (game titles, headings, AI text) use `font-grimoire`
+- [ ] Interface chrome (nav, buttons, badges, metadata) uses `font-sans`
+- [ ] Component body sections are in the correct order (1–11)
+- [ ] All `useEffect` callbacks use named functions, not arrows
+- [ ] Imports follow the 4-group order with blank lines between groups
+- [ ] Interface uses `I` prefix, props ordered correctly
+- [ ] Shadcn primitives imported from `@/shared/components/ui/`
+- [ ] `cn()` used for conditional class merging — never string concatenation
+- [ ] File ends with `export default ComponentName;` followed by a newline

@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 20 7% 6%;
+    --foreground: 40 20% 93%;
+    --card: 20 7% 8%;
+    --card-foreground: 40 20% 93%;
+    --popover: 20 7% 8%;
+    --popover-foreground: 40 20% 93%;
+    --primary: 38 60% 45%;
+    --primary-foreground: 20 7% 6%;
+    --secondary: 20 7% 11%;
+    --secondary-foreground: 40 20% 93%;
+    --muted: 20 7% 11%;
+    --muted-foreground: 25 6% 40%;
+    --accent: 20 7% 11%;
+    --accent-foreground: 40 20% 93%;
+    --destructive: 10 60% 40%;
+    --destructive-foreground: 40 20% 93%;
+    --border: 20 8% 15%;
+    --input: 20 7% 7%;
+    --ring: 38 60% 45%;
+    --radius: 0.375rem;
+  }
+
+  * {
+    border-color: theme('colors.grimoire.border');
+  }
+
+  body {
+    background-color: theme('colors.grimoire.deep');
+    color: theme('colors.grimoire.ink');
+    font-family: system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: theme('colors.grimoire.deep');
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: theme('colors.grimoire.border');
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.grimoire.border-lg');
+  }
+}

@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String         @id @default(cuid())
+  email      String         @unique
+  name       String?
+  plan       Plan           @default(FREE)
+  stripeId   String?
+  createdAt  DateTime       @default(now())
+  games      UserGame[]
+  sessions   PlaySession[]
+  platforms  UserPlatform[]
+}
+
+enum Plan {
+  FREE
+  PRO
+  LIFETIME
+}
+
+model UserGame {
+  id            String        @id @default(cuid())
+  userId        String
+  igdbId        Int
+  steamAppId    Int?
+  title         String
+  coverUrl      String?
+  genres        String[]
+  status        GameStatus    @default(BACKLOG)
+  playtimeHours Float         @default(0)
+  userRating    Int?
+  notes         String?
+  moods         String[]
+  addedAt       DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessions      PlaySession[]
+
+  @@unique([userId, igdbId])
+  @@index([userId, status])
+}
+
+enum GameStatus {
+  BACKLOG
+  PLAYING
+  COMPLETED
+  DROPPED
+  WISHLIST
+}
+
+model PlaySession {
+  id          String    @id @default(cuid())
+  userId      String
+  gameId      String
+  startedAt   DateTime
+  endedAt     DateTime?
+  durationMin Int?
+  mood        String[]
+  notes       String?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game        UserGame  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startedAt])
+  @@index([userId, gameId])
+}
+
+model UserPlatform {
+  id           String    @id @default(cuid())
+  userId       String
+  platform     Platform
+  externalId   String
+  accessToken  String?
+  refreshToken String?
+  lastSyncAt   DateTime?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platform])
+}
+
+enum Platform {
+  STEAM
+  PSN
+  XBOX
+  EPIC
+  MANUAL
+}
