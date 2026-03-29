@@ -10,6 +10,7 @@ interface IAiPanel {
   sessionLengthMinutes: number
   streamedTokens: string
   isStreaming: boolean
+  aiEnabled: boolean
   onMoodToggle: (mood: string) => void
   onSessionLengthChange: (minutes: number) => void
   onRequest: () => void
@@ -20,6 +21,7 @@ function AiPanel({
   sessionLengthMinutes,
   streamedTokens,
   isStreaming,
+  aiEnabled,
   onMoodToggle,
   onSessionLengthChange,
   onRequest,
@@ -48,18 +50,20 @@ function AiPanel({
 
   function renderMoods() {
     return (
-      <div className='flex flex-col gap-2'>
+      <div className={cn('flex flex-col gap-2', !aiEnabled && 'opacity-40')}>
         <p className='font-sans text-xs text-grimoire-muted'>How are you feeling?</p>
         <div className='flex flex-wrap gap-1.5'>
           {MOODS.map((mood) => (
             <button
               key={mood}
               onClick={() => onMoodToggle(mood)}
+              disabled={!aiEnabled}
               className={cn(
                 'rounded-full border px-2.5 py-1 font-sans text-xs transition-colors',
                 selectedMoods.includes(mood)
                   ? 'border-grimoire-gold bg-grimoire-gold/10 text-grimoire-gold'
                   : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg hover:text-grimoire-ink',
+                !aiEnabled && 'cursor-not-allowed',
               )}
             >
               {mood}
@@ -72,18 +76,20 @@ function AiPanel({
 
   function renderSessionLength() {
     return (
-      <div className='flex flex-col gap-2'>
+      <div className={cn('flex flex-col gap-2', !aiEnabled && 'opacity-40')}>
         <p className='font-sans text-xs text-grimoire-muted'>Session length</p>
         <div className='flex gap-1.5'>
           {SESSION_OPTIONS.map((min) => (
             <button
               key={min}
               onClick={() => onSessionLengthChange(min)}
+              disabled={!aiEnabled}
               className={cn(
                 'flex-1 rounded border py-1.5 font-sans text-xs transition-colors',
                 sessionLengthMinutes === min
                   ? 'border-grimoire-gold bg-grimoire-gold/10 text-grimoire-gold'
                   : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg hover:text-grimoire-ink',
+                !aiEnabled && 'cursor-not-allowed',
               )}
             >
               {min < 60 ? `${min}m` : `${min / 60}h`}
@@ -109,13 +115,20 @@ function AiPanel({
 
   function renderButton() {
     return (
-      <button
-        onClick={onRequest}
-        disabled={isStreaming || selectedMoods.length === 0}
-        className='w-full rounded bg-grimoire-gold py-2 font-sans text-xs font-medium text-grimoire-deep transition-colors hover:bg-grimoire-gold-bright disabled:cursor-not-allowed disabled:opacity-40'
-      >
-        {isStreaming ? 'Consulting the grimoire…' : 'Get recommendation'}
-      </button>
+      <div className='flex flex-col gap-2'>
+        {!aiEnabled && (
+          <p className='font-sans text-xs text-grimoire-muted text-center'>
+            AI features are currently disabled for your account.
+          </p>
+        )}
+        <button
+          onClick={onRequest}
+          disabled={!aiEnabled || isStreaming || selectedMoods.length === 0}
+          className='w-full rounded bg-grimoire-gold py-2 font-sans text-xs font-medium text-grimoire-deep transition-colors hover:bg-grimoire-gold-bright disabled:cursor-not-allowed disabled:opacity-40'
+        >
+          {isStreaming ? 'Consulting the grimoire…' : 'Get recommendation'}
+        </button>
+      </div>
     )
   }
 }

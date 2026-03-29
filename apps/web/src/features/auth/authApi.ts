@@ -1,10 +1,15 @@
 import { api } from '@/app/api'
+import { Role } from '@grimoire/shared'
 
 export interface Session {
   user: {
     id: string
     email: string
     name: string
+    role: Role
+    mustChangePassword: boolean
+    aiEnabled: boolean
+    aiRequestsLimit: number | null
   }
 }
 
@@ -13,10 +18,9 @@ interface SignInArgs {
   password: string
 }
 
-interface SignUpArgs {
-  email: string
-  password: string
-  name: string
+interface ChangePasswordArgs {
+  currentPassword: string
+  newPassword: string
 }
 
 export const authApi = api.injectEndpoints({
@@ -35,15 +39,6 @@ export const authApi = api.injectEndpoints({
       invalidatesTags: ['User'],
     }),
 
-    signUp: builder.mutation<Session, SignUpArgs>({
-      query: (body) => ({
-        url: 'auth/sign-up/email',
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: ['User'],
-    }),
-
     signOut: builder.mutation<void, void>({
       query: () => ({
         url: 'auth/sign-out',
@@ -51,12 +46,21 @@ export const authApi = api.injectEndpoints({
       }),
       invalidatesTags: ['User', 'Game', 'Session', 'Stats'],
     }),
+
+    changePassword: builder.mutation<void, ChangePasswordArgs>({
+      query: (body) => ({
+        url: 'users/me/password',
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['User'],
+    }),
   }),
 })
 
 export const {
   useGetSessionQuery,
   useSignInMutation,
-  useSignUpMutation,
   useSignOutMutation,
+  useChangePasswordMutation,
 } = authApi

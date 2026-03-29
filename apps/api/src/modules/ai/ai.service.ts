@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { Observable } from 'rxjs';
 
 import { RecommendationContext, RecommendationRequest } from '@grimoire/shared';
 
+import { PrismaService } from '../../prisma/prisma.service';
 import { GamesService } from '../games/games.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { ClaudeProvider } from './providers/claude.provider';
@@ -17,6 +18,7 @@ export class AiService {
 
   constructor(
     private config: ConfigService,
+    private prisma: PrismaService,
     private grokProvider: GrokProvider,
     private claudeProvider: ClaudeProvider,
     private gamesService: GamesService,
@@ -26,7 +28,32 @@ export class AiService {
     this.provider = providerName === 'claude' ? this.claudeProvider : this.grokProvider;
   }
 
+  private async _checkAndIncrementAiUsage(userId: string): Promise<void> {
+    const globalSettings = await this.prisma.aiGlobalSettings.findUnique({ where: { id: 1 } });
+    if (globalSettings && !globalSettings.aiEnabled) {
+      throw new ForbiddenException('AI features are globally disabled');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { aiEnabled: true, aiRequestsUsed: true, aiRequestsLimit: true },
+    });
+
+    if (!user) throw new ForbiddenException('User not found');
+    if (!user.aiEnabled) throw new ForbiddenException('AI features are disabled for your account');
+    if (user.aiRequestsLimit !== null && user.aiRequestsUsed >= user.aiRequestsLimit) {
+      throw new ForbiddenException('AI request limit reached');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { aiRequestsUsed: { increment: 1 } },
+    });
+  }
+
   async buildContext(userId: string, request: RecommendationRequest): Promise<RecommendationContext> {
+    await this._checkAndIncrementAiUsage(userId);
+
     const [games, recentSessions] = await Promise.all([this.gamesService.findAll(userId), this.sessionsService.findRecent(userId, 5)]);
 
     return {

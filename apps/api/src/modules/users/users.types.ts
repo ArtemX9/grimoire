@@ -3,5 +3,9 @@ export interface UserResponse {
   email: string;
   name?: string;
   plan: string;
+  role: string;
+  mustChangePassword: boolean;
+  aiEnabled: boolean;
+  aiRequestsLimit: number | null;
   createdAt: Date;
 }

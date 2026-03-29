@@ -5,6 +5,7 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import * as bcryptjs from 'bcryptjs';
 
 @Injectable()
 export class AuthService {
@@ -17,8 +18,22 @@ export class AuthService {
     this.auth = betterAuth({
       secret: this.config.get<string>('app.auth.secret'),
       database: prismaAdapter(this.prisma, { provider: 'postgresql' }),
-      emailAndPassword: { enabled: true },
+      emailAndPassword: { enabled: true, password: {
+        hash: doHashing,
+          verify: doVerify,
+        } },
       socialProviders: {},
     }) as ReturnType<typeof betterAuth>;
   }
+}
+
+function doHashing (password: string): Promise<string> {
+  return bcryptjs.hash(password, 12);
+}
+
+function doVerify(data: {
+  hash: string;
+  password: string;
+}): Promise<boolean> {
+  return bcryptjs.compare(data.password, data.hash);
 }

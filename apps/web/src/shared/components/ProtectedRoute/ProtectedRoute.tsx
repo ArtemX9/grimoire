@@ -1,17 +1,22 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
 import { useGetSessionQuery } from '@/features/auth/authApi'
 import { Skeleton } from '@/shared/components/ui/skeleton'
 
 export function ProtectedRoute() {
   const { data: session, isLoading } = useGetSessionQuery()
+  const location = useLocation()
 
   if (isLoading) {
     return renderLoadingSkeleton()
   }
 
   if (!session) {
-    return <Navigate to='/auth' replace />
+    return <Navigate to='/login' replace />
+  }
+
+  if (session.user.mustChangePassword && location.pathname !== '/change-password') {
+    return <Navigate to='/change-password' replace />
   }
 
   return <Outlet />

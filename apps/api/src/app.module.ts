@@ -1,9 +1,12 @@
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import appConfig from './config/app.config';
+import { MustChangePasswordGuard } from './common/guards/must-change-password.guard';
+import { AdminModule } from './modules/admin/admin.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { GamesModule } from './modules/games/games.module';
@@ -24,12 +27,19 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     PrismaModule,
     AuthModule,
+    AdminModule,
     UsersModule,
     GamesModule,
     SessionsModule,
     IgdbModule,
     PlatformsModule,
     AiModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: MustChangePasswordGuard,
+    },
   ],
 })
 export class AppModule {}
