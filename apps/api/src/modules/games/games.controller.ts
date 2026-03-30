@@ -8,7 +8,6 @@ import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { GamesService } from './games.service';
 
 @Controller('games')
-@UseGuards(AuthGuard)
 export class GamesController {
   constructor(private gamesService: GamesService) {}
 

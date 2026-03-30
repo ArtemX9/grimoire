@@ -1,10 +1,9 @@
-import { Body, Controller, Get, HttpCode, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Patch } from '@nestjs/common';
 
 import { z } from 'zod';
 
 import { CurrentUser, RequestUser } from '../../common/decorators/current-user.decorator';
 import { SkipMustChangePassword } from '../../common/decorators/skip-must-change-password.decorator';
-import { AuthGuard } from '../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { UsersService } from './users.service';
 
@@ -18,7 +17,6 @@ const ChangePasswordSchema = z.object({
 type ChangePasswordDto = z.infer<typeof ChangePasswordSchema>;
 
 @Controller('users')
-@UseGuards(AuthGuard)
 export class UsersController {
   constructor(private usersService: UsersService) {}
 

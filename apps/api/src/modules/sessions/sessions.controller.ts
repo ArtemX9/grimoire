@@ -8,7 +8,6 @@ import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { SessionsService } from './sessions.service';
 
 @Controller('sessions')
-@UseGuards(AuthGuard)
 export class SessionsController {
   constructor(private sessionsService: SessionsService) {}
 

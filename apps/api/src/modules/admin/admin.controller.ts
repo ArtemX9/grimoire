@@ -13,6 +13,7 @@ import {
 import { z } from 'zod';
 
 import { AdminOnly } from '../../common/decorators/admin-only.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser, RequestUser } from '../../common/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AdminAiService } from './admin-ai.service';
@@ -61,6 +62,7 @@ export class AdminController {
   ) {}
 
   @Post('setup')
+  @Public()
   @HttpCode(201)
   setup(@Body(new ZodValidationPipe(SetupAdminSchema)) body: SetupAdminDto) {
     return this.adminService.setupAdmin(body);

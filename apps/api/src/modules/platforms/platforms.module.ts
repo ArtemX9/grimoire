@@ -7,9 +7,10 @@ import { SteamSyncProcessor } from './steam/steam-sync.processor';
 import { SteamController } from './steam/steam.controller';
 import { SteamService } from './steam/steam.service';
 import {AuthModule} from '../auth/auth.module';
+import {UsersModule} from '../users/users.module';
 
 @Module({
-  imports: [AuthModule, BullModule.registerQueue({ name: 'steam-sync' }), GamesModule, IgdbModule],
+  imports: [AuthModule, UsersModule, BullModule.registerQueue({ name: 'steam-sync' }), GamesModule, IgdbModule],
   controllers: [SteamController],
   providers: [SteamService, SteamSyncProcessor],
 })

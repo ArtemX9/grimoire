@@ -12,7 +12,6 @@ import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AiService } from './ai.service';
 
 @Controller('ai')
-@UseGuards(AuthGuard)
 export class AiController {
   constructor(private aiService: AiService) {}
 

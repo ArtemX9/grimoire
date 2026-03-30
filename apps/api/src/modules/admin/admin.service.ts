@@ -9,6 +9,7 @@ import * as bcryptjs from 'bcryptjs';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { AdminUserResponse, AdminUserListResponse, AdminStatsResponse } from './admin.types';
+import {Role} from '@grimoire/shared';
 
 type PrismaAdminUser = {
   id: string;
@@ -73,7 +74,7 @@ export class AdminService {
         data: {
           email: dto.email,
           name: dto.name,
-          role: 'ADMIN',
+          role: Role.ADMIN,
           passwordHash: hash,
           mustChangePassword: false,
         },
@@ -121,7 +122,7 @@ export class AdminService {
         data: {
           email: dto.email,
           name: dto.name,
-          role: 'USER',
+          role: Role.ADMIN,
           passwordHash: hash,
           mustChangePassword: true,
         },
