@@ -1,11 +1,11 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Role } from '@grimoire/shared';
+import { Navigate, Outlet } from 'react-router-dom';
 
-import { useGetSessionQuery } from '@/features/auth/authApi'
-import { Skeleton } from '@/shared/components/ui/skeleton'
-import { Role } from '@grimoire/shared'
+import { useGetSessionQuery } from '@/features/auth/authApi';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 export function AdminRoute() {
-  const { data: session, isLoading } = useGetSessionQuery()
+  const { data: session, isLoading } = useGetSessionQuery();
 
   if (isLoading) {
     return (
@@ -16,16 +16,16 @@ export function AdminRoute() {
           <Skeleton className='h-4 w-40 rounded' />
         </div>
       </div>
-    )
+    );
   }
 
   if (!session) {
-    return <Navigate to='/login' replace />
+    return <Navigate to='/login' replace />;
   }
 
   if (session.user.role !== Role.ADMIN) {
-    return <Navigate to='/' replace />
+    return <Navigate to='/' replace />;
   }
 
-  return <Outlet />
+  return <Outlet />;
 }

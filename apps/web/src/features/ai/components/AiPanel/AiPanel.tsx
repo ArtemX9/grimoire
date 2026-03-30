@@ -1,19 +1,19 @@
-import { Sparkles } from 'lucide-react'
+import { MOODS } from '@grimoire/shared';
+import { Sparkles } from 'lucide-react';
 
-import { MOODS } from '@grimoire/shared'
-import { cn } from '@/shared/utils/cn'
+import { cn } from '@/shared/utils/cn';
 
-const SESSION_OPTIONS = [60, 120, 240] as const
+const SESSION_OPTIONS = [60, 120, 240] as const;
 
 interface IAiPanel {
-  selectedMoods: string[]
-  sessionLengthMinutes: number
-  streamedTokens: string
-  isStreaming: boolean
-  aiEnabled: boolean
-  onMoodToggle: (mood: string) => void
-  onSessionLengthChange: (minutes: number) => void
-  onRequest: () => void
+  selectedMoods: string[];
+  sessionLengthMinutes: number;
+  streamedTokens: string;
+  isStreaming: boolean;
+  aiEnabled: boolean;
+  onMoodToggle: (mood: string) => void;
+  onSessionLengthChange: (minutes: number) => void;
+  onRequest: () => void;
 }
 
 function AiPanel({
@@ -34,7 +34,7 @@ function AiPanel({
       {streamedTokens && renderRecommendation()}
       {renderButton()}
     </aside>
-  )
+  );
 
   function renderHeader() {
     return (
@@ -45,7 +45,7 @@ function AiPanel({
           AI
         </span>
       </div>
-    )
+    );
   }
 
   function renderMoods() {
@@ -71,7 +71,7 @@ function AiPanel({
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   function renderSessionLength() {
@@ -97,7 +97,7 @@ function AiPanel({
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   function renderRecommendation() {
@@ -105,21 +105,17 @@ function AiPanel({
       <div className='rounded border border-grimoire-border bg-grimoire-deep p-3'>
         <p className='font-grimoire text-sm leading-relaxed text-grimoire-ink'>
           {streamedTokens}
-          {isStreaming && (
-            <span className='ml-0.5 inline-block h-4 w-px animate-pulse bg-grimoire-gold' />
-          )}
+          {isStreaming && <span className='ml-0.5 inline-block h-4 w-px animate-pulse bg-grimoire-gold' />}
         </p>
       </div>
-    )
+    );
   }
 
   function renderButton() {
     return (
       <div className='flex flex-col gap-2'>
         {!aiEnabled && (
-          <p className='font-sans text-xs text-grimoire-muted text-center'>
-            AI features are currently disabled for your account.
-          </p>
+          <p className='font-sans text-xs text-grimoire-muted text-center'>AI features are currently disabled for your account.</p>
         )}
         <button
           onClick={onRequest}
@@ -129,8 +125,8 @@ function AiPanel({
           {isStreaming ? 'Consulting the grimoire…' : 'Get recommendation'}
         </button>
       </div>
-    )
+    );
   }
 }
 
-export default AiPanel
+export default AiPanel;

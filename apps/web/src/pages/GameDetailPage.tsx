@@ -1,88 +1,82 @@
-import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Clock, Star, Trash2 } from 'lucide-react'
+import { GameStatus, UpdateGameDto } from '@grimoire/shared';
+import { ArrowLeft, Clock, Star, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
-import { GameStatus, UpdateGameDto } from '@grimoire/shared'
-import { useGetGameQuery, useUpdateGameMutation, useDeleteGameMutation } from '@/features/games/gamesApi'
-import { useGetGameSessionsQuery } from '@/features/sessions/sessionsApi'
-import { cn } from '@/shared/utils/cn'
-import { Skeleton } from '@/shared/components/ui/skeleton'
-import { ScrollArea } from '@/shared/components/ui/scroll-area'
-import { Button } from '@/shared/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/shared/components/ui/dialog'
-import { toast } from '@/shared/components/ui/use-toast'
-import GameNotes from '@/features/games/components/GameNotes/GameNotes'
-import LogSessionDialog from '@/features/sessions/components/LogSessionDialog'
+import GameNotes from '@/features/games/components/GameNotes/GameNotes';
+import { useDeleteGameMutation, useGetGameQuery, useUpdateGameMutation } from '@/features/games/gamesApi';
+import LogSessionDialog from '@/features/sessions/components/LogSessionDialog';
+import { useGetGameSessionsQuery } from '@/features/sessions/sessionsApi';
+import { Button } from '@/shared/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
+import { ScrollArea } from '@/shared/components/ui/scroll-area';
+import { Skeleton } from '@/shared/components/ui/skeleton';
+import { toast } from '@/shared/components/ui/use-toast';
+import { cn } from '@/shared/utils/cn';
 
 const STATUS_STYLES: Record<GameStatus, string> = {
-  PLAYING:   'bg-grimoire-status-playing-bg   text-grimoire-status-playing-text',
-  BACKLOG:   'bg-grimoire-status-backlog-bg   text-grimoire-status-backlog-text',
+  PLAYING: 'bg-grimoire-status-playing-bg   text-grimoire-status-playing-text',
+  BACKLOG: 'bg-grimoire-status-backlog-bg   text-grimoire-status-backlog-text',
   COMPLETED: 'bg-grimoire-status-completed-bg text-grimoire-status-completed-text',
-  DROPPED:   'bg-grimoire-status-dropped-bg   text-grimoire-status-dropped-text',
-  WISHLIST:  'bg-grimoire-status-wishlist-bg  text-grimoire-status-wishlist-text',
-}
+  DROPPED: 'bg-grimoire-status-dropped-bg   text-grimoire-status-dropped-text',
+  WISHLIST: 'bg-grimoire-status-wishlist-bg  text-grimoire-status-wishlist-text',
+};
 
 export function GameDetailPage() {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
-  const { data: game, isLoading } = useGetGameQuery(id!)
-  const { data: sessions = [] } = useGetGameSessionsQuery(id!)
-  const [updateGame, { isLoading: isUpdating }] = useUpdateGameMutation()
-  const [deleteGame, { isLoading: isDeleting }] = useDeleteGameMutation()
+  const { data: game, isLoading } = useGetGameQuery(id!);
+  const { data: sessions = [] } = useGetGameSessionsQuery(id!);
+  const [updateGame, { isLoading: isUpdating }] = useUpdateGameMutation();
+  const [deleteGame, { isLoading: isDeleting }] = useDeleteGameMutation();
 
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [logSessionOpen, setLogSessionOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [logSessionOpen, setLogSessionOpen] = useState(false);
 
-  if (isLoading) return renderSkeleton()
+  if (isLoading) return renderSkeleton();
 
   if (!game) {
     return (
       <div className='flex h-full items-center justify-center'>
         <p className='font-grimoire text-lg text-grimoire-muted'>Game not found</p>
       </div>
-    )
+    );
   }
 
   async function handleStatusChange(status: GameStatus) {
     try {
-      await updateGame({ id: game!.id, data: { status } }).unwrap()
+      await updateGame({ id: game!.id, data: { status } }).unwrap();
     } catch {
-      toast({ title: 'Failed to update status', variant: 'destructive' })
+      toast({ title: 'Failed to update status', variant: 'destructive' });
     }
   }
 
   async function handleRatingChange(rating: number) {
-    const next = game!.userRating === rating ? undefined : rating
+    const next = game!.userRating === rating ? undefined : rating;
     try {
-      await updateGame({ id: game!.id, data: { userRating: next } as UpdateGameDto }).unwrap()
+      await updateGame({ id: game!.id, data: { userRating: next } as UpdateGameDto }).unwrap();
     } catch {
-      toast({ title: 'Failed to update rating', variant: 'destructive' })
+      toast({ title: 'Failed to update rating', variant: 'destructive' });
     }
   }
 
   async function handleSaveNotes(notes: string) {
     try {
-      await updateGame({ id: game!.id, data: { notes } }).unwrap()
-      toast({ title: 'Notes saved' })
+      await updateGame({ id: game!.id, data: { notes } }).unwrap();
+      toast({ title: 'Notes saved' });
     } catch {
-      toast({ title: 'Failed to save notes', variant: 'destructive' })
+      toast({ title: 'Failed to save notes', variant: 'destructive' });
     }
   }
 
   async function handleDelete() {
     try {
-      await deleteGame(game!.id).unwrap()
-      toast({ title: `${game!.title} removed from library` })
-      navigate('/library')
+      await deleteGame(game!.id).unwrap();
+      toast({ title: `${game!.title} removed from library` });
+      navigate('/library');
     } catch {
-      toast({ title: 'Failed to delete game', variant: 'destructive' })
+      toast({ title: 'Failed to delete game', variant: 'destructive' });
     }
   }
 
@@ -114,8 +108,7 @@ export function GameDetailPage() {
             <DialogTitle>Remove from library?</DialogTitle>
           </DialogHeader>
           <p className='font-sans text-sm text-grimoire-muted'>
-            This will permanently remove{' '}
-            <span className='text-grimoire-ink'>{game.title}</span> and all its sessions.
+            This will permanently remove <span className='text-grimoire-ink'>{game.title}</span> and all its sessions.
           </p>
           <DialogFooter>
             <Button variant='ghost' size='sm' onClick={() => setDeleteDialogOpen(false)}>
@@ -128,13 +121,9 @@ export function GameDetailPage() {
         </DialogContent>
       </Dialog>
 
-      <LogSessionDialog
-        open={logSessionOpen}
-        gameId={game.id}
-        onOpenChange={setLogSessionOpen}
-      />
+      <LogSessionDialog open={logSessionOpen} gameId={game.id} onOpenChange={setLogSessionOpen} />
     </ScrollArea>
-  )
+  );
 
   function renderCover() {
     return (
@@ -149,7 +138,7 @@ export function GameDetailPage() {
           )}
         </div>
       </div>
-    )
+    );
   }
 
   function renderDetails() {
@@ -201,8 +190,8 @@ export function GameDetailPage() {
 
         <div className='flex items-center gap-1'>
           {Array.from({ length: 10 }).map((_, i) => {
-            const rating = i + 1
-            const filled = game!.userRating !== undefined && rating <= game!.userRating
+            const rating = i + 1;
+            const filled = game!.userRating !== undefined && rating <= game!.userRating;
             return (
               <button
                 key={rating}
@@ -211,9 +200,14 @@ export function GameDetailPage() {
                 aria-label={`Rate ${rating}`}
                 className='transition-transform hover:scale-110 disabled:opacity-50'
               >
-                <Star className={cn('h-4 w-4', filled ? 'fill-grimoire-gold text-grimoire-gold' : 'fill-transparent text-grimoire-faint hover:text-grimoire-muted')} />
+                <Star
+                  className={cn(
+                    'h-4 w-4',
+                    filled ? 'fill-grimoire-gold text-grimoire-gold' : 'fill-transparent text-grimoire-faint hover:text-grimoire-muted',
+                  )}
+                />
               </button>
-            )
+            );
           })}
         </div>
 
@@ -233,15 +227,13 @@ export function GameDetailPage() {
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   function renderSessionsSection() {
     return (
       <div className='flex flex-col gap-2'>
-        <h2 className='font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>
-          Sessions
-        </h2>
+        <h2 className='font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>Sessions</h2>
         {sessions.length === 0 ? (
           <p className='font-sans text-sm text-grimoire-faint py-2'>No sessions logged yet</p>
         ) : (
@@ -255,15 +247,13 @@ export function GameDetailPage() {
                     year: 'numeric',
                   })}
                 </span>
-                <span className='font-sans text-sm text-grimoire-ink'>
-                  {session.durationMin ? `${session.durationMin} min` : '—'}
-                </span>
+                <span className='font-sans text-sm text-grimoire-ink'>{session.durationMin ? `${session.durationMin} min` : '—'}</span>
               </div>
             ))}
           </div>
         )}
       </div>
-    )
+    );
   }
 }
 
@@ -280,5 +270,5 @@ function renderSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }

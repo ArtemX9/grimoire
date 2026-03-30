@@ -1,57 +1,66 @@
-import { useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Plan, Role } from '@grimoire/shared';
+import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
-import { AdminUserRow } from '@/features/admin/adminApi'
-import { TableRow, TableCell } from '@/shared/components/ui/table'
-import { Switch } from '@/shared/components/ui/switch'
-import { Input } from '@/shared/components/ui/input'
-import { Button } from '@/shared/components/ui/button'
+import { AdminUserRow } from '@/features/admin/adminApi';
 import {
   AlertDialog,
-  AlertDialogTrigger,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from '@/shared/components/ui/alert-dialog'
-import { cn } from '@/shared/utils/cn'
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/shared/components/ui/alert-dialog';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import { Switch } from '@/shared/components/ui/switch';
+import { TableCell, TableRow } from '@/shared/components/ui/table';
+import { cn } from '@/shared/utils/cn';
 
 const ROLE_STYLES: Record<string, string> = {
   ADMIN: 'border-grimoire-gold/40 bg-grimoire-gold/10 text-grimoire-gold',
   USER: 'border-grimoire-border bg-grimoire-hover text-grimoire-muted',
-}
+};
+
+const PLAN_STYLES: Record<Plan, string> = {
+  [Plan.LIFETIME]: 'border-grimoire-gold-dim bg-grimoire-gold/10 text-grimoire-gold',
+  [Plan.PRO]: 'border-grimoire-border-lg bg-grimoire-hover text-grimoire-ink',
+  [Plan.FREE]: 'border-grimoire-border bg-grimoire-hover text-grimoire-muted',
+};
+
+const PLAN_OPTIONS = [Plan.FREE, Plan.PRO, Plan.LIFETIME];
 
 interface IUserRow {
-  user: AdminUserRow
-  globalAiEnabled: boolean
-  onDelete: (id: string) => void
-  onAiEnabledChange: (id: string, enabled: boolean) => void
-  onAiLimitChange: (id: string, limit: number | null) => void
+  user: AdminUserRow;
+  globalAiEnabled: boolean;
+  onDelete: (id: string) => void;
+  onAiEnabledChange: (id: string, enabled: boolean) => void;
+  onAiLimitChange: (id: string, limit: number | null) => void;
+  onPlanChange: (id: string, plan: string) => void;
 }
 
-export function UserRow({ user, globalAiEnabled, onDelete, onAiEnabledChange, onAiLimitChange }: IUserRow) {
-  const [limitInput, setLimitInput] = useState(
-    user.aiRequestsLimit !== null ? String(user.aiRequestsLimit) : '',
-  )
+export function UserRow({ user, globalAiEnabled, onDelete, onAiEnabledChange, onAiLimitChange, onPlanChange }: IUserRow) {
+  const [limitInput, setLimitInput] = useState(user.aiRequestsLimit !== null ? String(user.aiRequestsLimit) : '');
 
   function handleLimitBlur() {
-    const trimmed = limitInput.trim()
+    const trimmed = limitInput.trim();
     if (trimmed === '') {
-      onAiLimitChange(user.id, null)
+      onAiLimitChange(user.id, null);
     } else {
-      const parsed = parseInt(trimmed, 10)
+      const parsed = parseInt(trimmed, 10);
       if (!isNaN(parsed) && parsed >= 0) {
-        onAiLimitChange(user.id, parsed)
+        onAiLimitChange(user.id, parsed);
       } else {
-        setLimitInput(user.aiRequestsLimit !== null ? String(user.aiRequestsLimit) : '')
+        setLimitInput(user.aiRequestsLimit !== null ? String(user.aiRequestsLimit) : '');
       }
     }
   }
 
-  const aiControlsDisabled = !globalAiEnabled || !user.aiEnabled
+  const aiControlsDisabled = !globalAiEnabled || !user.aiEnabled;
 
   return (
     <TableRow>
@@ -63,28 +72,37 @@ export function UserRow({ user, globalAiEnabled, onDelete, onAiEnabledChange, on
       </TableCell>
 
       <TableCell>
-        <span
-          className={cn(
-            'rounded-full border px-2 py-0.5 font-sans text-xs',
-            ROLE_STYLES[user.role] ?? ROLE_STYLES.USER,
-          )}
-        >
+        <span className={cn('rounded-full border px-2 py-0.5 font-sans text-xs', ROLE_STYLES[user.role] ?? ROLE_STYLES.USER)}>
           {user.role}
         </span>
       </TableCell>
 
-      <TableCell className='font-sans text-sm'>{user.gamesCount}</TableCell>
-
-      <TableCell className='font-sans text-sm'>
-        {user.aiEnabled && globalAiEnabled ? user.aiRequestsUsed : '—'}
+      <TableCell>
+        <Select value={user.plan} onValueChange={(value) => onPlanChange(user.id, value)} disabled={user.role === Role.ADMIN}>
+          <SelectTrigger
+            className={cn(
+              'w-28 font-sans text-xs rounded-full border px-2 py-0.5 h-auto',
+              PLAN_STYLES[user.plan as Plan] ?? PLAN_STYLES[Plan.FREE],
+            )}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PLAN_OPTIONS.map((plan) => (
+              <SelectItem key={plan} value={plan} className='font-sans text-xs'>
+                {plan}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </TableCell>
 
+      <TableCell className='font-sans text-sm'>{user.gamesCount}</TableCell>
+
+      <TableCell className='font-sans text-sm'>{user.aiEnabled && globalAiEnabled ? user.aiRequestsUsed : '—'}</TableCell>
+
       <TableCell>
-        <Switch
-          checked={user.aiEnabled}
-          onCheckedChange={(checked) => onAiEnabledChange(user.id, checked)}
-          disabled={!globalAiEnabled}
-        />
+        <Switch checked={user.aiEnabled} onCheckedChange={(checked) => onAiEnabledChange(user.id, checked)} disabled={!globalAiEnabled} />
       </TableCell>
 
       <TableCell>
@@ -111,7 +129,8 @@ export function UserRow({ user, globalAiEnabled, onDelete, onAiEnabledChange, on
             <AlertDialogHeader>
               <AlertDialogTitle>Delete account</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete <strong>{user.email}</strong>? This will permanently remove their account and all associated data.
+                Are you sure you want to delete <strong>{user.email}</strong>? This will permanently remove their account and all associated
+                data.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -122,5 +141,5 @@ export function UserRow({ user, globalAiEnabled, onDelete, onAiEnabledChange, on
         </AlertDialog>
       </TableCell>
     </TableRow>
-  )
+  );
 }

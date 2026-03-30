@@ -106,9 +106,7 @@ describe('AdminAiService', () => {
     it('throws NotFoundException when userId does not exist', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(
-        service.updateSettings({ userId: 'nonexistent', userEnabled: true }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.updateSettings({ userId: 'nonexistent', userEnabled: true })).rejects.toThrow(NotFoundException);
     });
   });
 });

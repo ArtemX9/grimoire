@@ -1,43 +1,38 @@
-import { useState } from 'react'
+import { useState } from 'react';
 
-import { Button } from '@/shared/components/ui/button'
-import { Textarea } from '@/shared/components/ui/textarea'
+import { Button } from '@/shared/components/ui/button';
+import { Textarea } from '@/shared/components/ui/textarea';
 
 interface IGameNotes {
-  notes?: string
-  isSaving: boolean
-  onSave: (notes: string) => void
+  notes?: string;
+  isSaving: boolean;
+  onSave: (notes: string) => void;
 }
 
 function GameNotes({ notes, isSaving, onSave }: IGameNotes) {
-  const [editing, setEditing] = useState(false)
-  const [value, setValue] = useState('')
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState('');
 
   function handleStartEdit() {
-    setValue(notes ?? '')
-    setEditing(true)
+    setValue(notes ?? '');
+    setEditing(true);
   }
 
   function handleSave() {
-    onSave(value)
-    setEditing(false)
+    onSave(value);
+    setEditing(false);
   }
 
   function handleCancel() {
-    setEditing(false)
+    setEditing(false);
   }
 
   return (
     <div className='flex flex-col gap-2'>
       <div className='flex items-center justify-between'>
-        <h2 className='font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>
-          Notes
-        </h2>
+        <h2 className='font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>Notes</h2>
         {!editing && (
-          <button
-            onClick={handleStartEdit}
-            className='font-sans text-xs text-grimoire-muted transition-colors hover:text-grimoire-ink'
-          >
+          <button onClick={handleStartEdit} className='font-sans text-xs text-grimoire-muted transition-colors hover:text-grimoire-ink'>
             Edit
           </button>
         )}
@@ -45,13 +40,7 @@ function GameNotes({ notes, isSaving, onSave }: IGameNotes) {
 
       {editing ? (
         <div className='flex flex-col gap-2'>
-          <Textarea
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder='Your thoughts on this game…'
-            rows={5}
-            autoFocus
-          />
+          <Textarea value={value} onChange={(e) => setValue(e.target.value)} placeholder='Your thoughts on this game…' rows={5} autoFocus />
           <div className='flex justify-end gap-2'>
             <Button variant='ghost' size='sm' onClick={handleCancel}>
               Cancel
@@ -62,10 +51,7 @@ function GameNotes({ notes, isSaving, onSave }: IGameNotes) {
           </div>
         </div>
       ) : (
-        <div
-          onClick={handleStartEdit}
-          className='min-h-[80px] cursor-text rounded border border-grimoire-border bg-grimoire-input p-3'
-        >
+        <div onClick={handleStartEdit} className='min-h-[80px] cursor-text rounded border border-grimoire-border bg-grimoire-input p-3'>
           {notes ? (
             <p className='font-grimoire text-sm leading-relaxed text-grimoire-ink'>{notes}</p>
           ) : (
@@ -74,7 +60,7 @@ function GameNotes({ notes, isSaving, onSave }: IGameNotes) {
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default GameNotes
+export default GameNotes;

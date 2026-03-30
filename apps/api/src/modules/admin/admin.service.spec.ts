@@ -100,9 +100,7 @@ describe('AdminService', () => {
     it('throws BadRequestException when users already exist', async () => {
       (prisma.user.count as jest.Mock).mockResolvedValue(1);
 
-      await expect(
-        service.setupAdmin({ email: 'admin@example.com', password: 'password123' }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.setupAdmin({ email: 'admin@example.com', password: 'password123' })).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -142,9 +140,7 @@ describe('AdminService', () => {
     it('throws ConflictException when email is already in use', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(makeAdminUserRow());
 
-      await expect(
-        service.createUser({ email: 'admin@example.com', password: 'password123' }),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.createUser({ email: 'admin@example.com', password: 'password123' })).rejects.toThrow(ConflictException);
     });
   });
 

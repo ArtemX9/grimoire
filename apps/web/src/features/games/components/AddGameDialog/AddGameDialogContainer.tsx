@@ -1,32 +1,29 @@
-import { useState } from 'react'
+import { GameStatus, IgdbGame } from '@grimoire/shared';
+import { useState } from 'react';
 
-import { IgdbGame, GameStatus } from '@grimoire/shared'
-import { useSearchIgdbQuery } from '@/features/igdb/igdbApi'
-import { useCreateGameMutation } from '@/features/games/gamesApi'
-import { useDebounce } from '@/shared/hooks/useDebounce'
-import { toast } from '@/shared/components/ui/use-toast'
+import { useCreateGameMutation } from '@/features/games/gamesApi';
+import { useSearchIgdbQuery } from '@/features/igdb/igdbApi';
+import { toast } from '@/shared/components/ui/use-toast';
+import { useDebounce } from '@/shared/hooks/useDebounce';
 
-import AddGameDialog from './AddGameDialog'
+import AddGameDialog from './AddGameDialog';
 
 interface IAddGameDialogContainer {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 function AddGameDialogContainer({ open, onOpenChange }: IAddGameDialogContainer) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const debouncedQuery = useDebounce(searchQuery, 400)
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedQuery = useDebounce(searchQuery, 400);
 
-  const { data: searchResults = [], isFetching: isSearching } = useSearchIgdbQuery(
-    debouncedQuery,
-    { skip: debouncedQuery.length < 2 },
-  )
+  const { data: searchResults = [], isFetching: isSearching } = useSearchIgdbQuery(debouncedQuery, { skip: debouncedQuery.length < 2 });
 
-  const [createGame, { isLoading: isAdding }] = useCreateGameMutation()
+  const [createGame, { isLoading: isAdding }] = useCreateGameMutation();
 
   async function handleAddGame(game: IgdbGame, status: GameStatus) {
     try {
-      const coverURL = !!game.cover ?  'https:' + game.cover.url.replace('t_thumb', 't_cover_big') : undefined;
+      const coverURL = !!game.cover ? 'https:' + game.cover.url.replace('t_thumb', 't_cover_big') : undefined;
       await createGame({
         igdbId: game.id,
         title: game.name,
@@ -34,12 +31,12 @@ function AddGameDialogContainer({ open, onOpenChange }: IAddGameDialogContainer)
         genres: game.genres?.map((g) => g.name) ?? [],
         status,
         moods: [],
-      }).unwrap()
-      toast({ title: `${game.name} added to your library` })
-      onOpenChange(false)
-      setSearchQuery('')
+      }).unwrap();
+      toast({ title: `${game.name} added to your library` });
+      onOpenChange(false);
+      setSearchQuery('');
     } catch {
-      toast({ title: 'Failed to add game', variant: 'destructive' })
+      toast({ title: 'Failed to add game', variant: 'destructive' });
     }
   }
 
@@ -54,7 +51,7 @@ function AddGameDialogContainer({ open, onOpenChange }: IAddGameDialogContainer)
       onSearchChange={setSearchQuery}
       onAddGame={handleAddGame}
     />
-  )
+  );
 }
 
-export default AddGameDialogContainer
+export default AddGameDialogContainer;

@@ -26,20 +26,14 @@ export class UsersController {
   }
 
   @Patch('me')
-  updateMe(
-    @CurrentUser() user: RequestUser,
-    @Body(new ZodValidationPipe(UpdateProfileSchema)) body: UpdateProfileDto,
-  ) {
+  updateMe(@CurrentUser() user: RequestUser, @Body(new ZodValidationPipe(UpdateProfileSchema)) body: UpdateProfileDto) {
     return this.usersService.updateProfile(user.id, body);
   }
 
   @Patch('me/password')
   @SkipMustChangePassword()
   @HttpCode(204)
-  async changePassword(
-    @CurrentUser() user: RequestUser,
-    @Body(new ZodValidationPipe(ChangePasswordSchema)) body: ChangePasswordDto,
-  ) {
+  async changePassword(@CurrentUser() user: RequestUser, @Body(new ZodValidationPipe(ChangePasswordSchema)) body: ChangePasswordDto) {
     await this.usersService.changePassword(user.id, body.currentPassword, body.newPassword);
   }
 }

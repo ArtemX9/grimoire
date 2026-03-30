@@ -5,9 +5,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GamesService } from '../games/games.service';
 import { SessionsService } from '../sessions/sessions.service';
+import { AiService } from './ai.service';
 import { ClaudeProvider } from './providers/claude.provider';
 import { GrokProvider } from './providers/grok.provider';
-import { AiService } from './ai.service';
 
 const MOCK_REQUEST: import('@grimoire/shared').RecommendationRequest = {
   userId: 'user-1',
@@ -77,9 +77,7 @@ describe('AiService._checkAndIncrementAiUsage (via buildContext)', () => {
     });
 
     await expect(service.buildContext('user-1', MOCK_REQUEST)).rejects.toThrow(ForbiddenException);
-    await expect(service.buildContext('user-1', MOCK_REQUEST)).rejects.toThrow(
-      'AI features are disabled for your account',
-    );
+    await expect(service.buildContext('user-1', MOCK_REQUEST)).rejects.toThrow('AI features are disabled for your account');
   });
 
   it('throws ForbiddenException when the user has reached their request limit', async () => {

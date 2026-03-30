@@ -1,12 +1,13 @@
-import React from 'react'
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Role } from '@grimoire/shared';
+import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { describe, expect, it, vi } from 'vitest';
 
-import { Role } from '@grimoire/shared'
-import { ProtectedRoute } from '@/shared/components/ProtectedRoute/ProtectedRoute'
-import { AdminRoute } from '@/shared/components/ProtectedRoute/AdminRoute'
-import { MustChangePasswordRoute } from '@/shared/components/ProtectedRoute/MustChangePasswordRoute'
+import { useGetSessionQuery } from '@/features/auth/authApi';
+import { AdminRoute } from '@/shared/components/ProtectedRoute/AdminRoute';
+import { MustChangePasswordRoute } from '@/shared/components/ProtectedRoute/MustChangePasswordRoute';
+import { ProtectedRoute } from '@/shared/components/ProtectedRoute/ProtectedRoute';
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -14,15 +15,11 @@ import { MustChangePasswordRoute } from '@/shared/components/ProtectedRoute/Must
 
 vi.mock('@/features/auth/authApi', () => ({
   useGetSessionQuery: vi.fn(),
-}))
+}));
 
 vi.mock('@/shared/components/ui/skeleton', () => ({
-  Skeleton: ({ className }: { className?: string }) => (
-    <div data-testid='skeleton' className={className} />
-  ),
-}))
-
-import { useGetSessionQuery } from '@/features/auth/authApi'
+  Skeleton: ({ className }: { className?: string }) => <div data-testid='skeleton' className={className} />,
+}));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -30,15 +27,15 @@ import { useGetSessionQuery } from '@/features/auth/authApi'
 
 type SessionData = {
   user: {
-    id: string
-    email: string
-    name: string
-    role: Role
-    mustChangePassword: boolean
-    aiEnabled: boolean
-    aiRequestsLimit: number | null
-  }
-}
+    id: string;
+    email: string;
+    name: string;
+    role: Role;
+    mustChangePassword: boolean;
+    aiEnabled: boolean;
+    aiRequestsLimit: number | null;
+  };
+};
 
 function mockSession(overrides: Partial<SessionData['user']> = {}) {
   return {
@@ -52,13 +49,10 @@ function mockSession(overrides: Partial<SessionData['user']> = {}) {
       aiRequestsLimit: null,
       ...overrides,
     },
-  }
+  };
 }
 
-function renderWithRoutes(
-  guardElement: React.ReactElement,
-  initialEntry = '/',
-) {
+function renderWithRoutes(guardElement: React.ReactElement, initialEntry = '/') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
@@ -72,7 +66,7 @@ function renderWithRoutes(
         </Route>
       </Routes>
     </MemoryRouter>,
-  )
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -84,46 +78,46 @@ describe('ProtectedRoute', () => {
     vi.mocked(useGetSessionQuery).mockReturnValue({
       data: undefined,
       isLoading: true,
-    } as unknown as ReturnType<typeof useGetSessionQuery>)
+    } as unknown as ReturnType<typeof useGetSessionQuery>);
 
-    renderWithRoutes(<ProtectedRoute />, '/protected')
+    renderWithRoutes(<ProtectedRoute />, '/protected');
 
-    expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0)
-  })
+    expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
+  });
 
   it('redirects to /login when there is no session', () => {
     vi.mocked(useGetSessionQuery).mockReturnValue({
       data: null,
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetSessionQuery>)
+    } as unknown as ReturnType<typeof useGetSessionQuery>);
 
-    renderWithRoutes(<ProtectedRoute />, '/protected')
+    renderWithRoutes(<ProtectedRoute />, '/protected');
 
-    expect(screen.getByText('Login Page')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Login Page')).toBeInTheDocument();
+  });
 
   it('redirects to /change-password when mustChangePassword is true', () => {
     vi.mocked(useGetSessionQuery).mockReturnValue({
       data: mockSession({ mustChangePassword: true }),
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetSessionQuery>)
+    } as unknown as ReturnType<typeof useGetSessionQuery>);
 
-    renderWithRoutes(<ProtectedRoute />, '/protected')
+    renderWithRoutes(<ProtectedRoute />, '/protected');
 
-    expect(screen.getByText('Change Password Page')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Change Password Page')).toBeInTheDocument();
+  });
 
   it('renders the outlet when session is valid', () => {
     vi.mocked(useGetSessionQuery).mockReturnValue({
       data: mockSession(),
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetSessionQuery>)
+    } as unknown as ReturnType<typeof useGetSessionQuery>);
 
-    renderWithRoutes(<ProtectedRoute />, '/protected')
+    renderWithRoutes(<ProtectedRoute />, '/protected');
 
-    expect(screen.getByText('Protected Content')).toBeInTheDocument()
-  })
-})
+    expect(screen.getByText('Protected Content')).toBeInTheDocument();
+  });
+});
 
 // ---------------------------------------------------------------------------
 // AdminRoute
@@ -134,46 +128,46 @@ describe('AdminRoute', () => {
     vi.mocked(useGetSessionQuery).mockReturnValue({
       data: null,
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetSessionQuery>)
+    } as unknown as ReturnType<typeof useGetSessionQuery>);
 
-    renderWithRoutes(<AdminRoute />, '/admin/dashboard')
+    renderWithRoutes(<AdminRoute />, '/admin/dashboard');
 
-    expect(screen.getByText('Login Page')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Login Page')).toBeInTheDocument();
+  });
 
   it('redirects to / when the user is not an admin', () => {
     vi.mocked(useGetSessionQuery).mockReturnValue({
       data: mockSession({ role: Role.USER }),
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetSessionQuery>)
+    } as unknown as ReturnType<typeof useGetSessionQuery>);
 
-    renderWithRoutes(<AdminRoute />, '/admin/dashboard')
+    renderWithRoutes(<AdminRoute />, '/admin/dashboard');
 
-    expect(screen.getByText('Home Page')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Home Page')).toBeInTheDocument();
+  });
 
   it('renders the outlet when the user is an admin', () => {
     vi.mocked(useGetSessionQuery).mockReturnValue({
       data: mockSession({ role: Role.ADMIN }),
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetSessionQuery>)
+    } as unknown as ReturnType<typeof useGetSessionQuery>);
 
-    renderWithRoutes(<AdminRoute />, '/admin/dashboard')
+    renderWithRoutes(<AdminRoute />, '/admin/dashboard');
 
-    expect(screen.getByText('Admin Dashboard')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Admin Dashboard')).toBeInTheDocument();
+  });
 
   it('renders loading skeletons while session is loading', () => {
     vi.mocked(useGetSessionQuery).mockReturnValue({
       data: undefined,
       isLoading: true,
-    } as unknown as ReturnType<typeof useGetSessionQuery>)
+    } as unknown as ReturnType<typeof useGetSessionQuery>);
 
-    renderWithRoutes(<AdminRoute />, '/admin/dashboard')
+    renderWithRoutes(<AdminRoute />, '/admin/dashboard');
 
-    expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0)
-  })
-})
+    expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
+  });
+});
 
 // ---------------------------------------------------------------------------
 // MustChangePasswordRoute
@@ -184,43 +178,43 @@ describe('MustChangePasswordRoute', () => {
     vi.mocked(useGetSessionQuery).mockReturnValue({
       data: null,
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetSessionQuery>)
+    } as unknown as ReturnType<typeof useGetSessionQuery>);
 
-    renderWithRoutes(<MustChangePasswordRoute />, '/must-change')
+    renderWithRoutes(<MustChangePasswordRoute />, '/must-change');
 
-    expect(screen.getByText('Login Page')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Login Page')).toBeInTheDocument();
+  });
 
   it('redirects to / when mustChangePassword is false', () => {
     vi.mocked(useGetSessionQuery).mockReturnValue({
       data: mockSession({ mustChangePassword: false }),
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetSessionQuery>)
+    } as unknown as ReturnType<typeof useGetSessionQuery>);
 
-    renderWithRoutes(<MustChangePasswordRoute />, '/must-change')
+    renderWithRoutes(<MustChangePasswordRoute />, '/must-change');
 
-    expect(screen.getByText('Home Page')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Home Page')).toBeInTheDocument();
+  });
 
   it('renders the outlet when mustChangePassword is true', () => {
     vi.mocked(useGetSessionQuery).mockReturnValue({
       data: mockSession({ mustChangePassword: true }),
       isLoading: false,
-    } as unknown as ReturnType<typeof useGetSessionQuery>)
+    } as unknown as ReturnType<typeof useGetSessionQuery>);
 
-    renderWithRoutes(<MustChangePasswordRoute />, '/must-change')
+    renderWithRoutes(<MustChangePasswordRoute />, '/must-change');
 
-    expect(screen.getByText('Must Change Content')).toBeInTheDocument()
-  })
+    expect(screen.getByText('Must Change Content')).toBeInTheDocument();
+  });
 
   it('renders loading skeletons while session is loading', () => {
     vi.mocked(useGetSessionQuery).mockReturnValue({
       data: undefined,
       isLoading: true,
-    } as unknown as ReturnType<typeof useGetSessionQuery>)
+    } as unknown as ReturnType<typeof useGetSessionQuery>);
 
-    renderWithRoutes(<MustChangePasswordRoute />, '/must-change')
+    renderWithRoutes(<MustChangePasswordRoute />, '/must-change');
 
-    expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0)
-  })
-})
+    expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
+  });
+});

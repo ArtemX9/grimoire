@@ -1,20 +1,12 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Param,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
 
 import { z } from 'zod';
 
+import { Plan } from '@grimoire/shared';
+
 import { AdminOnly } from '../../common/decorators/admin-only.decorator';
-import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser, RequestUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AdminAiService } from './admin-ai.service';
 import { AdminService } from './admin.service';
@@ -48,11 +40,16 @@ const ListUsersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+const UpdateUserPlanSchema = z.object({
+  plan: z.nativeEnum(Plan),
+});
+
 type SetupAdminDto = z.infer<typeof SetupAdminSchema>;
 type CreateUserDto = z.infer<typeof CreateUserSchema>;
 type UpdateAiSettingsDto = z.infer<typeof UpdateAiSettingsSchema>;
 type UpdateUserAiDto = z.infer<typeof UpdateUserAiSchema>;
 type ListUsersQuery = z.infer<typeof ListUsersQuerySchema>;
+type UpdateUserPlanDto = z.infer<typeof UpdateUserPlanSchema>;
 
 @Controller('admin')
 export class AdminController {
@@ -88,6 +85,16 @@ export class AdminController {
     await this.adminService.deleteUser(user.id, targetId);
   }
 
+  @Patch('users/:id/plan')
+  @AdminOnly()
+  updateUserPlan(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateUserPlanSchema)) body: UpdateUserPlanDto,
+  ) {
+    return this.adminService.updateUserPlan(user.id, id, body.plan);
+  }
+
   @Get('stats')
   @AdminOnly()
   getStats() {
@@ -109,10 +116,7 @@ export class AdminController {
   @Patch('users/:id/ai')
   @AdminOnly()
   @HttpCode(204)
-  async updateUserAiSettings(
-    @Param('id') userId: string,
-    @Body(new ZodValidationPipe(UpdateUserAiSchema)) body: UpdateUserAiDto,
-  ) {
+  async updateUserAiSettings(@Param('id') userId: string, @Body(new ZodValidationPipe(UpdateUserAiSchema)) body: UpdateUserAiDto) {
     await this.adminAiService.updateUserAiSettings(userId, body);
   }
 }

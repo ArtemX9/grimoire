@@ -1,61 +1,67 @@
-import { api } from '@/app/api'
-import { Role } from '@grimoire/shared'
+import { Role } from '@grimoire/shared';
+
+import { api } from '@/app/api';
 
 export interface AdminUserRow {
-  id: string
-  email: string
-  name?: string
-  role: Role
-  plan: string
-  mustChangePassword: boolean
-  aiEnabled: boolean
-  aiRequestsUsed: number
-  aiRequestsLimit: number | null
-  gamesCount: number
-  createdAt: string
+  id: string;
+  email: string;
+  name?: string;
+  role: Role;
+  plan: string;
+  mustChangePassword: boolean;
+  aiEnabled: boolean;
+  aiRequestsUsed: number;
+  aiRequestsLimit: number | null;
+  gamesCount: number;
+  createdAt: string;
 }
 
 export interface AdminUserListResponse {
-  data: AdminUserRow[]
-  total: number
+  data: AdminUserRow[];
+  total: number;
 }
 
 export interface AiGlobalSettings {
-  aiEnabled: boolean
+  aiEnabled: boolean;
 }
 
 export interface AdminStats {
   users: Array<{
-    id: string
-    email: string
-    name?: string
-    gamesCount: number
-    sessionsCount: number
-    aiRequestsUsed: number
-    aiRequestsLimit: number | null
-  }>
+    id: string;
+    email: string;
+    name?: string;
+    gamesCount: number;
+    sessionsCount: number;
+    aiRequestsUsed: number;
+    aiRequestsLimit: number | null;
+  }>;
 }
 
 export interface CreateUserArgs {
-  email: string
-  password: string
-  name?: string
+  email: string;
+  password: string;
+  name?: string;
 }
 
 export interface UpdateUserAiArgs {
-  id: string
-  aiEnabled: boolean
-  aiRequestsLimit: number | null
+  id: string;
+  aiEnabled: boolean;
+  aiRequestsLimit: number | null;
 }
 
 export interface UpdateAiGlobalArgs {
-  aiEnabled: boolean
+  aiEnabled: boolean;
+}
+
+export interface UpdateUserPlanArgs {
+  id: string;
+  plan: string;
 }
 
 export interface SetupAdminArgs {
-  email: string
-  password: string
-  name?: string
+  email: string;
+  password: string;
+  name?: string;
 }
 
 export const adminApi = api.injectEndpoints({
@@ -95,11 +101,16 @@ export const adminApi = api.injectEndpoints({
       providesTags: ['AdminUser'],
     }),
 
+    updateUserPlan: builder.mutation<AdminUserRow, UpdateUserPlanArgs>({
+      query: ({ id, plan }) => ({ url: `admin/users/${id}/plan`, method: 'PATCH', body: { plan } }),
+      invalidatesTags: ['AdminUser'],
+    }),
+
     setupAdmin: builder.mutation<AdminUserRow, SetupAdminArgs>({
       query: (body) => ({ url: 'admin/setup', method: 'POST', body }),
     }),
   }),
-})
+});
 
 export const {
   useListAdminUsersQuery,
@@ -108,6 +119,7 @@ export const {
   useGetAiGlobalSettingsQuery,
   useUpdateAiGlobalSettingsMutation,
   useUpdateUserAiSettingsMutation,
+  useUpdateUserPlanMutation,
   useGetAdminStatsQuery,
   useSetupAdminMutation,
-} = adminApi
+} = adminApi;

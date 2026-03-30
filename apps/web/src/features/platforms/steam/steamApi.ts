@@ -1,10 +1,11 @@
-import { api } from '@/app/api'
-import { UserPlatform } from '@grimoire/shared'
+import { UserPlatform } from '@grimoire/shared';
+
+import { api } from '@/app/api';
 
 interface SteamSyncStatus {
-  connected: boolean
-  lastSyncAt?: string
-  platform?: UserPlatform
+  connected: boolean;
+  lastSyncAt?: string;
+  platform?: UserPlatform;
 }
 
 export const steamApi = api.injectEndpoints({
@@ -24,6 +25,6 @@ export const steamApi = api.injectEndpoints({
       invalidatesTags: ['Game', 'Stats'],
     }),
   }),
-})
+});
 
-export const { useGetSteamStatusQuery, useConnectSteamMutation, useSyncSteamMutation } = steamApi
+export const { useGetSteamStatusQuery, useConnectSteamMutation, useSyncSteamMutation } = steamApi;

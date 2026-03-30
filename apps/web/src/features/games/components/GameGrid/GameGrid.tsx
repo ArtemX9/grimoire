@@ -1,19 +1,20 @@
-import { UserGame } from '@grimoire/shared'
-import { Skeleton } from '@/shared/components/ui/skeleton'
-import GameCard from '@/features/games/components/GameCard/GameCard'
+import { UserGame } from '@grimoire/shared';
+
+import GameCard from '@/features/games/components/GameCard/GameCard';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 interface IGameGrid {
-  games: UserGame[]
-  isLoading: boolean
+  games: UserGame[];
+  isLoading: boolean;
 }
 
 function GameGrid({ games, isLoading }: IGameGrid) {
   if (isLoading) {
-    return renderSkeletons()
+    return renderSkeletons();
   }
 
   if (!games || games.length === 0) {
-    return renderEmpty()
+    return renderEmpty();
   }
 
   return (
@@ -22,7 +23,7 @@ function GameGrid({ games, isLoading }: IGameGrid) {
         <GameCard key={game.id} game={game} />
       ))}
     </div>
-  )
+  );
 
   function renderSkeletons() {
     return (
@@ -35,19 +36,17 @@ function GameGrid({ games, isLoading }: IGameGrid) {
           </div>
         ))}
       </div>
-    )
+    );
   }
 
   function renderEmpty() {
     return (
       <div className='flex flex-col items-center justify-center py-20 text-center'>
         <p className='font-grimoire text-lg text-grimoire-muted'>Your library is empty</p>
-        <p className='mt-1 font-sans text-sm text-grimoire-faint'>
-          Add games manually or connect Steam to get started
-        </p>
+        <p className='mt-1 font-sans text-sm text-grimoire-faint'>Add games manually or connect Steam to get started</p>
       </div>
-    )
+    );
   }
 }
 
-export default GameGrid
+export default GameGrid;

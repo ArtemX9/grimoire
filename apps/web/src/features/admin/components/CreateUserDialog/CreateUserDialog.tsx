@@ -1,41 +1,34 @@
-import { useState } from 'react'
+import { useState } from 'react';
 
-import { CreateUserArgs } from '@/features/admin/adminApi'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/shared/components/ui/dialog'
-import { Input } from '@/shared/components/ui/input'
-import { Button } from '@/shared/components/ui/button'
+import { CreateUserArgs } from '@/features/admin/adminApi';
+import { Button } from '@/shared/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
+import { Input } from '@/shared/components/ui/input';
 
 interface ICreateUserDialog {
-  open: boolean
-  isLoading: boolean
-  error: string
-  onClose: () => void
-  onSubmit: (args: CreateUserArgs) => void
+  open: boolean;
+  isLoading: boolean;
+  error: string;
+  onClose: () => void;
+  onSubmit: (args: CreateUserArgs) => void;
 }
 
 export function CreateUserDialog({ open, isLoading, error, onClose, onSubmit }: ICreateUserDialog) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    onSubmit({ name: name || undefined, email, password })
+    e.preventDefault();
+    onSubmit({ name: name || undefined, email, password });
   }
 
   function handleOpenChange(isOpen: boolean) {
     if (!isOpen) {
-      onClose()
-      setName('')
-      setEmail('')
-      setPassword('')
+      onClose();
+      setName('');
+      setEmail('');
+      setPassword('');
     }
   }
 
@@ -44,21 +37,13 @@ export function CreateUserDialog({ open, isLoading, error, onClose, onSubmit }: 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create user account</DialogTitle>
-          <DialogDescription>
-            The user will be prompted to change their password on first login.
-          </DialogDescription>
+          <DialogDescription>The user will be prompted to change their password on first login.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
           <div className='flex flex-col gap-1.5'>
             <label className='font-sans text-xs text-grimoire-muted'>Name (optional)</label>
-            <Input
-              type='text'
-              placeholder='Their name'
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete='off'
-            />
+            <Input type='text' placeholder='Their name' value={name} onChange={(e) => setName(e.target.value)} autoComplete='off' />
           </div>
 
           <div className='flex flex-col gap-1.5'>
@@ -86,9 +71,7 @@ export function CreateUserDialog({ open, isLoading, error, onClose, onSubmit }: 
             />
           </div>
 
-          {error && (
-            <p className='font-sans text-xs text-grimoire-status-dropped-text'>{error}</p>
-          )}
+          {error && <p className='font-sans text-xs text-grimoire-status-dropped-text'>{error}</p>}
 
           <DialogFooter className='mt-2'>
             <Button type='button' variant='outline' onClick={onClose} disabled={isLoading}>
@@ -101,5 +84,5 @@ export function CreateUserDialog({ open, isLoading, error, onClose, onSubmit }: 
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

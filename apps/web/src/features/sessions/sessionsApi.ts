@@ -1,5 +1,6 @@
-import { api } from '@/app/api'
-import { PlaySession, CreateSessionDto } from '@grimoire/shared'
+import { CreateSessionDto, PlaySession } from '@grimoire/shared';
+
+import { api } from '@/app/api';
 
 export const sessionsApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -18,10 +19,6 @@ export const sessionsApi = api.injectEndpoints({
       invalidatesTags: ['Session', 'Game', 'Stats'],
     }),
   }),
-})
+});
 
-export const {
-  useGetRecentSessionsQuery,
-  useGetGameSessionsQuery,
-  useCreateSessionMutation,
-} = sessionsApi
+export const { useGetRecentSessionsQuery, useGetGameSessionsQuery, useCreateSessionMutation } = sessionsApi;

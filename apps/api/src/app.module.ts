@@ -4,9 +4,9 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 
-import appConfig from './config/app.config';
 import { AuthGuard } from './common/guards/auth.guard';
 import { MustChangePasswordGuard } from './common/guards/must-change-password.guard';
+import appConfig from './config/app.config';
 import { AdminModule } from './modules/admin/admin.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AuthModule } from './modules/auth/auth.module';

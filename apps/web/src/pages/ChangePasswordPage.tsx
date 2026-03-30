@@ -1,34 +1,34 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { useChangePasswordMutation } from '@/features/auth/authApi'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card'
-import { Input } from '@/shared/components/ui/input'
-import { Button } from '@/shared/components/ui/button'
+import { useChangePasswordMutation } from '@/features/auth/authApi';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Input } from '@/shared/components/ui/input';
 
 export function ChangePasswordPage() {
-  const navigate = useNavigate()
-  const [changePassword, { isLoading }] = useChangePasswordMutation()
+  const navigate = useNavigate();
+  const [changePassword, { isLoading }] = useChangePasswordMutation();
 
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError('');
 
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match.')
-      return
+      setError('New passwords do not match.');
+      return;
     }
 
     try {
-      await changePassword({ currentPassword, newPassword }).unwrap()
-      navigate('/', { replace: true })
+      await changePassword({ currentPassword, newPassword }).unwrap();
+      navigate('/', { replace: true });
     } catch {
-      setError('Could not change password. Please check your current password and try again.')
+      setError('Could not change password. Please check your current password and try again.');
     }
   }
 
@@ -43,15 +43,15 @@ export function ChangePasswordPage() {
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-base'>Set your password</CardTitle>
-            <CardDescription>
-              Your administrator has created this account. Choose a password before continuing.
-            </CardDescription>
+            <CardDescription>Your administrator has created this account. Choose a password before continuing.</CardDescription>
           </CardHeader>
 
           <CardContent>
             <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
               <div className='flex flex-col gap-1.5'>
-                <label htmlFor='cp-current' className='font-sans text-xs text-grimoire-muted'>Current (temporary) password</label>
+                <label htmlFor='cp-current' className='font-sans text-xs text-grimoire-muted'>
+                  Current (temporary) password
+                </label>
                 <Input
                   id='cp-current'
                   type='password'
@@ -64,7 +64,9 @@ export function ChangePasswordPage() {
               </div>
 
               <div className='flex flex-col gap-1.5'>
-                <label htmlFor='cp-new' className='font-sans text-xs text-grimoire-muted'>New password</label>
+                <label htmlFor='cp-new' className='font-sans text-xs text-grimoire-muted'>
+                  New password
+                </label>
                 <Input
                   id='cp-new'
                   type='password'
@@ -78,7 +80,9 @@ export function ChangePasswordPage() {
               </div>
 
               <div className='flex flex-col gap-1.5'>
-                <label htmlFor='cp-confirm' className='font-sans text-xs text-grimoire-muted'>Confirm new password</label>
+                <label htmlFor='cp-confirm' className='font-sans text-xs text-grimoire-muted'>
+                  Confirm new password
+                </label>
                 <Input
                   id='cp-confirm'
                   type='password'
@@ -91,9 +95,7 @@ export function ChangePasswordPage() {
                 />
               </div>
 
-              {error && (
-                <p className='font-sans text-xs text-grimoire-status-dropped-text'>{error}</p>
-              )}
+              {error && <p className='font-sans text-xs text-grimoire-status-dropped-text'>{error}</p>}
 
               <Button type='submit' className='mt-1 w-full' disabled={isLoading}>
                 {isLoading ? 'Saving…' : 'Set password'}
@@ -103,5 +105,5 @@ export function ChangePasswordPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

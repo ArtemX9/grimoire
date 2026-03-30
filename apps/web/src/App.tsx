@@ -1,17 +1,17 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom';
 
-import Layout from '@/shared/components/Layout/Layout'
-import { ProtectedRoute } from '@/shared/components/ProtectedRoute/ProtectedRoute'
-import { AdminRoute } from '@/shared/components/ProtectedRoute/AdminRoute'
-import { MustChangePasswordRoute } from '@/shared/components/ProtectedRoute/MustChangePasswordRoute'
-import { Toaster } from '@/shared/components/ui/toaster'
-import { LoginPage } from '@/pages/LoginPage'
-import { AdminSetupPage } from '@/pages/AdminSetupPage'
-import { AdminDashboardPage } from '@/pages/AdminDashboardPage'
-import { ChangePasswordPage } from '@/pages/ChangePasswordPage'
-import { LibraryPage } from '@/pages/LibraryPage'
-import { GameDetailPage } from '@/pages/GameDetailPage'
-import { SettingsPage } from '@/pages/SettingsPage'
+import { AdminDashboardPage } from '@/pages/AdminDashboardPage';
+import { AdminSetupPage } from '@/pages/AdminSetupPage';
+import { ChangePasswordPage } from '@/pages/ChangePasswordPage';
+import { GameDetailPage } from '@/pages/GameDetailPage';
+import { LibraryPage } from '@/pages/LibraryPage';
+import { LoginPage } from '@/pages/LoginPage';
+import { SettingsPage } from '@/pages/SettingsPage';
+import Layout from '@/shared/components/Layout/Layout';
+import { AdminRoute } from '@/shared/components/ProtectedRoute/AdminRoute';
+import { MustChangePasswordRoute } from '@/shared/components/ProtectedRoute/MustChangePasswordRoute';
+import { ProtectedRoute } from '@/shared/components/ProtectedRoute/ProtectedRoute';
+import { Toaster } from '@/shared/components/ui/toaster';
 
 export default function App() {
   return (
@@ -39,5 +39,5 @@ export default function App() {
       </Routes>
       <Toaster />
     </>
-  )
+  );
 }

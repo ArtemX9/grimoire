@@ -1,26 +1,27 @@
-import { api } from '@/app/api'
-import { Role } from '@grimoire/shared'
+import { Role } from '@grimoire/shared';
+
+import { api } from '@/app/api';
 
 export interface Session {
   user: {
-    id: string
-    email: string
-    name: string
-    role: Role
-    mustChangePassword: boolean
-    aiEnabled: boolean
-    aiRequestsLimit: number | null
-  }
+    id: string;
+    email: string;
+    name: string;
+    role: Role;
+    mustChangePassword: boolean;
+    aiEnabled: boolean;
+    aiRequestsLimit: number | null;
+  };
 }
 
 interface SignInArgs {
-  email: string
-  password: string
+  email: string;
+  password: string;
 }
 
 interface ChangePasswordArgs {
-  currentPassword: string
-  newPassword: string
+  currentPassword: string;
+  newPassword: string;
 }
 
 export const authApi = api.injectEndpoints({
@@ -56,11 +57,6 @@ export const authApi = api.injectEndpoints({
       invalidatesTags: ['User'],
     }),
   }),
-})
+});
 
-export const {
-  useGetSessionQuery,
-  useSignInMutation,
-  useSignOutMutation,
-  useChangePasswordMutation,
-} = authApi
+export const { useGetSessionQuery, useSignInMutation, useSignOutMutation, useChangePasswordMutation } = authApi;

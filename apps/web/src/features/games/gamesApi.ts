@@ -1,16 +1,17 @@
-import { api } from '@/app/api'
-import { UserGame, GameStatus, CreateGameDto, UpdateGameDto } from '@grimoire/shared'
+import { CreateGameDto, GameStatus, UpdateGameDto, UserGame } from '@grimoire/shared';
+
+import { api } from '@/app/api';
 
 interface GameStats {
-  total: number
-  byStatus: Array<{ status: GameStatus; _count: number }>
-  totalHours: number
+  total: number;
+  byStatus: Array<{ status: GameStatus; _count: number }>;
+  totalHours: number;
 }
 
 interface GamesQuery {
-  status?: GameStatus
-  genre?: string
-  search?: string
+  status?: GameStatus;
+  genre?: string;
+  search?: string;
 }
 
 export const gamesApi = api.injectEndpoints({
@@ -18,9 +19,7 @@ export const gamesApi = api.injectEndpoints({
     getGames: builder.query<UserGame[], GamesQuery>({
       query: (params = {}) => ({
         url: 'games',
-        params: Object.fromEntries(
-          Object.entries(params).filter(([, v]) => v !== undefined && v !== ''),
-        ),
+        params: Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')),
       }),
       providesTags: ['Game'],
     }),
@@ -50,7 +49,7 @@ export const gamesApi = api.injectEndpoints({
       invalidatesTags: ['Game', 'Stats'],
     }),
   }),
-})
+});
 
 export const {
   useGetGamesQuery,
@@ -59,4 +58,4 @@ export const {
   useCreateGameMutation,
   useUpdateGameMutation,
   useDeleteGameMutation,
-} = gamesApi
+} = gamesApi;

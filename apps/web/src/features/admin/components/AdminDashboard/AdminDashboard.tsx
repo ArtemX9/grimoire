@@ -1,22 +1,23 @@
-import { AdminUserRow } from '@/features/admin/adminApi'
-import { UserRow } from '@/features/admin/components/UserRow/UserRow'
-import { CreateUserDialogContainer } from '@/features/admin/components/CreateUserDialog/CreateUserDialogContainer'
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/shared/components/ui/table'
-import { Switch } from '@/shared/components/ui/switch'
-import { Button } from '@/shared/components/ui/button'
-import { Skeleton } from '@/shared/components/ui/skeleton'
+import { AdminUserRow } from '@/features/admin/adminApi';
+import { CreateUserDialogContainer } from '@/features/admin/components/CreateUserDialog/CreateUserDialogContainer';
+import { UserRow } from '@/features/admin/components/UserRow/UserRow';
+import { Button } from '@/shared/components/ui/button';
+import { Skeleton } from '@/shared/components/ui/skeleton';
+import { Switch } from '@/shared/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table';
 
 interface IAdminDashboard {
-  users: AdminUserRow[]
-  isLoading: boolean
-  globalAiEnabled: boolean
-  isCreateDialogOpen: boolean
-  onToggleGlobalAi: (enabled: boolean) => void
-  onDeleteUser: (id: string) => void
-  onAiEnabledChange: (id: string, enabled: boolean) => void
-  onAiLimitChange: (id: string, limit: number | null) => void
-  onOpenCreateDialog: () => void
-  onCloseCreateDialog: () => void
+  users: AdminUserRow[];
+  isLoading: boolean;
+  globalAiEnabled: boolean;
+  isCreateDialogOpen: boolean;
+  onToggleGlobalAi: (enabled: boolean) => void;
+  onDeleteUser: (id: string) => void;
+  onAiEnabledChange: (id: string, enabled: boolean) => void;
+  onAiLimitChange: (id: string, limit: number | null) => void;
+  onPlanChange: (id: string, plan: string) => void;
+  onOpenCreateDialog: () => void;
+  onCloseCreateDialog: () => void;
 }
 
 export function AdminDashboard({
@@ -28,6 +29,7 @@ export function AdminDashboard({
   onDeleteUser,
   onAiEnabledChange,
   onAiLimitChange,
+  onPlanChange,
   onOpenCreateDialog,
   onCloseCreateDialog,
 }: IAdminDashboard) {
@@ -38,7 +40,7 @@ export function AdminDashboard({
       {renderTable()}
       <CreateUserDialogContainer open={isCreateDialogOpen} onClose={onCloseCreateDialog} />
     </div>
-  )
+  );
 
   function renderHeader() {
     return (
@@ -48,19 +50,17 @@ export function AdminDashboard({
           Create user
         </Button>
       </div>
-    )
+    );
   }
 
   function renderAiGlobalToggle() {
     return (
       <div className='flex items-center gap-3 rounded border border-grimoire-border bg-grimoire-card px-4 py-3'>
         <span className='flex-1 font-sans text-sm text-grimoire-ink'>AI features</span>
-        <span className='font-sans text-xs text-grimoire-muted'>
-          {globalAiEnabled ? 'Enabled globally' : 'Disabled globally'}
-        </span>
+        <span className='font-sans text-xs text-grimoire-muted'>{globalAiEnabled ? 'Enabled globally' : 'Disabled globally'}</span>
         <Switch checked={globalAiEnabled} onCheckedChange={onToggleGlobalAi} />
       </div>
-    )
+    );
   }
 
   function renderTable() {
@@ -71,6 +71,7 @@ export function AdminDashboard({
             <TableRow>
               <TableHead>User</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>Plan</TableHead>
               <TableHead>Games</TableHead>
               <TableHead>AI requests</TableHead>
               <TableHead>AI enabled</TableHead>
@@ -90,35 +91,53 @@ export function AdminDashboard({
                   onDelete={onDeleteUser}
                   onAiEnabledChange={onAiEnabledChange}
                   onAiLimitChange={onAiLimitChange}
+                  onPlanChange={onPlanChange}
                 />
               ))}
           </TableBody>
         </Table>
       </div>
-    )
+    );
   }
 
   function renderSkeletonRows() {
     return Array.from({ length: 3 }).map((_, i) => (
       <TableRow key={i}>
-        <TableCell><Skeleton className='h-4 w-32 rounded' /></TableCell>
-        <TableCell><Skeleton className='h-4 w-12 rounded' /></TableCell>
-        <TableCell><Skeleton className='h-4 w-8 rounded' /></TableCell>
-        <TableCell><Skeleton className='h-4 w-8 rounded' /></TableCell>
-        <TableCell><Skeleton className='h-4 w-8 rounded' /></TableCell>
-        <TableCell><Skeleton className='h-4 w-16 rounded' /></TableCell>
-        <TableCell><Skeleton className='h-4 w-8 rounded' /></TableCell>
+        <TableCell>
+          <Skeleton className='h-4 w-32 rounded' />
+        </TableCell>
+        <TableCell>
+          <Skeleton className='h-4 w-12 rounded' />
+        </TableCell>
+        <TableCell>
+          <Skeleton className='h-4 w-16 rounded' />
+        </TableCell>
+        <TableCell>
+          <Skeleton className='h-4 w-8 rounded' />
+        </TableCell>
+        <TableCell>
+          <Skeleton className='h-4 w-8 rounded' />
+        </TableCell>
+        <TableCell>
+          <Skeleton className='h-4 w-8 rounded' />
+        </TableCell>
+        <TableCell>
+          <Skeleton className='h-4 w-16 rounded' />
+        </TableCell>
+        <TableCell>
+          <Skeleton className='h-4 w-8 rounded' />
+        </TableCell>
       </TableRow>
-    ))
+    ));
   }
 
   function renderEmptyState() {
     return (
       <TableRow>
-        <TableCell colSpan={7} className='py-8 text-center font-sans text-sm text-grimoire-muted'>
+        <TableCell colSpan={8} className='py-8 text-center font-sans text-sm text-grimoire-muted'>
           No users yet.
         </TableCell>
       </TableRow>
-    )
+    );
   }
 }

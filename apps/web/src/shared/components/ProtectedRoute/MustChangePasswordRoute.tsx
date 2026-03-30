@@ -1,10 +1,10 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet } from 'react-router-dom';
 
-import { useGetSessionQuery } from '@/features/auth/authApi'
-import { Skeleton } from '@/shared/components/ui/skeleton'
+import { useGetSessionQuery } from '@/features/auth/authApi';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 export function MustChangePasswordRoute() {
-  const { data: session, isLoading } = useGetSessionQuery()
+  const { data: session, isLoading } = useGetSessionQuery();
 
   if (isLoading) {
     return (
@@ -15,16 +15,16 @@ export function MustChangePasswordRoute() {
           <Skeleton className='h-4 w-40 rounded' />
         </div>
       </div>
-    )
+    );
   }
 
   if (!session) {
-    return <Navigate to='/login' replace />
+    return <Navigate to='/login' replace />;
   }
 
   if (!session.user.mustChangePassword) {
-    return <Navigate to='/' replace />
+    return <Navigate to='/' replace />;
   }
 
-  return <Outlet />
+  return <Outlet />;
 }

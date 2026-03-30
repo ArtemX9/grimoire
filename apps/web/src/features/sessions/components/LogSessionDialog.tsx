@@ -1,37 +1,29 @@
-import { useState } from 'react'
+import { MOODS } from '@grimoire/shared';
+import { useState } from 'react';
 
-import { MOODS } from '@grimoire/shared'
-import { useCreateSessionMutation } from '@/features/sessions/sessionsApi'
-import { cn } from '@/shared/utils/cn'
-import { toast } from '@/shared/components/ui/use-toast'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/shared/components/ui/dialog'
-import { Input } from '@/shared/components/ui/input'
-import { Textarea } from '@/shared/components/ui/textarea'
-import { Button } from '@/shared/components/ui/button'
+import { useCreateSessionMutation } from '@/features/sessions/sessionsApi';
+import { Button } from '@/shared/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
+import { Input } from '@/shared/components/ui/input';
+import { Textarea } from '@/shared/components/ui/textarea';
+import { toast } from '@/shared/components/ui/use-toast';
+import { cn } from '@/shared/utils/cn';
 
 interface ILogSessionDialog {
-  open: boolean
-  gameId: string
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  gameId: string;
+  onOpenChange: (open: boolean) => void;
 }
 
 function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
-  const [durationMin, setDurationMin] = useState('')
-  const [selectedMoods, setSelectedMoods] = useState<string[]>([])
-  const [notes, setNotes] = useState('')
+  const [durationMin, setDurationMin] = useState('');
+  const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
+  const [notes, setNotes] = useState('');
 
-  const [createSession, { isLoading }] = useCreateSessionMutation()
+  const [createSession, { isLoading }] = useCreateSessionMutation();
 
   function handleMoodToggle(mood: string) {
-    setSelectedMoods((prev) =>
-      prev.includes(mood) ? prev.filter((m) => m !== mood) : [...prev, mood],
-    )
+    setSelectedMoods((prev) => (prev.includes(mood) ? prev.filter((m) => m !== mood) : [...prev, mood]));
   }
 
   async function handleSubmit() {
@@ -42,19 +34,19 @@ function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
         durationMin: durationMin ? parseInt(durationMin, 10) : undefined,
         mood: selectedMoods,
         notes: notes || undefined,
-      }).unwrap()
-      toast({ title: 'Session logged' })
-      handleClose()
+      }).unwrap();
+      toast({ title: 'Session logged' });
+      handleClose();
     } catch {
-      toast({ title: 'Failed to log session', variant: 'destructive' })
+      toast({ title: 'Failed to log session', variant: 'destructive' });
     }
   }
 
   function handleClose() {
-    setDurationMin('')
-    setSelectedMoods([])
-    setNotes('')
-    onOpenChange(false)
+    setDurationMin('');
+    setSelectedMoods([]);
+    setNotes('');
+    onOpenChange(false);
   }
 
   return (
@@ -67,13 +59,7 @@ function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
         <div className='flex flex-col gap-4'>
           <div className='flex flex-col gap-1.5'>
             <label className='font-sans text-xs text-grimoire-muted'>Duration (minutes)</label>
-            <Input
-              type='number'
-              min='1'
-              value={durationMin}
-              onChange={(e) => setDurationMin(e.target.value)}
-              placeholder='e.g. 90'
-            />
+            <Input type='number' min='1' value={durationMin} onChange={(e) => setDurationMin(e.target.value)} placeholder='e.g. 90' />
           </div>
 
           <div className='flex flex-col gap-1.5'>
@@ -98,12 +84,7 @@ function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
 
           <div className='flex flex-col gap-1.5'>
             <label className='font-sans text-xs text-grimoire-muted'>Notes (optional)</label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder='How did it go?'
-              rows={3}
-            />
+            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder='How did it go?' rows={3} />
           </div>
         </div>
 
@@ -117,7 +98,7 @@ function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
-export default LogSessionDialog
+export default LogSessionDialog;

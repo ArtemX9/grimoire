@@ -1,27 +1,22 @@
-import { useState } from 'react'
-import { Search, Loader2 } from 'lucide-react'
+import { GameStatus, IgdbGame } from '@grimoire/shared';
+import { Loader2, Search } from 'lucide-react';
+import { useState } from 'react';
 
-import { IgdbGame, GameStatus } from '@grimoire/shared'
-import { cn } from '@/shared/utils/cn'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/shared/components/ui/dialog'
-import { Input } from '@/shared/components/ui/input'
-import { Button } from '@/shared/components/ui/button'
-import { Skeleton } from '@/shared/components/ui/skeleton'
+import { Button } from '@/shared/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
+import { Input } from '@/shared/components/ui/input';
+import { Skeleton } from '@/shared/components/ui/skeleton';
+import { cn } from '@/shared/utils/cn';
 
 interface IAddGameDialog {
-  open: boolean
-  searchQuery: string
-  searchResults: IgdbGame[]
-  isSearching: boolean
-  isAdding: boolean
-  onOpenChange: (open: boolean) => void
-  onSearchChange: (q: string) => void
-  onAddGame: (game: IgdbGame, status: GameStatus) => void
+  open: boolean;
+  searchQuery: string;
+  searchResults: IgdbGame[];
+  isSearching: boolean;
+  isAdding: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSearchChange: (q: string) => void;
+  onAddGame: (game: IgdbGame, status: GameStatus) => void;
 }
 
 function AddGameDialog({
@@ -34,24 +29,24 @@ function AddGameDialog({
   onSearchChange,
   onAddGame,
 }: IAddGameDialog) {
-  const [selectedGame, setSelectedGame] = useState<IgdbGame | null>(null)
-  const [selectedStatus, setSelectedStatus] = useState<GameStatus>(GameStatus.BACKLOG)
+  const [selectedGame, setSelectedGame] = useState<IgdbGame | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<GameStatus>(GameStatus.BACKLOG);
 
-  const STATUS_OPTIONS = Object.values(GameStatus)
+  const STATUS_OPTIONS = Object.values(GameStatus);
 
   function handleConfirm() {
-    if (!selectedGame) return
-    onAddGame(selectedGame, selectedStatus)
-    setSelectedGame(null)
-    setSelectedStatus(GameStatus.BACKLOG)
+    if (!selectedGame) return;
+    onAddGame(selectedGame, selectedStatus);
+    setSelectedGame(null);
+    setSelectedStatus(GameStatus.BACKLOG);
   }
 
   function handleOpenChange(next: boolean) {
     if (!next) {
-      setSelectedGame(null)
-      setSelectedStatus(GameStatus.BACKLOG)
+      setSelectedGame(null);
+      setSelectedStatus(GameStatus.BACKLOG);
     }
-    onOpenChange(next)
+    onOpenChange(next);
   }
 
   return (
@@ -65,7 +60,7 @@ function AddGameDialog({
         {selectedGame ? renderConfirm() : renderResults()}
       </DialogContent>
     </Dialog>
-  )
+  );
 
   function renderSearch() {
     return (
@@ -74,15 +69,15 @@ function AddGameDialog({
         <Input
           value={searchQuery}
           onChange={(e) => {
-            onSearchChange(e.target.value)
-            setSelectedGame(null)
+            onSearchChange(e.target.value);
+            setSelectedGame(null);
           }}
           placeholder='Search IGDB…'
           autoFocus
           className='pl-9'
         />
       </div>
-    )
+    );
   }
 
   function renderResults() {
@@ -93,17 +88,13 @@ function AddGameDialog({
             <Skeleton key={i} className='h-12 w-full rounded-md' />
           ))}
         </div>
-      )
+      );
     }
 
-    if (!searchQuery) return null
+    if (!searchQuery) return null;
 
     if (searchResults.length === 0) {
-      return (
-        <p className='mt-2 font-sans text-sm text-grimoire-muted text-center py-4'>
-          No results found
-        </p>
-      )
+      return <p className='mt-2 font-sans text-sm text-grimoire-muted text-center py-4'>No results found</p>;
     }
 
     return (
@@ -129,18 +120,21 @@ function AddGameDialog({
               <span className='font-grimoire text-sm text-grimoire-ink truncate'>{game.name}</span>
               {game.genres && game.genres.length > 0 && (
                 <span className='font-sans text-xs text-grimoire-muted'>
-                  {game.genres.slice(0, 2).map((g) => g.name).join(', ')}
+                  {game.genres
+                    .slice(0, 2)
+                    .map((g) => g.name)
+                    .join(', ')}
                 </span>
               )}
             </div>
           </button>
         ))}
       </div>
-    )
+    );
   }
 
   function renderConfirm() {
-    if (!selectedGame) return null
+    if (!selectedGame) return null;
 
     return (
       <div className='flex flex-col gap-4 mt-1'>
@@ -178,18 +172,10 @@ function AddGameDialog({
         </div>
 
         <div className='flex justify-end gap-2'>
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={() => setSelectedGame(null)}
-          >
+          <Button variant='ghost' size='sm' onClick={() => setSelectedGame(null)}>
             Back
           </Button>
-          <Button
-            size='sm'
-            onClick={handleConfirm}
-            disabled={isAdding}
-          >
+          <Button size='sm' onClick={handleConfirm} disabled={isAdding}>
             {isAdding ? (
               <>
                 <Loader2 className='h-3.5 w-3.5 animate-spin' />
@@ -201,8 +187,8 @@ function AddGameDialog({
           </Button>
         </div>
       </div>
-    )
+    );
   }
 }
 
-export default AddGameDialog
+export default AddGameDialog;

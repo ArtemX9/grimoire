@@ -1,5 +1,6 @@
-import { api } from '@/app/api'
-import { IgdbGame } from '@grimoire/shared'
+import { IgdbGame } from '@grimoire/shared';
+
+import { api } from '@/app/api';
 
 export const igdbApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -11,6 +12,6 @@ export const igdbApi = api.injectEndpoints({
       query: (id) => `igdb/${id}`,
     }),
   }),
-})
+});
 
-export const { useSearchIgdbQuery, useGetIgdbGameQuery } = igdbApi
+export const { useSearchIgdbQuery, useGetIgdbGameQuery } = igdbApi;

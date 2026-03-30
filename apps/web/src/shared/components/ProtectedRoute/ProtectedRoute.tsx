@@ -1,25 +1,25 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
-import { useGetSessionQuery } from '@/features/auth/authApi'
-import { Skeleton } from '@/shared/components/ui/skeleton'
+import { useGetSessionQuery } from '@/features/auth/authApi';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 export function ProtectedRoute() {
-  const { data: session, isLoading } = useGetSessionQuery()
-  const location = useLocation()
+  const { data: session, isLoading } = useGetSessionQuery();
+  const location = useLocation();
 
   if (isLoading) {
-    return renderLoadingSkeleton()
+    return renderLoadingSkeleton();
   }
 
   if (!session) {
-    return <Navigate to='/login' replace />
+    return <Navigate to='/login' replace />;
   }
 
   if (session.user.mustChangePassword && location.pathname !== '/change-password') {
-    return <Navigate to='/change-password' replace />
+    return <Navigate to='/change-password' replace />;
   }
 
-  return <Outlet />
+  return <Outlet />;
 
   function renderLoadingSkeleton() {
     return (
@@ -30,6 +30,6 @@ export function ProtectedRoute() {
           <Skeleton className='h-4 w-40 rounded' />
         </div>
       </div>
-    )
+    );
   }
 }

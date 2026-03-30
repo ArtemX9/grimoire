@@ -1,34 +1,34 @@
-import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { GameStatus } from '@grimoire/shared';
+import { Plus } from 'lucide-react';
+import { useState } from 'react';
 
-import { GameStatus } from '@grimoire/shared'
-import { useAppSelector, useAppDispatch } from '@/app/hooks'
-import { useGetGameStatsQuery } from '@/features/games/gamesApi'
-import { setStatusFilter, setGenreFilter, setSearch } from '@/features/games/filtersSlice'
-import { Skeleton } from '@/shared/components/ui/skeleton'
-import { ScrollArea } from '@/shared/components/ui/scroll-area'
-import FilterBar from '@/features/games/components/FilterBar/FilterBar'
-import GameGridContainer from '@/features/games/components/GameGrid/GameGridContainer'
-import AddGameDialogContainer from '@/features/games/components/AddGameDialog/AddGameDialogContainer'
-import AiPanelContainer from '@/features/ai/components/AiPanel/AiPanelContainer'
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import AiPanelContainer from '@/features/ai/components/AiPanel/AiPanelContainer';
+import AddGameDialogContainer from '@/features/games/components/AddGameDialog/AddGameDialogContainer';
+import FilterBar from '@/features/games/components/FilterBar/FilterBar';
+import GameGridContainer from '@/features/games/components/GameGrid/GameGridContainer';
+import { setGenreFilter, setSearch, setStatusFilter } from '@/features/games/filtersSlice';
+import { useGetGameStatsQuery } from '@/features/games/gamesApi';
+import { ScrollArea } from '@/shared/components/ui/scroll-area';
+import { Skeleton } from '@/shared/components/ui/skeleton';
 
 export function LibraryPage() {
-  const dispatch = useAppDispatch()
-  const filters = useAppSelector((s) => s.filters)
-  const [addDialogOpen, setAddDialogOpen] = useState(false)
+  const dispatch = useAppDispatch();
+  const filters = useAppSelector((s) => s.filters);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
 
-  const { data: stats, isLoading: statsLoading } = useGetGameStatsQuery()
+  const { data: stats, isLoading: statsLoading } = useGetGameStatsQuery();
 
   function handleStatusChange(status: GameStatus | null) {
-    dispatch(setStatusFilter(status))
+    dispatch(setStatusFilter(status));
   }
 
   function handleGenreChange(genre: string | null) {
-    dispatch(setGenreFilter(genre))
+    dispatch(setGenreFilter(genre));
   }
 
   function handleSearchChange(search: string) {
-    dispatch(setSearch(search))
+    dispatch(setSearch(search));
   }
 
   return (
@@ -70,12 +70,9 @@ export function LibraryPage() {
         <AiPanelContainer />
       </div>
 
-      <AddGameDialogContainer
-        open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
-      />
+      <AddGameDialogContainer open={addDialogOpen} onOpenChange={setAddDialogOpen} />
     </div>
-  )
+  );
 
   function renderStats() {
     if (statsLoading) {
@@ -84,29 +81,20 @@ export function LibraryPage() {
           <Skeleton className='h-4 w-16 rounded' />
           <Skeleton className='h-4 w-16 rounded' />
         </div>
-      )
+      );
     }
 
-    if (!stats) return null
+    if (!stats) return null;
 
-    const completedCount =
-      stats.byStatus.find((s) => s.status === GameStatus.COMPLETED)?._count ?? 0
-    const completedPct = stats.total > 0
-      ? Math.round((completedCount / stats.total) * 100)
-      : 0
+    const completedCount = stats.byStatus.find((s) => s.status === GameStatus.COMPLETED)?._count ?? 0;
+    const completedPct = stats.total > 0 ? Math.round((completedCount / stats.total) * 100) : 0;
 
     return (
       <div className='flex items-center gap-4'>
-        <span className='font-sans text-sm text-grimoire-muted'>
-          {stats.total} games
-        </span>
-        <span className='font-sans text-sm text-grimoire-muted'>
-          {Math.round(stats.totalHours)}h played
-        </span>
-        <span className='font-sans text-sm text-grimoire-muted'>
-          {completedPct}% completed
-        </span>
+        <span className='font-sans text-sm text-grimoire-muted'>{stats.total} games</span>
+        <span className='font-sans text-sm text-grimoire-muted'>{Math.round(stats.totalHours)}h played</span>
+        <span className='font-sans text-sm text-grimoire-muted'>{completedPct}% completed</span>
       </div>
-    )
+    );
   }
 }

@@ -54,31 +54,23 @@ describe('UsersService.changePassword', () => {
   });
 
   it('throws UnauthorizedException when current password is wrong', async () => {
-    (prisma.user.findUnique as jest.Mock).mockResolvedValue(
-      makeUserRow({ passwordHash: 'hashed-old-password' }),
-    );
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(makeUserRow({ passwordHash: 'hashed-old-password' }));
     mockedBcrypt.compare.mockResolvedValue(false as never);
 
-    await expect(
-      service.changePassword('user-1', 'wrong-password', 'new-password-123'),
-    ).rejects.toThrow(UnauthorizedException);
+    await expect(service.changePassword('user-1', 'wrong-password', 'new-password-123')).rejects.toThrow(UnauthorizedException);
   });
 
   it('throws UnauthorizedException when the user has no passwordHash', async () => {
     (prisma.user.findUnique as jest.Mock).mockResolvedValue(makeUserRow({ passwordHash: null }));
     mockedBcrypt.compare.mockResolvedValue(false as never);
 
-    await expect(
-      service.changePassword('user-1', 'any-password', 'new-password-123'),
-    ).rejects.toThrow(UnauthorizedException);
+    await expect(service.changePassword('user-1', 'any-password', 'new-password-123')).rejects.toThrow(UnauthorizedException);
   });
 
   it('throws NotFoundException when user does not exist', async () => {
     (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
-    await expect(
-      service.changePassword('nonexistent', 'any-password', 'new-password-123'),
-    ).rejects.toThrow(NotFoundException);
+    await expect(service.changePassword('nonexistent', 'any-password', 'new-password-123')).rejects.toThrow(NotFoundException);
   });
 
   it('updates the password and clears mustChangePassword on success', async () => {

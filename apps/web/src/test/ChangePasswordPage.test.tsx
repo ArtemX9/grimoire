@@ -1,32 +1,31 @@
-import React from 'react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChangePasswordPage } from '@/pages/ChangePasswordPage'
+import { useChangePasswordMutation } from '@/features/auth/authApi';
+import { ChangePasswordPage } from '@/pages/ChangePasswordPage';
 
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
 
-const mockNavigate = vi.fn()
+const mockNavigate = vi.fn();
 
 vi.mock('react-router-dom', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('react-router-dom')>()
+  const actual = await importOriginal<typeof import('react-router-dom')>();
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-  }
-})
+  };
+});
 
-const mockChangePasswordTrigger = vi.fn()
+const mockChangePasswordTrigger = vi.fn();
 
 vi.mock('@/features/auth/authApi', () => ({
   useChangePasswordMutation: vi.fn(),
-}))
-
-import { useChangePasswordMutation } from '@/features/auth/authApi'
+}));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -37,14 +36,14 @@ function renderPage() {
     <MemoryRouter>
       <ChangePasswordPage />
     </MemoryRouter>,
-  )
+  );
 }
 
 function setupIdleMock() {
   vi.mocked(useChangePasswordMutation).mockReturnValue([
     mockChangePasswordTrigger,
     { isLoading: false } as unknown as ReturnType<typeof useChangePasswordMutation>[1],
-  ])
+  ]);
 }
 
 // ---------------------------------------------------------------------------
@@ -52,84 +51,84 @@ function setupIdleMock() {
 // ---------------------------------------------------------------------------
 
 beforeEach(() => {
-  mockNavigate.mockReset()
-  mockChangePasswordTrigger.mockReset()
-})
+  mockNavigate.mockReset();
+  mockChangePasswordTrigger.mockReset();
+});
 
 describe('ChangePasswordPage', () => {
   it('renders the three password fields and submit button', () => {
-    setupIdleMock()
-    renderPage()
+    setupIdleMock();
+    renderPage();
 
-    expect(screen.getByLabelText(/current \(temporary\) password/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/^new password$/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/confirm new password/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /set password/i })).toBeInTheDocument()
-  })
+    expect(screen.getByLabelText(/current \(temporary\) password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^new password$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/confirm new password/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /set password/i })).toBeInTheDocument();
+  });
 
   it('shows a mismatch error without calling the API when passwords differ', async () => {
-    setupIdleMock()
-    renderPage()
+    setupIdleMock();
+    renderPage();
 
-    await userEvent.type(screen.getByLabelText(/current \(temporary\) password/i), 'tempPass1')
-    await userEvent.type(screen.getByLabelText(/^new password$/i), 'newPass123')
-    await userEvent.type(screen.getByLabelText(/confirm new password/i), 'differentPass')
-    await userEvent.click(screen.getByRole('button', { name: /set password/i }))
+    await userEvent.type(screen.getByLabelText(/current \(temporary\) password/i), 'tempPass1');
+    await userEvent.type(screen.getByLabelText(/^new password$/i), 'newPass123');
+    await userEvent.type(screen.getByLabelText(/confirm new password/i), 'differentPass');
+    await userEvent.click(screen.getByRole('button', { name: /set password/i }));
 
-    expect(screen.getByText(/do not match/i)).toBeInTheDocument()
-    expect(mockChangePasswordTrigger).not.toHaveBeenCalled()
-  })
+    expect(screen.getByText(/do not match/i)).toBeInTheDocument();
+    expect(mockChangePasswordTrigger).not.toHaveBeenCalled();
+  });
 
   it('navigates to / on successful password change', async () => {
-    setupIdleMock()
+    setupIdleMock();
     mockChangePasswordTrigger.mockReturnValue({
       unwrap: () => Promise.resolve(),
-    })
-    renderPage()
+    });
+    renderPage();
 
-    await userEvent.type(screen.getByLabelText(/current \(temporary\) password/i), 'tempPass1')
-    await userEvent.type(screen.getByLabelText(/^new password$/i), 'newPass123')
-    await userEvent.type(screen.getByLabelText(/confirm new password/i), 'newPass123')
-    await userEvent.click(screen.getByRole('button', { name: /set password/i }))
+    await userEvent.type(screen.getByLabelText(/current \(temporary\) password/i), 'tempPass1');
+    await userEvent.type(screen.getByLabelText(/^new password$/i), 'newPass123');
+    await userEvent.type(screen.getByLabelText(/confirm new password/i), 'newPass123');
+    await userEvent.click(screen.getByRole('button', { name: /set password/i }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true })
-    })
-  })
+      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
+    });
+  });
 
   it('shows an error message when the API call fails', async () => {
-    setupIdleMock()
+    setupIdleMock();
     mockChangePasswordTrigger.mockReturnValue({
       unwrap: () => Promise.reject(new Error('Forbidden')),
-    })
-    renderPage()
+    });
+    renderPage();
 
-    await userEvent.type(screen.getByLabelText(/current.*password/i), 'wrongTemp')
-    await userEvent.type(screen.getByLabelText(/^new password$/i), 'newPass123')
-    await userEvent.type(screen.getByLabelText(/confirm new password/i), 'newPass123')
-    await userEvent.click(screen.getByRole('button', { name: /set password/i }))
+    await userEvent.type(screen.getByLabelText(/current.*password/i), 'wrongTemp');
+    await userEvent.type(screen.getByLabelText(/^new password$/i), 'newPass123');
+    await userEvent.type(screen.getByLabelText(/confirm new password/i), 'newPass123');
+    await userEvent.click(screen.getByRole('button', { name: /set password/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/could not change password/i)).toBeInTheDocument()
-    })
-  })
+      expect(screen.getByText(/could not change password/i)).toBeInTheDocument();
+    });
+  });
 
   it('does not navigate when the API call fails', async () => {
-    setupIdleMock()
+    setupIdleMock();
     mockChangePasswordTrigger.mockReturnValue({
       unwrap: () => Promise.reject(new Error('Forbidden')),
-    })
-    renderPage()
+    });
+    renderPage();
 
-    await userEvent.type(screen.getByLabelText(/current.*password/i), 'wrongTemp')
-    await userEvent.type(screen.getByLabelText(/^new password$/i), 'newPass123')
-    await userEvent.type(screen.getByLabelText(/confirm new password/i), 'newPass123')
-    await userEvent.click(screen.getByRole('button', { name: /set password/i }))
+    await userEvent.type(screen.getByLabelText(/current.*password/i), 'wrongTemp');
+    await userEvent.type(screen.getByLabelText(/^new password$/i), 'newPass123');
+    await userEvent.type(screen.getByLabelText(/confirm new password/i), 'newPass123');
+    await userEvent.click(screen.getByRole('button', { name: /set password/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/could not change password/i)).toBeInTheDocument()
-    })
+      expect(screen.getByText(/could not change password/i)).toBeInTheDocument();
+    });
 
-    expect(mockNavigate).not.toHaveBeenCalled()
-  })
-})
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+});

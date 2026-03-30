@@ -1,32 +1,32 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { useSetupAdminMutation } from '@/features/admin/adminApi'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card'
-import { Input } from '@/shared/components/ui/input'
-import { Button } from '@/shared/components/ui/button'
+import { useSetupAdminMutation } from '@/features/admin/adminApi';
+import { Button } from '@/shared/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Input } from '@/shared/components/ui/input';
 
 export function AdminSetupPage() {
-  const navigate = useNavigate()
-  const [setupAdmin, { isLoading }] = useSetupAdminMutation()
+  const navigate = useNavigate();
+  const [setupAdmin, { isLoading }] = useSetupAdminMutation();
 
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError('');
     try {
-      await setupAdmin({ email, password, name: name || undefined }).unwrap()
-      navigate('/login', { replace: true })
+      await setupAdmin({ email, password, name: name || undefined }).unwrap();
+      navigate('/login', { replace: true });
     } catch (err: unknown) {
-      const status = (err as { status?: number })?.status
+      const status = (err as { status?: number })?.status;
       if (status === 403) {
-        navigate('/login', { replace: true })
+        navigate('/login', { replace: true });
       } else {
-        setError('Could not create admin account. Please try again.')
+        setError('Could not create admin account. Please try again.');
       }
     }
   }
@@ -42,15 +42,15 @@ export function AdminSetupPage() {
         <Card>
           <CardHeader className='pb-2'>
             <CardTitle className='text-base'>Create admin account</CardTitle>
-            <CardDescription>
-              No accounts exist yet. Create the first administrator account to get started.
-            </CardDescription>
+            <CardDescription>No accounts exist yet. Create the first administrator account to get started.</CardDescription>
           </CardHeader>
 
           <CardContent>
             <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
               <div className='flex flex-col gap-1.5'>
-                <label htmlFor='setup-name' className='font-sans text-xs text-grimoire-muted'>Name (optional)</label>
+                <label htmlFor='setup-name' className='font-sans text-xs text-grimoire-muted'>
+                  Name (optional)
+                </label>
                 <Input
                   id='setup-name'
                   type='text'
@@ -62,7 +62,9 @@ export function AdminSetupPage() {
               </div>
 
               <div className='flex flex-col gap-1.5'>
-                <label htmlFor='setup-email' className='font-sans text-xs text-grimoire-muted'>Email</label>
+                <label htmlFor='setup-email' className='font-sans text-xs text-grimoire-muted'>
+                  Email
+                </label>
                 <Input
                   id='setup-email'
                   type='email'
@@ -75,7 +77,9 @@ export function AdminSetupPage() {
               </div>
 
               <div className='flex flex-col gap-1.5'>
-                <label htmlFor='setup-password' className='font-sans text-xs text-grimoire-muted'>Password</label>
+                <label htmlFor='setup-password' className='font-sans text-xs text-grimoire-muted'>
+                  Password
+                </label>
                 <Input
                   id='setup-password'
                   type='password'
@@ -88,9 +92,7 @@ export function AdminSetupPage() {
                 />
               </div>
 
-              {error && (
-                <p className='font-sans text-xs text-grimoire-status-dropped-text'>{error}</p>
-              )}
+              {error && <p className='font-sans text-xs text-grimoire-status-dropped-text'>{error}</p>}
 
               <Button type='submit' className='mt-1 w-full' disabled={isLoading}>
                 {isLoading ? 'Creating…' : 'Create admin account'}
@@ -100,5 +102,5 @@ export function AdminSetupPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

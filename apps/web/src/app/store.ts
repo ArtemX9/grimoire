@@ -1,17 +1,17 @@
-import { configureStore } from '@reduxjs/toolkit'
+import { configureStore } from '@reduxjs/toolkit';
 
-import { api } from './api'
-import filtersReducer from '@/features/games/filtersSlice'
-import aiReducer from '@/features/ai/aiSlice'
-import uiReducer from '@/features/ui/uiSlice'
-
+import aiReducer from '@/features/ai/aiSlice';
 // Import API slices to trigger endpoint injection
-import '@/features/auth/authApi'
-import '@/features/games/gamesApi'
-import '@/features/sessions/sessionsApi'
-import '@/features/igdb/igdbApi'
-import '@/features/users/usersApi'
-import '@/features/platforms/steam/steamApi'
+import '@/features/auth/authApi';
+import filtersReducer from '@/features/games/filtersSlice';
+import '@/features/games/gamesApi';
+import '@/features/igdb/igdbApi';
+import '@/features/platforms/steam/steamApi';
+import '@/features/sessions/sessionsApi';
+import uiReducer from '@/features/ui/uiSlice';
+import '@/features/users/usersApi';
+
+import { api } from './api';
 
 export const store = configureStore({
   reducer: {
@@ -20,9 +20,8 @@ export const store = configureStore({
     ai: aiReducer,
     ui: uiReducer,
   },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(api.middleware),
-})
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
+});
 
-export type RootState = ReturnType<typeof store.getState>
-export type AppDispatch = typeof store.dispatch
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

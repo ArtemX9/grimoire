@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 
+import { AuthModule } from '../auth/auth.module';
+import { UsersModule } from '../users/users.module';
 import { IgdbController } from './igdb.controller';
 import { IgdbService } from './igdb.service';
-import {AuthModule} from '../auth/auth.module';
-import {UsersModule} from '../users/users.module';
 
 @Module({
   imports: [AuthModule, UsersModule],

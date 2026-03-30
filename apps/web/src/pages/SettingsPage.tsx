@@ -1,27 +1,25 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { RefreshCw, CheckCircle2, AlertCircle, LogOut } from 'lucide-react'
+import { AlertCircle, CheckCircle2, LogOut, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { useSignOutMutation } from '@/features/auth/authApi'
-import { useGetMeQuery, useUpdateMeMutation } from '@/features/users/usersApi'
-import { useGetSteamStatusQuery, useConnectSteamMutation, useSyncSteamMutation } from '@/features/platforms/steam/steamApi'
-import { useAppDispatch } from '@/app/hooks'
-import { api } from '@/app/api'
-import { cn } from '@/shared/utils/cn'
-import { Input } from '@/shared/components/ui/input'
-import { Button } from '@/shared/components/ui/button'
-import { ScrollArea } from '@/shared/components/ui/scroll-area'
-import { Skeleton } from '@/shared/components/ui/skeleton'
-import { toast } from '@/shared/components/ui/use-toast'
+import { api } from '@/app/api';
+import { useAppDispatch } from '@/app/hooks';
+import { useSignOutMutation } from '@/features/auth/authApi';
+import { useConnectSteamMutation, useGetSteamStatusQuery, useSyncSteamMutation } from '@/features/platforms/steam/steamApi';
+import { useGetMeQuery, useUpdateMeMutation } from '@/features/users/usersApi';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { ScrollArea } from '@/shared/components/ui/scroll-area';
+import { Skeleton } from '@/shared/components/ui/skeleton';
+import { toast } from '@/shared/components/ui/use-toast';
+import { cn } from '@/shared/utils/cn';
 
 export function SettingsPage() {
   return (
     <ScrollArea className='h-full'>
       <div className='mx-auto max-w-2xl p-5'>
         <h1 className='font-grimoire text-xl text-grimoire-ink'>Settings</h1>
-        <p className='mt-1 font-sans text-sm text-grimoire-muted'>
-          Manage your profile and platform connections
-        </p>
+        <p className='mt-1 font-sans text-sm text-grimoire-muted'>Manage your profile and platform connections</p>
 
         <div className='mt-6 flex flex-col gap-6'>
           <ProfileSection />
@@ -29,50 +27,48 @@ export function SettingsPage() {
         </div>
       </div>
     </ScrollArea>
-  )
+  );
 }
 
 function ProfileSection() {
-  const navigate = useNavigate()
-  const dispatch = useAppDispatch()
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
-  const { data: user, isLoading } = useGetMeQuery()
-  const [updateMe, { isLoading: isUpdating }] = useUpdateMeMutation()
-  const [signOut, { isLoading: isSigningOut }] = useSignOutMutation()
+  const { data: user, isLoading } = useGetMeQuery();
+  const [updateMe, { isLoading: isUpdating }] = useUpdateMeMutation();
+  const [signOut, { isLoading: isSigningOut }] = useSignOutMutation();
 
-  const [nameValue, setNameValue] = useState('')
-  const [editing, setEditing] = useState(false)
+  const [nameValue, setNameValue] = useState('');
+  const [editing, setEditing] = useState(false);
 
   function handleStartEdit() {
-    setNameValue(user?.name ?? '')
-    setEditing(true)
+    setNameValue(user?.name ?? '');
+    setEditing(true);
   }
 
   async function handleSave() {
     try {
-      await updateMe({ name: nameValue }).unwrap()
-      toast({ title: 'Profile updated' })
-      setEditing(false)
+      await updateMe({ name: nameValue }).unwrap();
+      toast({ title: 'Profile updated' });
+      setEditing(false);
     } catch {
-      toast({ title: 'Failed to update profile', variant: 'destructive' })
+      toast({ title: 'Failed to update profile', variant: 'destructive' });
     }
   }
 
   async function handleSignOut() {
     try {
-      await signOut().unwrap()
+      await signOut().unwrap();
     } catch {
       // session may already be gone — proceed regardless
     }
-    dispatch(api.util.resetApiState())
-    navigate('/auth', { replace: true })
+    dispatch(api.util.resetApiState());
+    navigate('/auth', { replace: true });
   }
 
   return (
     <section>
-      <h2 className='mb-3 font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>
-        Profile
-      </h2>
+      <h2 className='mb-3 font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>Profile</h2>
       <div className='rounded-lg border border-grimoire-border bg-grimoire-card p-4'>
         {isLoading ? (
           <div className='flex flex-col gap-2'>
@@ -100,12 +96,7 @@ function ProfileSection() {
               <div className='flex flex-col gap-2'>
                 <div className='flex flex-col gap-1'>
                   <label className='font-sans text-xs text-grimoire-muted'>Display name</label>
-                  <Input
-                    value={nameValue}
-                    onChange={(e) => setNameValue(e.target.value)}
-                    placeholder='Your name'
-                    autoFocus
-                  />
+                  <Input value={nameValue} onChange={(e) => setNameValue(e.target.value)} placeholder='Your name' autoFocus />
                 </div>
                 <div className='flex justify-end gap-2'>
                   <Button variant='ghost' size='sm' onClick={() => setEditing(false)}>
@@ -141,15 +132,13 @@ function ProfileSection() {
         )}
       </div>
     </section>
-  )
+  );
 }
 
 function PlatformsSection() {
   return (
     <section>
-      <h2 className='mb-3 font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>
-        Platform connections
-      </h2>
+      <h2 className='mb-3 font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>Platform connections</h2>
       <div className='flex flex-col divide-y divide-grimoire-border rounded-lg border border-grimoire-border bg-grimoire-card'>
         <SteamRow />
         <InactivePlatformRow label='PlayStation Network' />
@@ -157,36 +146,36 @@ function PlatformsSection() {
         <InactivePlatformRow label='Epic Games' />
       </div>
     </section>
-  )
+  );
 }
 
 function SteamRow() {
-  const { data: status, isLoading } = useGetSteamStatusQuery()
-  const [connectSteam, { isLoading: isConnecting }] = useConnectSteamMutation()
-  const [syncSteam, { isLoading: isSyncing }] = useSyncSteamMutation()
-  const [steamIdInput, setSteamIdInput] = useState('')
-  const [showInput, setShowInput] = useState(false)
+  const { data: status, isLoading } = useGetSteamStatusQuery();
+  const [connectSteam, { isLoading: isConnecting }] = useConnectSteamMutation();
+  const [syncSteam, { isLoading: isSyncing }] = useSyncSteamMutation();
+  const [steamIdInput, setSteamIdInput] = useState('');
+  const [showInput, setShowInput] = useState(false);
 
-  const connected = status?.connected ?? false
+  const connected = status?.connected ?? false;
 
   async function handleConnect() {
-    if (!steamIdInput.trim()) return
+    if (!steamIdInput.trim()) return;
     try {
-      await connectSteam({ steamId: steamIdInput.trim() }).unwrap()
-      toast({ title: 'Steam account connected' })
-      setShowInput(false)
-      setSteamIdInput('')
+      await connectSteam({ steamId: steamIdInput.trim() }).unwrap();
+      toast({ title: 'Steam account connected' });
+      setShowInput(false);
+      setSteamIdInput('');
     } catch {
-      toast({ title: 'Failed to connect Steam', variant: 'destructive' })
+      toast({ title: 'Failed to connect Steam', variant: 'destructive' });
     }
   }
 
   async function handleSync() {
     try {
-      await syncSteam().unwrap()
-      toast({ title: 'Steam sync started — this may take a moment' })
+      await syncSteam().unwrap();
+      toast({ title: 'Steam sync started — this may take a moment' });
     } catch {
-      toast({ title: 'Failed to start sync', variant: 'destructive' })
+      toast({ title: 'Failed to start sync', variant: 'destructive' });
     }
   }
 
@@ -265,11 +254,11 @@ function SteamRow() {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 interface IInactivePlatformRow {
-  label: string
+  label: string;
 }
 
 function InactivePlatformRow({ label }: IInactivePlatformRow) {
@@ -278,6 +267,5 @@ function InactivePlatformRow({ label }: IInactivePlatformRow) {
       <span className='font-sans text-sm text-grimoire-ink'>{label}</span>
       <span className='font-sans text-xs text-grimoire-faint'>Coming soon</span>
     </div>
-  )
+  );
 }
-

@@ -1,5 +1,6 @@
-import { api } from '@/app/api'
-import { User } from '@grimoire/shared'
+import { User } from '@grimoire/shared';
+
+import { api } from '@/app/api';
 
 export const usersApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -13,6 +14,6 @@ export const usersApi = api.injectEndpoints({
       invalidatesTags: ['User'],
     }),
   }),
-})
+});
 
-export const { useGetMeQuery, useUpdateMeMutation } = usersApi
+export const { useGetMeQuery, useUpdateMeMutation } = usersApi;

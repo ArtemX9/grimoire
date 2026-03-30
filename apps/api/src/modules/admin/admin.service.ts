@@ -1,15 +1,11 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 
 import * as bcryptjs from 'bcryptjs';
 
+import { Plan, Role } from '@grimoire/shared';
+
 import { PrismaService } from '../../prisma/prisma.service';
-import { AdminUserResponse, AdminUserListResponse, AdminStatsResponse } from './admin.types';
-import {Role} from '@grimoire/shared';
+import { AdminStatsResponse, AdminUserListResponse, AdminUserResponse } from './admin.types';
 
 type PrismaAdminUser = {
   id: string;
@@ -125,6 +121,7 @@ export class AdminService {
           role: Role.ADMIN,
           passwordHash: hash,
           mustChangePassword: true,
+          plan: Plan.LIFETIME,
         },
         select: this.userSelect,
       });
@@ -153,6 +150,26 @@ export class AdminService {
     if (!user) throw new NotFoundException('User not found');
 
     await this.prisma.user.delete({ where: { id: targetId } });
+  }
+
+  async updateUserPlan(adminId: string, targetId: string, plan: Plan): Promise<AdminUserResponse> {
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+      select: { role: true },
+    });
+    if (!target) throw new NotFoundException('User not found');
+
+    if (target.role === Role.ADMIN) {
+      throw new BadRequestException('Admin users always have LIFETIME plan');
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: targetId },
+      data: { plan },
+      select: this.userSelect,
+    });
+
+    return this._toResponse(updated);
   }
 
   async getStats(): Promise<AdminStatsResponse> {

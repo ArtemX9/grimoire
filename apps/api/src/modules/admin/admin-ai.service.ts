@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../../prisma/prisma.service';
-import { AiSettingsResponse, AdminUserResponse } from './admin.types';
+import { AdminUserResponse, AiSettingsResponse } from './admin.types';
 
 @Injectable()
 export class AdminAiService {
@@ -82,10 +82,7 @@ export class AdminAiService {
     };
   }
 
-  async updateUserAiSettings(
-    userId: string,
-    dto: { aiEnabled: boolean; aiRequestsLimit: number | null },
-  ): Promise<void> {
+  async updateUserAiSettings(userId: string, dto: { aiEnabled: boolean; aiRequestsLimit: number | null }): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 

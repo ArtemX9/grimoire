@@ -1,46 +1,34 @@
-import { Search, X } from 'lucide-react'
+import { GENRES, GameStatus } from '@grimoire/shared';
+import { Search, X } from 'lucide-react';
 
-import { GameStatus, GENRES } from '@grimoire/shared'
-import { cn } from '@/shared/utils/cn'
-import { Input } from '@/shared/components/ui/input'
+import { Input } from '@/shared/components/ui/input';
+import { cn } from '@/shared/utils/cn';
 
-const STATUS_OPTIONS = Object.values(GameStatus)
+const STATUS_OPTIONS = Object.values(GameStatus);
 
 interface IFilterBar {
-  activeStatus: GameStatus | null
-  activeGenre: string | null
-  search: string
-  onStatusChange: (status: GameStatus | null) => void
-  onGenreChange: (genre: string | null) => void
-  onSearchChange: (search: string) => void
+  activeStatus: GameStatus | null;
+  activeGenre: string | null;
+  search: string;
+  onStatusChange: (status: GameStatus | null) => void;
+  onGenreChange: (genre: string | null) => void;
+  onSearchChange: (search: string) => void;
 }
 
-function FilterBar({
-  activeStatus,
-  activeGenre,
-  search,
-  onStatusChange,
-  onGenreChange,
-  onSearchChange,
-}: IFilterBar) {
+function FilterBar({ activeStatus, activeGenre, search, onStatusChange, onGenreChange, onSearchChange }: IFilterBar) {
   return (
     <div className='flex flex-col gap-3'>
       {renderSearch()}
       {renderStatusFilters()}
       {renderGenreFilters()}
     </div>
-  )
+  );
 
   function renderSearch() {
     return (
       <div className='relative'>
         <Search className='absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-grimoire-muted' />
-        <Input
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder='Search games…'
-          className='pl-9 pr-8'
-        />
+        <Input value={search} onChange={(e) => onSearchChange(e.target.value)} placeholder='Search games…' className='pl-9 pr-8' />
         {search && (
           <button
             onClick={() => onSearchChange('')}
@@ -50,7 +38,7 @@ function FilterBar({
           </button>
         )}
       </div>
-    )
+    );
   }
 
   function renderStatusFilters() {
@@ -82,7 +70,7 @@ function FilterBar({
           </button>
         ))}
       </div>
-    )
+    );
   }
 
   function renderGenreFilters() {
@@ -103,8 +91,8 @@ function FilterBar({
           </button>
         ))}
       </div>
-    )
+    );
   }
 }
 
-export default FilterBar
+export default FilterBar;
