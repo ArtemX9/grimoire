@@ -26,10 +26,11 @@ function AddGameDialogContainer({ open, onOpenChange }: IAddGameDialogContainer)
 
   async function handleAddGame(game: IgdbGame, status: GameStatus) {
     try {
+      const coverURL = !!game.cover ?  'https:' + game.cover.url.replace('t_thumb', 't_cover_big') : undefined;
       await createGame({
         igdbId: game.id,
         title: game.name,
-        coverUrl: game.cover?.url.replace('t_thumb', 't_cover_big') ?? undefined,
+        coverUrl: coverURL,
         genres: game.genres?.map((g) => g.name) ?? [],
         status,
         moods: [],

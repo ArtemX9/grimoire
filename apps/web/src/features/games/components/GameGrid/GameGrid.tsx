@@ -12,7 +12,7 @@ function GameGrid({ games, isLoading }: IGameGrid) {
     return renderSkeletons()
   }
 
-  if (games.length === 0) {
+  if (!games || games.length === 0) {
     return renderEmpty()
   }
 
