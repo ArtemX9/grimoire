@@ -1,6 +1,6 @@
 import { IgdbGame } from '@grimoire/shared';
 
-import { api } from '@/app/api';
+import { api } from './api';
 
 export const igdbApi = api.injectEndpoints({
   endpoints: (builder) => ({

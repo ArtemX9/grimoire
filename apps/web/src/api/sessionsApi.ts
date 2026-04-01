@@ -1,6 +1,6 @@
 import { CreateSessionDto, PlaySession } from '@grimoire/shared';
 
-import { api } from '@/app/api';
+import { api } from './api';
 
 export const sessionsApi = api.injectEndpoints({
   endpoints: (builder) => ({

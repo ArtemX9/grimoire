@@ -3,7 +3,6 @@ import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import { useGetGameStatsQuery } from '@/api/gamesApi';
-import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import AiPanelContainer from '@/components/AiPanel/AiPanelContainer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,6 +10,7 @@ import AddGameDialogContainer from '@/pages/LibraryPage/components/AddGameDialog
 import FilterBar from '@/pages/LibraryPage/components/FilterBar/FilterBar';
 import GameGridContainer from '@/pages/LibraryPage/components/GameGrid/GameGridContainer';
 import { setGenreFilter, setSearch, setStatusFilter } from '@/store/filtersSlice';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 
 export function LibraryPage() {
   const dispatch = useAppDispatch();
@@ -86,7 +86,7 @@ export function LibraryPage() {
 
     if (!stats) return null;
 
-    const completedCount = stats.byStatus.find((s) => s.status === GameStatus.COMPLETED)?._count ?? 0;
+    const completedCount = stats.byStatus.find((s: { status: GameStatus }) => s.status === GameStatus.COMPLETED)?._count ?? 0;
     const completedPct = stats.total > 0 ? Math.round((completedCount / stats.total) * 100) : 0;
 
     return (

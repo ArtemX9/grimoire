@@ -4,20 +4,20 @@ import React from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useGetSessionQuery } from '@/features/auth/authApi';
-import { AdminRoute } from '@/shared/components/ProtectedRoute/AdminRoute';
-import { MustChangePasswordRoute } from '@/shared/components/ProtectedRoute/MustChangePasswordRoute';
-import { ProtectedRoute } from '@/shared/components/ProtectedRoute/ProtectedRoute';
+import { useGetSessionQuery } from '@/api/authApi';
+import { AdminRoute } from '@/components/ProtectedRoute/AdminRoute';
+import { MustChangePasswordRoute } from '@/components/ProtectedRoute/MustChangePasswordRoute';
+import { ProtectedRoute } from '@/components/ProtectedRoute/ProtectedRoute';
 
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
 
-vi.mock('@/features/auth/authApi', () => ({
+vi.mock('@/api/authApi', () => ({
   useGetSessionQuery: vi.fn(),
 }));
 
-vi.mock('@/shared/components/ui/skeleton', () => ({
+vi.mock('@/components/ui/skeleton', () => ({
   Skeleton: ({ className }: { className?: string }) => <div data-testid='skeleton' className={className} />,
 }));
 

@@ -23,7 +23,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 
 const mockChangePasswordTrigger = vi.fn();
 
-vi.mock('@/features/auth/authApi', () => ({
+vi.mock('@/api/authApi', () => ({
   useChangePasswordMutation: vi.fn(),
 }));
 

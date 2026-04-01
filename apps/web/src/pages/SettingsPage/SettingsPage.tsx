@@ -2,16 +2,16 @@ import { AlertCircle, CheckCircle2, LogOut, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { api } from '@/api/api';
 import { useSignOutMutation } from '@/api/authApi';
 import { useConnectSteamMutation, useGetSteamStatusQuery, useSyncSteamMutation } from '@/api/steamApi';
 import { useGetMeQuery, useUpdateMeMutation } from '@/api/usersApi';
-import { api } from '@/app/api';
-import { useAppDispatch } from '@/app/hooks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/use-toast';
+import { useAppDispatch } from '@/store/hooks';
 import { cn } from '@/utils/cn';
 
 export function SettingsPage() {

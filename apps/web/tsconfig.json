@@ -7,11 +7,12 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "outDir": "./dist",
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
     "paths": {
       "@grimoire/shared": ["../../packages/shared/src/index.ts"],
       "@/*": ["./src/*"]
     }
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist", "src/test"]
+  "exclude": ["node_modules", "dist"]
 }

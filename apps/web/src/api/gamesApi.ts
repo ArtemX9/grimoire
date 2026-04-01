@@ -1,6 +1,6 @@
 import { CreateGameDto, GameStatus, UpdateGameDto, UserGame } from '@grimoire/shared';
 
-import { api } from '@/app/api';
+import { api } from './api';
 
 interface GameStats {
   total: number;

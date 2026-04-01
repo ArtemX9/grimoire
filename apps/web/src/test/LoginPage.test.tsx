@@ -5,8 +5,8 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useGetSessionQuery, useSignInMutation } from '@/features/auth/authApi';
-import { LoginPage } from '@/pages/LoginPage';
+import { useGetSessionQuery, useSignInMutation } from '@/api/authApi';
+import { LoginPage } from '@/pages/LoginPage/LoginPage';
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -26,7 +26,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
 // object with .unwrap() that resolves/rejects to simulate RTK Query behaviour.
 const mockSignInTrigger = vi.fn();
 
-vi.mock('@/features/auth/authApi', () => ({
+vi.mock('@/api/authApi', () => ({
   useGetSessionQuery: vi.fn(),
   useSignInMutation: vi.fn(),
 }));
