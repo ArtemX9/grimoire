@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/use-toast';
+import { ROUTES } from '@/constants/routes';
 import GameNotes from '@/pages/GameDetailPage/components/GameNotes/GameNotes';
 import LogSessionDialog from '@/pages/GameDetailPage/components/LogSessionDialog';
+import { useAppSelector } from '@/store/hooks';
 import { cn } from '@/utils/cn';
 
 const STATUS_STYLES: Record<GameStatus, string> = {
@@ -26,7 +28,12 @@ export function GameDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { data: game, isLoading } = useGetGameQuery(id!);
+  const game = useAppSelector((s) => s.games.selectedGame);
+  const isLoading = useAppSelector((s) => s.games.isSelectedGameLoading);
+
+  // Trigger the RTK Query fetch so onQueryStarted populates the slice.
+  useGetGameQuery(id!);
+
   const { data: sessions = [] } = useGetGameSessionsQuery(id!);
   const [updateGame, { isLoading: isUpdating }] = useUpdateGameMutation();
   const [deleteGame, { isLoading: isDeleting }] = useDeleteGameMutation();
@@ -74,7 +81,7 @@ export function GameDetailPage() {
     try {
       await deleteGame(game!.id).unwrap();
       toast({ title: `${game!.title} removed from library` });
-      navigate('/library');
+      navigate(ROUTES.LIBRARY);
     } catch {
       toast({ title: 'Failed to delete game', variant: 'destructive' });
     }

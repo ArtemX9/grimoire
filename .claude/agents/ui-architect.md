@@ -581,6 +581,162 @@ const STATUS_STYLES: Record<GameStatus, string> = {
 
 ---
 
+## State Pattern: RTK Query → Slice → Selector
+
+### Rule
+
+Components never call RTK Query query hooks to read server state. All server-fetched data that is shared across the app (session, etc.) lives in a Redux slice. RTK Query acts purely as the transport mechanism. The three-step flow is:
+
+1. **Dispatch the request** — RTK Query hook triggers the endpoint (query on mount, or mutation on user action)
+2. **Write to the slice** — `onQueryStarted` in the API file intercepts the settled result and dispatches slice actions
+3. **Read from the selector** — components call `useAppSelector((s) => s.sliceName.field)`, never the RTK Query hook
+
+RTK Query hooks (`useXxxQuery`) may still be called in containers for local loading/error state that is not shared beyond that container. The selector is always the source of truth for shared data.
+
+### When to apply this pattern
+
+Apply the full slice pattern when the data is:
+- Read by more than one unrelated component (e.g. `session` used in every route guard)
+- The canonical source of truth for an entire domain (e.g. `auth.session`)
+
+Do **not** apply this pattern for data that is only consumed by a single container, where RTK Query's internal cache is sufficient.
+
+### Slice structure
+
+```ts
+// store/authSlice.ts
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+
+import type { Session } from '@/api/authApi';
+
+export interface AuthState {
+  session: Session | null;
+  isBootstrapped: boolean; // true once the first getSession settles
+}
+
+const initialState: AuthState = {
+  session: null,
+  isBootstrapped: false,
+};
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState,
+  reducers: {
+    sessionLoaded: (state, action: PayloadAction<Session | null>) => {
+      state.session = action.payload;
+      state.isBootstrapped = true;
+    },
+    sessionCleared: (state) => {
+      state.session = null;
+    },
+  },
+});
+
+export const { sessionLoaded, sessionCleared } = authSlice.actions;
+export default authSlice.reducer;
+```
+
+Key decisions:
+- The type imported from the API file (`Session`) flows into the slice — the API file is the single definition point for that type
+- `isBootstrapped` separates "not yet resolved" from "resolved but empty" — prevents redirect flicker on hard refresh
+- No `extraReducers` — action creators live in the slice, not matched by string against RTK action types
+
+### Wiring RTK Query to the slice via `onQueryStarted`
+
+`onQueryStarted` lives inside the API file, right next to the endpoint definition. It dispatches the slice action after `queryFulfilled` resolves.
+
+```ts
+// api/authApi.ts
+import { sessionCleared, sessionLoaded } from '@/store/authSlice';
+
+getSession: builder.query<Session | null, void>({
+  query: () => `${BASE_URL_PATH}/get-session`,
+  providesTags: ['User'],
+  onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
+    try {
+      const { data } = await queryFulfilled;
+      dispatch(sessionLoaded(data));
+    } catch {
+      // Network error on boot — mark as bootstrapped with no session
+      dispatch(sessionLoaded(null));
+    }
+  },
+}),
+
+signIn: builder.mutation<Session, SignInArgs>({
+  query: (body) => ({ url: `${BASE_URL_PATH}/sign-in/email`, method: 'POST', body }),
+  invalidatesTags: ['User'],
+  onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
+    const { data } = await queryFulfilled;
+    dispatch(sessionLoaded(data));
+    // No try/catch — let the mutation error propagate to the calling component
+  },
+}),
+
+signOut: builder.mutation<void, void>({
+  query: () => ({ url: `${BASE_URL_PATH}/sign-out`, method: 'POST' }),
+  invalidatesTags: ['User', 'Game', 'Session', 'Stats'],
+  onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
+    await queryFulfilled;
+    dispatch(sessionCleared());
+  },
+}),
+```
+
+Rules for `onQueryStarted`:
+- Query endpoints: always wrap in try/catch — a network error on boot must still mark `isBootstrapped`
+- Mutation endpoints: no try/catch — let the error surface to the caller via `.unwrap()` so it can show UI feedback
+- Import slice actions via the `@/` alias — the API file is not a plain TS module and can reference store code
+- Do not read from the store inside `onQueryStarted` — only dispatch
+
+### Why `onQueryStarted` over `extraReducers + matchFulfilled`
+
+`extraReducers + matchFulfilled` requires importing RTK Query action creators into the slice file, which creates a `store/ → api/` dependency. `onQueryStarted` keeps the coupling local to the API file where the endpoint is defined, leaving slices free of API imports. It also allows per-endpoint control (e.g. different error handling for queries vs mutations).
+
+### Reading in components
+
+```tsx
+// Before — calls RTK Query, subscribes to its internal cache
+const { data: session, isLoading } = useGetSessionQuery();
+
+// After — reads from the authoritative slice
+const { session, isBootstrapped } = useAppSelector((s) => s.auth);
+```
+
+The component never imports from `@/api/`. It only imports from `@/store/hooks`.
+
+### Testing components that read from the slice
+
+Do not mock RTK Query hooks. Provide a real store with preloaded state:
+
+```tsx
+import { configureStore } from '@reduxjs/toolkit';
+import { Provider } from 'react-redux';
+
+import { api } from '@/api/api';
+import authReducer, { AuthState } from '@/store/authSlice';
+
+function makeStore(auth: AuthState) {
+  return configureStore({
+    reducer: {
+      [api.reducerPath]: api.reducer,
+      auth: authReducer,
+    },
+    preloadedState: { auth },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
+  });
+}
+
+function renderWithStore(ui: React.ReactElement, auth: AuthState) {
+  return render(<Provider store={makeStore(auth)}>{ui}</Provider>);
+}
+```
+
+Only mock RTK Query hooks (e.g. `useSignInMutation`) when the component invokes them directly as mutation triggers — the mock replaces the trigger function, not the cached data.
+
+---
+
 ## RTK Query Conventions
 
 ### File Layout
@@ -703,6 +859,90 @@ Known tag types: `'Game' | 'Session' | 'User' | 'AdminUser' | 'Stats'`
 
 ---
 
+## Redux Slice Key Convention
+
+Every slice file must export a named `const` for its Redux key. The const name is the slice name in `SCREAMING_SNAKE_CASE` with a `_SLICE` suffix. The string value is the exact key registered in `configureStore`.
+
+### Rule
+
+- Declare the const **before** the state interface, immediately after the last import
+- Use the const in **both** `createSlice({ name })` and `configureStore({ reducer })`
+- Never use an inline string literal in either place
+
+### Slice file
+
+```ts
+// store/gamesSlice.ts
+
+export const GAMES_SLICE = 'games';           // ← exported const
+
+export interface GamesState { ... }
+
+const gamesSlice = createSlice({
+  name: GAMES_SLICE,                          // ← used here
+  initialState,
+  reducers: { ... },
+});
+```
+
+### Store file
+
+```ts
+// store/store.ts
+import gamesReducer, { GAMES_SLICE } from '@/store/gamesSlice';
+
+export const store = configureStore({
+  reducer: {
+    [GAMES_SLICE]: gamesReducer,              // ← and here
+  },
+});
+```
+
+This makes the string a single source of truth — renaming a slice key is a one-line change in the slice file with no manual search across `store.ts`.
+
+---
+
+## Routing Convention
+
+All route strings are defined in `apps/web/src/constants/routes.ts`. This file is the single source of truth — inline string literals like `'/login'` or `'/admin/dashboard'` are never used anywhere else in the codebase.
+
+### Rules
+
+1. **Every route string lives in `ROUTES`** — add a new key to `apps/web/src/constants/routes.ts` before using it anywhere.
+2. **Import and use `ROUTES.XXX`** — in `<Route path=...>`, `<Navigate to=...>`, `<Link to=...>`, `navigate(...)`, and `location.pathname` comparisons.
+3. **Parameterised URLs require a helper** — never build parameterised URLs with inline string interpolation. Export a dedicated helper from `routes.ts` and use it at every call site.
+
+```ts
+// apps/web/src/constants/routes.ts
+export const ROUTES = {
+  ADMIN_DASHBOARD: '/admin/dashboard',
+  ADMIN_SETUP:     '/admin/setup',
+  CHANGE_PASSWORD: '/change-password',
+  DEFAULT:         '/',
+  GAME_DETAILS:    '/games/:id',
+  LIBRARY:         '/library',
+  LOGIN:           '/login',
+  USER_SETTINGS:   '/settings',
+}
+
+// Helper for parameterised navigation — one function per parameterised route
+export const getGameDetailsURL = (gameID: string) => ROUTES.GAME_DETAILS.replace(':id', gameID);
+```
+
+### Where each form is used
+
+| Usage | Correct form | Example |
+|---|---|---|
+| React Router `<Route path=...>` | Raw `ROUTES.XXX` pattern | `<Route path={ROUTES.GAME_DETAILS} ...>` |
+| `<Navigate to=...>` | Raw `ROUTES.XXX` pattern | `<Navigate to={ROUTES.LOGIN} replace />` |
+| `<Link to=...>` static | Raw `ROUTES.XXX` | `<Link to={ROUTES.LIBRARY}>` |
+| `<Link to=...>` with ID | Helper function | `<Link to={getGameDetailsURL(game.id)}>` |
+| `navigate(...)` static | Raw `ROUTES.XXX` | `navigate(ROUTES.DEFAULT, { replace: true })` |
+| `navigate(...)` with ID | Helper function | `navigate(getGameDetailsURL(id))` |
+| `location.pathname` comparison | Raw `ROUTES.XXX` | `location.pathname !== ROUTES.CHANGE_PASSWORD` |
+
+---
+
 ## Pre-Commit Checklist
 
 Before finalizing any component, verify all of the following:
@@ -724,3 +964,7 @@ Before finalizing any component, verify all of the following:
 - [ ] Shadcn primitives imported from `@/components/ui/`
 - [ ] `cn()` used for conditional class merging — never string concatenation
 - [ ] File ends with `export default ComponentName;` followed by a newline
+- [ ] Every slice exports a named `SCREAMING_SNAKE_CASE_SLICE` const; `createSlice({ name })` and `configureStore({ reducer })` both use it — no inline string literals
+- [ ] All route strings come from `ROUTES.XXX` imported from `@/constants/routes` — no inline `'/login'`, `'/'`, etc.
+- [ ] Parameterised navigation uses a helper from `routes.ts` (e.g. `getGameDetailsURL(id)`) — never inline string interpolation
+- [ ] `<Route path=...>` uses the raw `ROUTES.XXX` pattern constant — helpers are only for building actual navigation URLs

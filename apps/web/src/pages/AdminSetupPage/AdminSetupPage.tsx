@@ -5,6 +5,7 @@ import { useSetupAdminMutation } from '@/api/adminApi';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { ROUTES } from '@/constants/routes';
 
 export function AdminSetupPage() {
   const navigate = useNavigate();
@@ -20,11 +21,11 @@ export function AdminSetupPage() {
     setError('');
     try {
       await setupAdmin({ email, password, name: name || undefined }).unwrap();
-      navigate('/login', { replace: true });
+      navigate(ROUTES.LOGIN, { replace: true });
     } catch (err: unknown) {
       const status = (err as { status?: number })?.status;
       if (status === 403) {
-        navigate('/login', { replace: true });
+        navigate(ROUTES.LOGIN, { replace: true });
       } else {
         setError('Could not create admin account. Please try again.');
       }

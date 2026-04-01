@@ -1,12 +1,13 @@
 import { Navigate, Outlet } from 'react-router-dom';
 
-import { useGetSessionQuery } from '@/api/authApi';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ROUTES } from '@/constants/routes';
+import { useAppSelector } from '@/store/hooks';
 
 export function MustChangePasswordRoute() {
-  const { data: session, isLoading } = useGetSessionQuery();
+  const { session, isBootstrapped } = useAppSelector((s) => s.auth);
 
-  if (isLoading) {
+  if (!isBootstrapped) {
     return (
       <div className='flex h-screen w-full items-center justify-center bg-grimoire-deep'>
         <div className='flex flex-col items-center gap-4'>
@@ -19,11 +20,11 @@ export function MustChangePasswordRoute() {
   }
 
   if (!session) {
-    return <Navigate to='/login' replace />;
+    return <Navigate to={ROUTES.LOGIN} replace />;
   }
 
   if (!session.user.mustChangePassword) {
-    return <Navigate to='/' replace />;
+    return <Navigate to={ROUTES.DEFAULT} replace />;
   }
 
   return <Outlet />;

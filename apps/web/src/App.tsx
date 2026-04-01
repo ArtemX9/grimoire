@@ -5,6 +5,7 @@ import { AdminRoute } from '@/components/ProtectedRoute/AdminRoute';
 import { MustChangePasswordRoute } from '@/components/ProtectedRoute/MustChangePasswordRoute';
 import { ProtectedRoute } from '@/components/ProtectedRoute/ProtectedRoute';
 import { Toaster } from '@/components/ui/toaster';
+import { ROUTES } from '@/constants/routes';
 import { AdminDashboardPage } from '@/pages/AdminDashboardPage/AdminDashboardPage';
 import { AdminSetupPage } from '@/pages/AdminSetupPage/AdminSetupPage';
 import { ChangePasswordPage } from '@/pages/ChangePasswordPage/ChangePasswordPage';
@@ -17,23 +18,23 @@ export default function App() {
   return (
     <>
       <Routes>
-        <Route path='/login' element={<LoginPage />} />
-        <Route path='/admin/setup' element={<AdminSetupPage />} />
+        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+        <Route path={ROUTES.ADMIN_SETUP} element={<AdminSetupPage />} />
 
         <Route element={<MustChangePasswordRoute />}>
-          <Route path='/change-password' element={<ChangePasswordPage />} />
+          <Route path={ROUTES.CHANGE_PASSWORD} element={<ChangePasswordPage />} />
         </Route>
 
         <Route element={<AdminRoute />}>
-          <Route path='/admin/dashboard' element={<AdminDashboardPage />} />
+          <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboardPage />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
-            <Route path='/' element={<Navigate to='/library' replace />} />
-            <Route path='/library' element={<LibraryPage />} />
-            <Route path='/games/:id' element={<GameDetailPage />} />
-            <Route path='/settings' element={<SettingsPage />} />
+            <Route path={ROUTES.DEFAULT} element={<Navigate to={ROUTES.LIBRARY} replace />} />
+            <Route path={ROUTES.LIBRARY} element={<LibraryPage />} />
+            <Route path={ROUTES.GAME_DETAILS} element={<GameDetailPage />} />
+            <Route path={ROUTES.USER_SETTINGS} element={<SettingsPage />} />
           </Route>
         </Route>
       </Routes>

@@ -1,5 +1,7 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+export const UI_SLICE = 'ui';
+
 export interface UiState {
   sidebarOpen: boolean;
   selectedGameId: string | null;
@@ -11,7 +13,7 @@ const initialState: UiState = {
 };
 
 const uiSlice = createSlice({
-  name: 'ui',
+  name: UI_SLICE,
   initialState,
   reducers: {
     toggleSidebar: (state) => {

@@ -1,11 +1,12 @@
 import { BookOpen, Library, Settings } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
+import { ROUTES } from '@/constants/routes';
 import { cn } from '@/utils/cn';
 
 const NAV_ITEMS = [
-  { to: '/library', label: 'Library', icon: Library },
-  { to: '/settings', label: 'Settings', icon: Settings },
+  { to: ROUTES.LIBRARY, label: 'Library', icon: Library },
+  { to: ROUTES.USER_SETTINGS, label: 'Settings', icon: Settings },
 ] as const;
 
 function Sidebar() {

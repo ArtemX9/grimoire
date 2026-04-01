@@ -1,6 +1,8 @@
 import { Mood } from '@grimoire/shared';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
+export const AI_SLICE = 'ai';
+
 export interface AiState {
   selectedMoods: Mood[];
   sessionLengthMinutes: number;
@@ -16,7 +18,7 @@ const initialState: AiState = {
 };
 
 const aiSlice = createSlice({
-  name: 'ai',
+  name: AI_SLICE,
   initialState,
   reducers: {
     toggleMood: (state, action: PayloadAction<Mood>) => {

@@ -5,6 +5,7 @@ import { useChangePasswordMutation } from '@/api/usersApi';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { ROUTES } from '@/constants/routes';
 
 export function ChangePasswordPage() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export function ChangePasswordPage() {
 
     try {
       await changePassword({ currentPassword, newPassword }).unwrap();
-      navigate('/', { replace: true });
+      navigate(ROUTES.DEFAULT, { replace: true });
     } catch {
       setError('Could not change password. Please check your current password and try again.');
     }

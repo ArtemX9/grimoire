@@ -325,6 +325,33 @@ The frontend uses a role-based layout rather than feature-sliced directories:
 
 Working on the AI panel means touching `components/AiPanel/` (UI) + `store/aiSlice.ts` (client state) + `api/` (any server queries) on the frontend, and `modules/ai/` on the backend.
 
+### Routing convention
+
+All route strings are defined in `src/constants/routes.ts` and nowhere else.
+
+```ts
+// src/constants/routes.ts
+export const ROUTES = {
+  ADMIN_DASHBOARD: '/admin/dashboard',
+  ADMIN_SETUP:     '/admin/setup',
+  CHANGE_PASSWORD: '/change-password',
+  DEFAULT:         '/',
+  GAME_DETAILS:    '/games/:id',
+  LIBRARY:         '/library',
+  LOGIN:           '/login',
+  USER_SETTINGS:   '/settings',
+}
+
+// One exported helper per parameterised route
+export const getGameDetailsURL = (gameID: string) => ROUTES.GAME_DETAILS.replace(':id', gameID);
+```
+
+Rules:
+- Every new route gets a key in `ROUTES` before it is used anywhere
+- `<Route path=...>`, `<Navigate to=...>`, `<Link to=...>`, `navigate(...)`, and `location.pathname` comparisons all import and use `ROUTES.XXX`
+- Building a parameterised URL (e.g. `/games/42`) always goes through a dedicated helper exported from `routes.ts` — never via inline template literals
+- `<Route path={ROUTES.GAME_DETAILS}>` is correct — the `:id` pattern stays as-is for React Router; only the *navigation* call needs the helper
+
 ### RTK Query API slice conventions
 
 Every file in `src/api/` follows the same structure. `adminApi.ts` is the canonical reference.

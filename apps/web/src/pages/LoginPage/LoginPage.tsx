@@ -2,27 +2,29 @@ import { Role } from '@grimoire/shared';
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
-import { useGetSessionQuery, useSignInMutation } from '@/api/authApi';
+import { useSignInMutation } from '@/api/authApi';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { ROUTES } from '@/constants/routes';
+import { useAppSelector } from '@/store/hooks';
 
 export function LoginPage() {
   const navigate = useNavigate();
 
-  const { data: session, isLoading: isSessionLoading } = useGetSessionQuery();
+  const { session, isBootstrapped } = useAppSelector((s) => s.auth);
   const [signIn, { isLoading: isSigningIn }] = useSignInMutation();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  if (isSessionLoading) {
+  if (!isBootstrapped) {
     return null;
   }
 
   if (session) {
-    return <Navigate to='/' replace />;
+    return <Navigate to={ROUTES.DEFAULT} replace />;
   }
 
   async function handleSignIn(e: React.FormEvent) {
@@ -31,11 +33,11 @@ export function LoginPage() {
     try {
       const result = await signIn({ email, password }).unwrap();
       if (result.user.mustChangePassword) {
-        navigate('/change-password', { replace: true });
+        navigate(ROUTES.CHANGE_PASSWORD, { replace: true });
       } else if (result.user.role === Role.ADMIN) {
-        navigate('/admin/dashboard', { replace: true });
+        navigate(ROUTES.ADMIN_DASHBOARD, { replace: true });
       } else {
-        navigate('/', { replace: true });
+        navigate(ROUTES.DEFAULT, { replace: true });
       }
     } catch {
       setError('Invalid email or password. Please try again.');

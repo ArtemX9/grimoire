@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/use-toast';
+import { ROUTES } from '@/constants/routes';
 import { useAppDispatch } from '@/store/hooks';
 import { cn } from '@/utils/cn';
 
@@ -63,7 +64,7 @@ function ProfileSection() {
       // session may already be gone — proceed regardless
     }
     dispatch(api.util.resetApiState());
-    navigate('/auth', { replace: true });
+    navigate(ROUTES.LOGIN, { replace: true });
   }
 
   return (

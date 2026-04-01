@@ -15,9 +15,12 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 export function LibraryPage() {
   const dispatch = useAppDispatch();
   const filters = useAppSelector((s) => s.filters);
+  const stats = useAppSelector((s) => s.games.stats);
+  const statsLoading = useAppSelector((s) => s.games.isStatsLoading);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
-  const { data: stats, isLoading: statsLoading } = useGetGameStatsQuery();
+  // Trigger the RTK Query fetch so onQueryStarted populates the slice.
+  useGetGameStatsQuery();
 
   function handleStatusChange(status: GameStatus | null) {
     dispatch(setStatusFilter(status));

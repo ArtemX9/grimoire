@@ -2,6 +2,7 @@ import { GameStatus, UserGame } from '@grimoire/shared';
 import { Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { getGameDetailsURL } from '@/constants/routes';
 import { cn } from '@/utils/cn';
 
 const STATUS_STYLES: Record<GameStatus, string> = {
@@ -19,7 +20,7 @@ interface IGameCard {
 function GameCard({ game }: IGameCard) {
   return (
     <Link
-      to={`/games/${game.id}`}
+      to={getGameDetailsURL(game.id)}
       className='group flex flex-col overflow-hidden rounded-lg border border-grimoire-border bg-grimoire-card transition-colors hover:border-grimoire-border-lg hover:bg-grimoire-hover'
     >
       {renderCover()}
