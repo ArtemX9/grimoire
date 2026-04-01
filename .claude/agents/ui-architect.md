@@ -583,9 +583,122 @@ const STATUS_STYLES: Record<GameStatus, string> = {
 
 ## RTK Query Conventions
 
+### File Layout
+
+Every API file in `src/api/` follows this exact top-to-bottom order:
+
+```ts
+// 1. Shared package imports (types from @grimoire/shared)
+import { Role } from '@grimoire/shared';
+
+// 2. Base API — relative import, never @/
+import { api } from './api';
+
+// 3. All type definitions — export type, one per declaration
+export type AdminUserRow = { ... }
+export type AdminUserListResponse = { ... }
+export type CreateUserArgs = { ... }
+
+// 4. BASE_URL_PATH constant — immediately before injectEndpoints
+const BASE_URL_PATH = 'admin';
+
+// 5. Named api slice — assigned and exported
+export const adminApi = api.injectEndpoints({ ... });
+
+// 6. Hooks — destructured from the named slice and exported
+export const {
+  useListAdminUsersQuery,
+  useCreateAdminUserMutation,
+} = adminApi;
+```
+
+Rules:
+- The import of `api` is always **relative** (`./api`), never via the `@/` alias
+- There is no React import — API files are plain TypeScript, never `.tsx`
+- `BASE_URL_PATH` is an untyped `const` string, not an enum and not a type
+
+### Type Naming Conventions
+
+| Pattern | Example | When to use |
+| --- | --- | --- |
+| `XxxRow` | `AdminUserRow` | Shape of a single item in a list response |
+| `XxxListResponse` | `AdminUserListResponse` | Paginated/list wrapper (`{ data, total }`) |
+| `CreateXxxArgs` | `CreateUserArgs` | Mutation input for POST creation |
+| `UpdateXxxArgs` | `UpdateUserAiArgs`, `UpdateUserPlanArgs` | Mutation input for PATCH/PUT |
+| `SetupXxxArgs` | `SetupAdminArgs` | One-time setup or special-case mutations |
+| Plain noun | `AiGlobalSettings`, `AdminStats` | Config/settings shapes and complex response objects |
+
+All types are exported individually with `export type`. Never group them in a namespace.
+
+### Query vs Mutation Structure
+
+Queries use string shorthand when there is no body:
+
+```ts
+listAdminUsers: builder.query<AdminUserListResponse, void>({
+  query: () => `${BASE_URL_PATH}/users`,
+  providesTags: ['AdminUser'],
+}),
+```
+
+Mutations always use the object form:
+
+```ts
+createAdminUser: builder.mutation<AdminUserRow, CreateUserArgs>({
+  query: (body) => ({ url: `${BASE_URL_PATH}/users`, method: 'POST', body }),
+  invalidatesTags: ['AdminUser'],
+}),
+```
+
+When the mutation args contain an `id` that belongs in the URL, destructure it inline — do not build a separate variable:
+
+```ts
+updateUserAiSettings: builder.mutation<void, UpdateUserAiArgs>({
+  query: ({ id, ...body }) => ({ url: `${BASE_URL_PATH}/users/${id}/ai`, method: 'PATCH', body }),
+  invalidatesTags: ['AdminUser'],
+}),
+```
+
+When only specific fields go to the body (not a spread), pick them explicitly:
+
+```ts
+updateUserPlan: builder.mutation<AdminUserRow, UpdateUserPlanArgs>({
+  query: ({ id, plan }) => ({ url: `${BASE_URL_PATH}/users/${id}/plan`, method: 'PATCH', body: { plan } }),
+  invalidatesTags: ['AdminUser'],
+}),
+```
+
+### Cache Tags
+
+`providesTags` and `invalidatesTags` always take an array of string literals — never factory functions unless per-item invalidation is genuinely required:
+
+```ts
+providesTags: ['AdminUser']
+invalidatesTags: ['AdminUser']
+```
+
+Cross-tag invalidation is allowed when a mutation affects multiple caches:
+
+```ts
+// Global AI toggle affects both admin view and user view
+invalidatesTags: ['AdminUser', 'User'],
+```
+
+Omit tags entirely on endpoints where cache invalidation is not meaningful (e.g. one-time setup mutations):
+
+```ts
+setupAdmin: builder.mutation<AdminUserRow, SetupAdminArgs>({
+  query: (body) => ({ url: `${BASE_URL_PATH}/setup`, method: 'POST', body }),
+  // no invalidatesTags — one-time setup, no cache to bust
+}),
+```
+
+Known tag types: `'Game' | 'Session' | 'User' | 'AdminUser' | 'Stats'`
+
+### General Rules
+
 - All endpoints in `src/api/<feature>Api.ts` via `api.injectEndpoints`
-- Tag types: `'Game' | 'Session' | 'User' | 'Stats'`
-- Invalidate conservatively — only tags that changed
+- Invalidate conservatively — only tags that actually changed
 - Never call RTK Query hooks in presentational components
 
 ---

@@ -2,7 +2,7 @@ import { Role } from '@grimoire/shared';
 
 import { api } from './api';
 
-export interface Session {
+export type Session = {
   user: {
     id: string;
     email: string;
@@ -12,51 +12,31 @@ export interface Session {
     aiEnabled: boolean;
     aiRequestsLimit: number | null;
   };
-}
+};
 
-interface SignInArgs {
+export type SignInArgs = {
   email: string;
   password: string;
-}
+};
 
-interface ChangePasswordArgs {
-  currentPassword: string;
-  newPassword: string;
-}
-
+const BASE_URL_PATH = 'auth';
 export const authApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getSession: builder.query<Session | null, void>({
-      query: () => 'auth/get-session',
+      query: () => `${BASE_URL_PATH}/get-session`,
       providesTags: ['User'],
     }),
 
     signIn: builder.mutation<Session, SignInArgs>({
-      query: (body) => ({
-        url: 'auth/sign-in/email',
-        method: 'POST',
-        body,
-      }),
+      query: (body) => ({ url: `${BASE_URL_PATH}/sign-in/email`, method: 'POST', body }),
       invalidatesTags: ['User'],
     }),
 
     signOut: builder.mutation<void, void>({
-      query: () => ({
-        url: 'auth/sign-out',
-        method: 'POST',
-      }),
+      query: () => ({ url: `${BASE_URL_PATH}/sign-out`, method: 'POST' }),
       invalidatesTags: ['User', 'Game', 'Session', 'Stats'],
-    }),
-
-    changePassword: builder.mutation<void, ChangePasswordArgs>({
-      query: (body) => ({
-        url: 'users/me/password',
-        method: 'PATCH',
-        body,
-      }),
-      invalidatesTags: ['User'],
     }),
   }),
 });
 
-export const { useGetSessionQuery, useSignInMutation, useSignOutMutation, useChangePasswordMutation } = authApi;
+export const { useGetSessionQuery, useSignInMutation, useSignOutMutation } = authApi;

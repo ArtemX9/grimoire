@@ -2,7 +2,7 @@ import { Role } from '@grimoire/shared';
 
 import { api } from './api';
 
-export interface AdminUserRow {
+export type AdminUserRow = {
   id: string;
   email: string;
   name?: string;
@@ -14,18 +14,18 @@ export interface AdminUserRow {
   aiRequestsLimit: number | null;
   gamesCount: number;
   createdAt: string;
-}
+};
 
-export interface AdminUserListResponse {
+export type AdminUserListResponse = {
   data: AdminUserRow[];
   total: number;
-}
+};
 
-export interface AiGlobalSettings {
+export type AiGlobalSettings = {
   aiEnabled: boolean;
-}
+};
 
-export interface AdminStats {
+export type AdminStats = {
   users: Array<{
     id: string;
     email: string;
@@ -35,79 +35,79 @@ export interface AdminStats {
     aiRequestsUsed: number;
     aiRequestsLimit: number | null;
   }>;
-}
+};
 
-export interface CreateUserArgs {
+export type CreateUserArgs = {
   email: string;
   password: string;
   name?: string;
-}
+};
 
-export interface UpdateUserAiArgs {
+export type UpdateUserAiArgs = {
   id: string;
   aiEnabled: boolean;
   aiRequestsLimit: number | null;
-}
+};
 
-export interface UpdateAiGlobalArgs {
+export type UpdateAiGlobalArgs = {
   aiEnabled: boolean;
-}
+};
 
-export interface UpdateUserPlanArgs {
+export type UpdateUserPlanArgs = {
   id: string;
   plan: string;
-}
+};
 
-export interface SetupAdminArgs {
+export type SetupAdminArgs = {
   email: string;
   password: string;
   name?: string;
-}
-
+};
+const BASE_URL_PATH = 'admin';
 export const adminApi = api.injectEndpoints({
   endpoints: (builder) => ({
     listAdminUsers: builder.query<AdminUserListResponse, void>({
-      query: () => 'admin/users',
+      query: () => `${BASE_URL_PATH}/users`,
       providesTags: ['AdminUser'],
     }),
 
     createAdminUser: builder.mutation<AdminUserRow, CreateUserArgs>({
-      query: (body) => ({ url: 'admin/users', method: 'POST', body }),
+      query: (body) => ({ url: `${BASE_URL_PATH}/users`, method: 'POST', body }),
       invalidatesTags: ['AdminUser'],
     }),
 
     deleteAdminUser: builder.mutation<void, string>({
-      query: (id) => ({ url: `admin/users/${id}`, method: 'DELETE' }),
+      query: (id) => ({ url: `${BASE_URL_PATH}/users/${id}`, method: 'DELETE' }),
       invalidatesTags: ['AdminUser'],
     }),
 
     getAiGlobalSettings: builder.query<AiGlobalSettings, void>({
-      query: () => 'admin/settings/ai',
+      query: () => `${BASE_URL_PATH}/settings/ai`,
       providesTags: ['AdminUser'],
     }),
 
     updateAiGlobalSettings: builder.mutation<void, UpdateAiGlobalArgs>({
-      query: (body) => ({ url: 'admin/settings/ai', method: 'PATCH', body }),
+      query: (body) => ({ url: `${BASE_URL_PATH}/settings/ai`, method: 'PATCH', body }),
       invalidatesTags: ['AdminUser', 'User'],
     }),
 
     updateUserAiSettings: builder.mutation<void, UpdateUserAiArgs>({
-      query: ({ id, ...body }) => ({ url: `admin/users/${id}/ai`, method: 'PATCH', body }),
+      query: ({ id, ...body }) => ({ url: `${BASE_URL_PATH}/users/${id}/ai`, method: 'PATCH', body }),
       invalidatesTags: ['AdminUser'],
     }),
 
     getAdminStats: builder.query<AdminStats, void>({
-      query: () => 'admin/stats',
+      query: () => `${BASE_URL_PATH}/stats`,
       providesTags: ['AdminUser'],
     }),
 
     updateUserPlan: builder.mutation<AdminUserRow, UpdateUserPlanArgs>({
-      query: ({ id, plan }) => ({ url: `admin/users/${id}/plan`, method: 'PATCH', body: { plan } }),
+      query: ({ id, plan }) => ({ url: `${BASE_URL_PATH}/users/${id}/plan`, method: 'PATCH', body: { plan } }),
       invalidatesTags: ['AdminUser'],
     }),
 
     setupAdmin: builder.mutation<AdminUserRow, SetupAdminArgs>({
-      query: (body) => ({ url: 'admin/setup', method: 'POST', body }),
+      query: (body) => ({ url: `${BASE_URL_PATH}/setup`, method: 'POST', body }),
     }),
   }),
 });

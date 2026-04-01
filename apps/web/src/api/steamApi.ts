@@ -2,26 +2,35 @@ import { UserPlatform } from '@grimoire/shared';
 
 import { api } from './api';
 
-interface SteamSyncStatus {
+export type SteamSyncStatus = {
   connected: boolean;
   lastSyncAt?: string;
   platform?: UserPlatform;
-}
+};
 
+export type ConnectSteamArgs = {
+  steamId: string;
+};
+
+export type SyncSteamResponse = {
+  jobId: string;
+};
+
+const BASE_URL_PATH = 'platforms/steam';
 export const steamApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getSteamStatus: builder.query<SteamSyncStatus, void>({
-      query: () => 'platforms/steam/status',
+      query: () => `${BASE_URL_PATH}/status`,
       providesTags: ['User'],
     }),
 
-    connectSteam: builder.mutation<UserPlatform, { steamId: string }>({
-      query: (body) => ({ url: 'platforms/steam/connect', method: 'POST', body }),
+    connectSteam: builder.mutation<UserPlatform, ConnectSteamArgs>({
+      query: (body) => ({ url: `${BASE_URL_PATH}/connect`, method: 'POST', body }),
       invalidatesTags: ['User'],
     }),
 
-    syncSteam: builder.mutation<{ jobId: string }, void>({
-      query: () => ({ url: 'platforms/steam/sync', method: 'POST' }),
+    syncSteam: builder.mutation<SyncSteamResponse, void>({
+      query: () => ({ url: `${BASE_URL_PATH}/sync`, method: 'POST' }),
       invalidatesTags: ['Game', 'Stats'],
     }),
   }),

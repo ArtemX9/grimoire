@@ -4,7 +4,7 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useChangePasswordMutation } from '@/api/authApi';
+import { useChangePasswordMutation } from '@/api/usersApi';
 import { ChangePasswordPage } from '@/pages/ChangePasswordPage/ChangePasswordPage';
 
 // ---------------------------------------------------------------------------

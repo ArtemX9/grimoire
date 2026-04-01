@@ -325,6 +325,69 @@ The frontend uses a role-based layout rather than feature-sliced directories:
 
 Working on the AI panel means touching `components/AiPanel/` (UI) + `store/aiSlice.ts` (client state) + `api/` (any server queries) on the frontend, and `modules/ai/` on the backend.
 
+### RTK Query API slice conventions
+
+Every file in `src/api/` follows the same structure. `adminApi.ts` is the canonical reference.
+
+**File layout (top to bottom):**
+1. Shared package imports (`@grimoire/shared`)
+2. Base API import — always relative (`./api`), never the `@/` alias
+3. All type definitions, each prefixed with `export type`
+4. `BASE_URL_PATH` constant — untyped `const` string, placed immediately before `injectEndpoints`
+5. Named API slice — `export const xxxApi = api.injectEndpoints({ ... })`
+6. Hook exports — destructured from the named slice
+
+API files are plain `.ts`, never `.tsx`. No React import.
+
+**Type naming:**
+
+| Pattern | Example | When to use |
+|---|---|---|
+| `XxxRow` | `AdminUserRow` | Single item in a list response |
+| `XxxListResponse` | `AdminUserListResponse` | Paginated/list wrapper `{ data, total }` |
+| `CreateXxxArgs` | `CreateUserArgs` | POST mutation input |
+| `UpdateXxxArgs` | `UpdateUserAiArgs` | PATCH/PUT mutation input |
+| `SetupXxxArgs` | `SetupAdminArgs` | One-time or special-case mutation input |
+| Plain noun | `AiGlobalSettings`, `AdminStats` | Config shapes and complex response objects |
+
+**Query vs mutation structure:**
+
+Queries use the string shorthand when there is no request body:
+```ts
+listAdminUsers: builder.query<AdminUserListResponse, void>({
+  query: () => `${BASE_URL_PATH}/users`,
+  providesTags: ['AdminUser'],
+}),
+```
+
+Mutations always use the object form. When the args include an `id` that belongs in the URL, destructure it inline:
+```ts
+updateUserAiSettings: builder.mutation<void, UpdateUserAiArgs>({
+  query: ({ id, ...body }) => ({ url: `${BASE_URL_PATH}/users/${id}/ai`, method: 'PATCH', body }),
+  invalidatesTags: ['AdminUser'],
+}),
+```
+
+When only specific fields go to the body, pick them explicitly rather than spreading:
+```ts
+updateUserPlan: builder.mutation<AdminUserRow, UpdateUserPlanArgs>({
+  query: ({ id, plan }) => ({ url: `${BASE_URL_PATH}/users/${id}/plan`, method: 'PATCH', body: { plan } }),
+  invalidatesTags: ['AdminUser'],
+}),
+```
+
+**Cache tags:**
+
+`providesTags` and `invalidatesTags` take an array of string literals. Factory functions are only used when per-item cache granularity is genuinely needed. Cross-tag invalidation is allowed when a mutation affects multiple caches:
+```ts
+// Global AI toggle affects both admin and user caches
+invalidatesTags: ['AdminUser', 'User'],
+```
+
+Omit tags entirely on one-time setup endpoints where there is no cache to invalidate.
+
+Known tag types: `'Game' | 'Session' | 'User' | 'AdminUser' | 'Stats'`
+
 ---
 
 ## Hosting Strategy
