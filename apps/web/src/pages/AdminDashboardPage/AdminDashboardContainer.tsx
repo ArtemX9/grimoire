@@ -8,23 +8,28 @@ import {
   useUpdateUserAiSettingsMutation,
   useUpdateUserPlanMutation,
 } from '@/api/adminApi';
+import { useAppSelector } from '@/store/hooks';
 
 import { AdminDashboard } from './AdminDashboard';
 
 export function AdminDashboardContainer() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const { data: usersData, isLoading: isUsersLoading } = useListAdminUsersQuery();
-  const { data: aiSettings, isLoading: isAiLoading } = useGetAiGlobalSettingsQuery();
+  useListAdminUsersQuery();
+  useGetAiGlobalSettingsQuery();
+
+  const users = useAppSelector((s) => s.admin.users);
+  const isUsersLoading = useAppSelector((s) => s.admin.isUsersLoading);
+  const aiSettings = useAppSelector((s) => s.admin.aiSettings);
+  const isAiSettingsLoading = useAppSelector((s) => s.admin.isAiSettingsLoading);
 
   const [deleteUser] = useDeleteAdminUserMutation();
   const [updateAiGlobal] = useUpdateAiGlobalSettingsMutation();
   const [updateUserAi] = useUpdateUserAiSettingsMutation();
   const [updateUserPlan] = useUpdateUserPlanMutation();
 
-  const users = usersData?.data ?? [];
   const globalAiEnabled = aiSettings?.aiEnabled ?? true;
-  const isLoading = isUsersLoading || isAiLoading;
+  const isLoading = isUsersLoading || isAiSettingsLoading;
 
   async function handleDeleteUser(id: string) {
     await deleteUser(id);
