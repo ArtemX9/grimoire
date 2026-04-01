@@ -5,6 +5,7 @@ import { useCreateGameMutation } from '@/api/gamesApi';
 import { useSearchIgdbQuery } from '@/api/igdbApi';
 import { toast } from '@/components/ui/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useAppSelector } from '@/store/hooks';
 
 import AddGameDialog from './AddGameDialog';
 
@@ -15,9 +16,12 @@ interface IAddGameDialogContainer {
 
 function AddGameDialogContainer({ open, onOpenChange }: IAddGameDialogContainer) {
   const [searchQuery, setSearchQuery] = useState('');
-  const debouncedQuery = useDebounce(searchQuery, 400);
+  const debouncedQuery = useDebounce(searchQuery, 1000);
 
-  const { data: searchResults = [], isFetching: isSearching } = useSearchIgdbQuery(debouncedQuery, { skip: debouncedQuery.length < 2 });
+  useSearchIgdbQuery(debouncedQuery, { skip: debouncedQuery.length < 2 });
+
+  const searchResults = useAppSelector((s) => s.igdb.searchResults);
+  const isSearching = useAppSelector((s) => s.igdb.isSearchLoading);
 
   const [createGame, { isLoading: isAdding }] = useCreateGameMutation();
 
