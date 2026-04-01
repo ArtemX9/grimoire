@@ -111,32 +111,49 @@ api/
 ```
 web/
 ├── src/
-│   ├── app/
-│   │   ├── store.ts                  # RTK store setup
-│   │   ├── api.ts                    # RTK Query base API
-│   │   └── providers.tsx             # Redux Provider, etc.
-│   ├── features/                     # Feature-sliced, mirrors backend modules
-│   │   ├── games/
-│   │   │   ├── components/
-│   │   │   ├── hooks/
-│   │   │   ├── gamesApi.ts           # RTK Query endpoints
-│   │   │   └── gamesSlice.ts
-│   │   ├── sessions/
-│   │   ├── ai/
-│   │   │   ├── components/
-│   │   │   │   └── AiPanel.tsx
-│   │   │   ├── aiSlice.ts            # mood, sessionLength, streamedTokens
-│   │   │   └── useAiStream.ts        # SSE EventSource hook
-│   │   └── platforms/
-│   │       └── steam/
-│   ├── shared/
-│   │   ├── components/               # Shadcn + custom base components
-│   │   ├── hooks/                    # useDebounce, useLocalStorage, etc.
-│   │   └── utils/
-│   ├── pages/
-│   │   ├── LibraryPage.tsx
-│   │   ├── GameDetailPage.tsx
-│   │   └── SettingsPage.tsx
+│   ├── api/                          # All RTK Query API slices (flat)
+│   │   ├── api.ts                    # RTK Query base API (createApi, baseQuery)
+│   │   ├── adminApi.ts
+│   │   ├── authApi.ts
+│   │   ├── gamesApi.ts
+│   │   ├── igdbApi.ts
+│   │   ├── sessionsApi.ts
+│   │   ├── steamApi.ts
+│   │   └── usersApi.ts
+│   ├── store/                        # Redux store and client-side slices
+│   │   ├── store.ts                  # Store setup
+│   │   ├── hooks.ts                  # useAppDispatch, useAppSelector
+│   │   ├── aiSlice.ts                # mood, sessionLength, streamedTokens
+│   │   ├── filtersSlice.ts
+│   │   └── uiSlice.ts
+│   ├── components/                   # Shared/reusable components
+│   │   ├── ui/                       # Shadcn primitives
+│   │   ├── AiPanel/
+│   │   │   ├── AiPanel.tsx
+│   │   │   └── AiPanelContainer.tsx
+│   │   ├── Layout/
+│   │   │   ├── Layout.tsx
+│   │   │   └── Sidebar.tsx
+│   │   └── ProtectedRoute/
+│   │       ├── AdminRoute.tsx
+│   │       ├── MustChangePasswordRoute.tsx
+│   │       └── ProtectedRoute.tsx
+│   ├── hooks/                        # Shared custom hooks
+│   │   ├── useAiStream.ts            # SSE EventSource hook
+│   │   └── useDebounce.ts
+│   ├── utils/
+│   │   └── cn.ts
+│   ├── pages/                        # Route-level pages; each owns its sub-components
+│   │   ├── AdminDashboardPage/
+│   │   │   └── components/
+│   │   ├── GameDetailPage/
+│   │   │   └── components/
+│   │   ├── LibraryPage/
+│   │   │   └── components/           # GameCard, GameGrid, FilterBar, AddGameDialog
+│   │   ├── LoginPage/
+│   │   ├── SettingsPage/
+│   │   ├── AdminSetupPage/
+│   │   └── ChangePasswordPage/
 │   └── main.tsx
 ├── Dockerfile
 ├── nginx.conf                        # Serve built assets + proxy /api
@@ -299,8 +316,14 @@ streamRecommendation(@Query() dto: MoodQueryDto): Observable<MessageEvent> {
 ### Shared Zod schemas
 Validation schemas live in `packages/shared/schemas`. Backend uses them via `ZodValidationPipe`. Frontend uses the same schemas for form validation. Single source of truth, no drift.
 
-### Feature-sliced frontend
-`features/` directory mirrors backend modules. Working on the AI panel means touching `features/ai/` on frontend and `modules/ai/` on backend. Consistent mental map, no hunting across directories.
+### Frontend directory organisation
+The frontend uses a role-based layout rather than feature-sliced directories:
+- `api/` — all RTK Query endpoint slices in one place, named after their backend module (`gamesApi.ts`, `sessionsApi.ts`, etc.)
+- `store/` — Redux store setup and all client-side slices (`aiSlice.ts`, `filtersSlice.ts`, `uiSlice.ts`)
+- `components/` — shared, cross-page components and all Shadcn primitives
+- `pages/` — one folder per route; page-specific components live in a `components/` subfolder co-located with the page
+
+Working on the AI panel means touching `components/AiPanel/` (UI) + `store/aiSlice.ts` (client state) + `api/` (any server queries) on the frontend, and `modules/ai/` on the backend.
 
 ---
 

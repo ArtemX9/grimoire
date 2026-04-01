@@ -43,10 +43,10 @@ These rules are non-negotiable. Verify every output against them.
 | Framework  | React 18, TypeScript, Vite                                                  |
 | Routing    | React Router v6                                                             |
 | Styling    | Tailwind CSS — dark-only, warm palette, antique gold accent                 |
-| Components | Shadcn/ui (Radix primitives) — copy-paste owned, lives in `shared/`         |
-| State      | Redux Toolkit (client) + RTK Query (server) — via `@/app/hooks`             |
+| Components | Shadcn/ui (Radix primitives) — copy-paste owned, lives in `components/ui/`  |
+| State      | Redux Toolkit (client) + RTK Query (server) — via `@/store/hooks`           |
 | Icons      | Lucide React                                                                |
-| Structure  | `features/` for domain slices, `shared/components/` for base UI             |
+| Structure  | `pages/` for route-level views, `components/` for shared UI, `api/` for RTK Query slices |
 
 ---
 
@@ -187,52 +187,97 @@ export default {
 ## Project Structure (apps/web/src)
 
 ```
-app/
-  store.ts               — Redux store
-  api.ts                 — RTK Query base API
-  hooks.ts               — useAppDispatch, useAppSelector
+api/                     — All RTK Query API slices (flat)
+  api.ts                 — RTK Query base API (createApi, baseQuery)
+  adminApi.ts
+  authApi.ts
+  gamesApi.ts
+  igdbApi.ts
+  sessionsApi.ts
+  steamApi.ts
+  usersApi.ts
 
-features/
-  games/
+store/                   — Redux store and client-side slices
+  store.ts               — Store setup
+  hooks.ts               — useAppDispatch, useAppSelector
+  aiSlice.ts
+  filtersSlice.ts
+  uiSlice.ts
+
+components/              — Shared/reusable components (all cross-page UI)
+  ui/                    — Shadcn primitives
+    alert-dialog.tsx
+    badge.tsx
+    button.tsx
+    card.tsx
+    dialog.tsx
+    input.tsx
+    scroll-area.tsx
+    select.tsx
+    skeleton.tsx
+    switch.tsx
+    table.tsx
+    tabs.tsx
+    textarea.tsx
+    toast.tsx
+    toaster.tsx
+    use-toast.ts
+  AiPanel/
+    AiPanel.tsx
+    AiPanelContainer.tsx
+  Layout/
+    Layout.tsx
+    Sidebar.tsx
+  ProtectedRoute/
+    AdminRoute.tsx
+    MustChangePasswordRoute.tsx
+    ProtectedRoute.tsx
+
+hooks/                   — Shared custom hooks
+  useAiStream.ts
+  useDebounce.ts
+
+utils/
+  cn.ts
+
+pages/                   — Route-level page components; each page owns its sub-components
+  AdminDashboardPage/
+    AdminDashboard.tsx
+    AdminDashboardContainer.tsx
+    AdminDashboardPage.tsx
     components/
+      CreateUserDialog/
+        CreateUserDialog.tsx
+        CreateUserDialogContainer.tsx
+      UserRow/
+        UserRow.tsx
+  AdminSetupPage/
+    AdminSetupPage.tsx
+  ChangePasswordPage/
+    ChangePasswordPage.tsx
+  GameDetailPage/
+    GameDetailPage.tsx
+    components/
+      GameNotes/
+        GameNotes.tsx
+      LogSessionDialog.tsx
+  LibraryPage/
+    LibraryPage.tsx
+    components/
+      AddGameDialog/
+        AddGameDialog.tsx
+        AddGameDialogContainer.tsx
+      FilterBar/
+        FilterBar.tsx
       GameCard/
         GameCard.tsx
       GameGrid/
         GameGrid.tsx
         GameGridContainer.tsx
-      FilterBar/
-        FilterBar.tsx
-    gamesApi.ts
-    filtersSlice.ts
-  sessions/
-    components/
-    sessionsApi.ts
-  ai/
-    components/
-      AiPanel/
-        AiPanel.tsx
-        AiPanelContainer.tsx
-    aiSlice.ts
-    useAiStream.ts
-  platforms/
-    steam/
-      components/
-
-shared/
-  components/
-    ui/                  — Shadcn primitives
-    Layout/
-      Layout.tsx
-      Sidebar.tsx
-  hooks/
-    useDebounce.ts
-  utils/
-    cn.ts
-
-pages/
-  LibraryPage.tsx
-  GameDetailPage.tsx
-  SettingsPage.tsx
+  LoginPage/
+    LoginPage.tsx
+  SettingsPage/
+    SettingsPage.tsx
 ```
 
 ---
@@ -256,29 +301,37 @@ Every non-trivial UI feature is split into two layers. This boundary is mandator
 
 ### File Placement
 
+Shared/cross-page components live in `src/components/`:
+
 ```
-features/ai/components/
+components/
   AiPanel/
     AiPanel.tsx            ← presentational
     AiPanelContainer.tsx   ← container
-
-features/games/components/
-  GameCard/
-    GameCard.tsx           ← no container needed
-  GameGrid/
-    GameGrid.tsx
-    GameGridContainer.tsx
 ```
 
-Single-responsibility presentational components with no container counterpart live directly in `components/` without a subfolder.
+Page-specific components live co-located under `pages/<PageName>/components/`:
+
+```
+pages/LibraryPage/
+  LibraryPage.tsx
+  components/
+    GameCard/
+      GameCard.tsx           ← no container needed
+    GameGrid/
+      GameGrid.tsx
+      GameGridContainer.tsx
+```
+
+Single-responsibility presentational components with no container counterpart live directly in their `components/` folder without a subfolder.
 
 ### Container Example (minimal)
 
 ```tsx
 // AiPanelContainer.tsx — data, dispatch, side effects. NO Tailwind. NO markup beyond a plain wrapper.
-import { useAiStream } from '@/features/ai/useAiStream';
-import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { toggleMood, setSessionLength } from '@/features/ai/aiSlice';
+import { useAiStream } from '@/hooks/useAiStream';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { toggleMood, setSessionLength } from '@/store/aiSlice';
 
 import { AiPanel } from './AiPanel';
 
@@ -318,7 +371,7 @@ export default AiPanelContainer;
 // AiPanel.tsx — markup, Tailwind grimoire tokens, UI-only state. NO RTK Query. NO dispatch.
 import { MOODS } from '@backlog-gg/shared';
 
-import { cn } from '@/shared/utils/cn';
+import { cn } from '@/utils/cn';
 
 interface IAiPanel {
   selectedMoods: string[];
@@ -424,9 +477,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 // 3. Internal aliases (@/)
-import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { Button } from '@/shared/components/ui/button';
-import { cn } from '@/shared/utils/cn';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/utils/cn';
 import { GameStatus, GENRES } from '@backlog-gg/shared';
 
 // 4. Local-folder (same feature/component)
@@ -520,7 +573,7 @@ const STATUS_STYLES: Record<GameStatus, string> = {
 
 ## Shadcn Usage Rules
 
-- Import from `@/shared/components/ui/` — never directly from `@radix-ui`
+- Import from `@/components/ui/` — never directly from `@radix-ui`
 - Run `npx shadcn@latest add <component>` to add primitives, commit the file
 - Never modify Shadcn primitives directly — wrap and extend via `className` prop
 - Override Shadcn default light-mode colors in `cn()` to match grimoire tokens
@@ -530,7 +583,7 @@ const STATUS_STYLES: Record<GameStatus, string> = {
 
 ## RTK Query Conventions
 
-- All endpoints in `<feature>/<feature>Api.ts` via `api.injectEndpoints`
+- All endpoints in `src/api/<feature>Api.ts` via `api.injectEndpoints`
 - Tag types: `'Game' | 'Session' | 'User' | 'Stats'`
 - Invalidate conservatively — only tags that changed
 - Never call RTK Query hooks in presentational components
@@ -555,6 +608,6 @@ Before finalizing any component, verify all of the following:
 - [ ] All `useEffect` callbacks use named functions, not arrows
 - [ ] Imports follow the 4-group order with blank lines between groups
 - [ ] Interface uses `I` prefix, props ordered correctly
-- [ ] Shadcn primitives imported from `@/shared/components/ui/`
+- [ ] Shadcn primitives imported from `@/components/ui/`
 - [ ] `cn()` used for conditional class merging — never string concatenation
 - [ ] File ends with `export default ComponentName;` followed by a newline
