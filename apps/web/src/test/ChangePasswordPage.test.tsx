@@ -4,8 +4,8 @@ import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useChangePasswordMutation } from '@/features/auth/authApi';
-import { ChangePasswordPage } from '@/pages/ChangePasswordPage';
+import { useChangePasswordMutation } from '@/api/authApi';
+import { ChangePasswordPage } from '@/pages/ChangePasswordPage/ChangePasswordPage';
 
 // ---------------------------------------------------------------------------
 // Module mocks

@@ -1,17 +1,17 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-import { AdminDashboardPage } from '@/pages/AdminDashboardPage';
-import { AdminSetupPage } from '@/pages/AdminSetupPage';
-import { ChangePasswordPage } from '@/pages/ChangePasswordPage';
-import { GameDetailPage } from '@/pages/GameDetailPage';
-import { LibraryPage } from '@/pages/LibraryPage';
-import { LoginPage } from '@/pages/LoginPage';
-import { SettingsPage } from '@/pages/SettingsPage';
-import Layout from '@/shared/components/Layout/Layout';
-import { AdminRoute } from '@/shared/components/ProtectedRoute/AdminRoute';
-import { MustChangePasswordRoute } from '@/shared/components/ProtectedRoute/MustChangePasswordRoute';
-import { ProtectedRoute } from '@/shared/components/ProtectedRoute/ProtectedRoute';
-import { Toaster } from '@/shared/components/ui/toaster';
+import Layout from '@/components/Layout/Layout';
+import { AdminRoute } from '@/components/ProtectedRoute/AdminRoute';
+import { MustChangePasswordRoute } from '@/components/ProtectedRoute/MustChangePasswordRoute';
+import { ProtectedRoute } from '@/components/ProtectedRoute/ProtectedRoute';
+import { Toaster } from '@/components/ui/toaster';
+import { AdminDashboardPage } from '@/pages/AdminDashboardPage/AdminDashboardPage';
+import { AdminSetupPage } from '@/pages/AdminSetupPage/AdminSetupPage';
+import { ChangePasswordPage } from '@/pages/ChangePasswordPage/ChangePasswordPage';
+import { GameDetailPage } from '@/pages/GameDetailPage/GameDetailPage';
+import { LibraryPage } from '@/pages/LibraryPage/LibraryPage';
+import { LoginPage } from '@/pages/LoginPage/LoginPage';
+import { SettingsPage } from '@/pages/SettingsPage/SettingsPage';
 
 export default function App() {
   return (

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import AiPanel from '@/features/ai/components/AiPanel/AiPanel';
+import AiPanel from '@/components/AiPanel/AiPanel';
 
 // ---------------------------------------------------------------------------
 // Helpers
