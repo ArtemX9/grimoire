@@ -7,7 +7,7 @@ export const CreateGameSchema = z.object({
   title: z.string().min(1).max(255),
   coverUrl: z.string().url().optional(),
   genres: z.array(z.string()).default([]),
-  status: z.nativeEnum(GameStatus).default(GameStatus.BACKLOG),
+  status: z.enum(GameStatus).default(GameStatus.BACKLOG),
   moods: z.array(z.string()).default([]),
   notes: z.string().max(2000).optional(),
 })

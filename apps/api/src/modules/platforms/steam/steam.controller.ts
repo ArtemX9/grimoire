@@ -5,7 +5,6 @@ import { AuthGuard } from '../../../common/guards/auth.guard';
 import { SteamService } from './steam.service';
 
 @Controller('platforms/steam')
-@UseGuards(AuthGuard)
 export class SteamController {
   constructor(private steamService: SteamService) {}
 

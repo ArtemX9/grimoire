@@ -4,7 +4,7 @@ import { Observable, map } from 'rxjs';
 
 import { RecommendationRequest, RecommendationRequestSchema } from '@grimoire/shared';
 
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentUser, RequestUser } from '../../common/decorators/current-user.decorator';
 import { PlanFeature } from '../../common/decorators/plan-feature.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { PlanGuard } from '../../common/guards/plan.guard';
@@ -12,7 +12,6 @@ import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AiService } from './ai.service';
 
 @Controller('ai')
-@UseGuards(AuthGuard)
 export class AiController {
   constructor(private aiService: AiService) {}
 
@@ -21,7 +20,7 @@ export class AiController {
   @PlanFeature('aiRecommendations')
   @Sse()
   async streamRecommendation(
-    @CurrentUser() user: any,
+    @CurrentUser() user: RequestUser,
     @Body(new ZodValidationPipe(RecommendationRequestSchema)) body: RecommendationRequest,
   ): Promise<Observable<MessageEvent>> {
     const context = await this.aiService.buildContext(user.id, body);

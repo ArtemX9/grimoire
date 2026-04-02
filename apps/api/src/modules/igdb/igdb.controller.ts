@@ -4,7 +4,6 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 import { IgdbService } from './igdb.service';
 
 @Controller('igdb')
-@UseGuards(AuthGuard)
 export class IgdbController {
   constructor(private igdbService: IgdbService) {}
 

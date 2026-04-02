@@ -24,6 +24,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build shared package
+        run: pnpm --filter shared build
+
+      - name: Generate Prisma client
+        run: pnpm --filter api prisma generate
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/db
+
       - name: Run API tests
         run: pnpm --filter api test
 
@@ -44,6 +52,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter shared build
 
       - name: Run web tests
         run: pnpm --filter web test:run
