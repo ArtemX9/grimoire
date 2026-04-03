@@ -3,14 +3,16 @@ import { ConfigService } from '@nestjs/config';
 
 import { Observable } from 'rxjs';
 
-import { RecommendationContext, RecommendationRequest } from '@grimoire/shared';
+import { Genre, Mood, RecommendationContext, RecommendationRequest } from '@grimoire/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { GamesService } from '../games/games.service';
 import { SessionsService } from '../sessions/sessions.service';
+import { AI_PROVIDERS } from './constants';
 import { ClaudeProvider } from './providers/claude.provider';
 import { GrokProvider } from './providers/grok.provider';
 import { LLMProvider } from './providers/llm-provider.interface';
+import { OllamaProvider } from './providers/ollama.provider';
 
 @Injectable()
 export class AiService {
@@ -21,11 +23,21 @@ export class AiService {
     private prisma: PrismaService,
     private grokProvider: GrokProvider,
     private claudeProvider: ClaudeProvider,
+    private ollamaProvider: OllamaProvider,
     private gamesService: GamesService,
     private sessionsService: SessionsService,
   ) {
-    const providerName = this.config.get<string>('app.llm.provider', 'grok');
-    this.provider = providerName === 'claude' ? this.claudeProvider : this.grokProvider;
+    const providerName = this.config.get<AI_PROVIDERS>('app.llm.provider', AI_PROVIDERS.GROK);
+    switch (providerName) {
+      case AI_PROVIDERS.CLAUDE:
+        this.provider = this.claudeProvider;
+        break;
+      case AI_PROVIDERS.OLLAMA:
+        this.provider = this.ollamaProvider;
+        break;
+      default:
+        this.provider = this.grokProvider;
+    }
   }
 
   private async _checkAndIncrementAiUsage(userId: string): Promise<void> {
@@ -62,14 +74,14 @@ export class AiService {
       games: games.map((g) => ({
         title: g.title,
         status: g.status,
-        genres: g.genres,
+        genres: g.genres as Genre[],
         playtimeHours: g.playtimeHours,
-        moods: g.moods,
+        moods: g.moods as Mood[],
       })),
       recentSessions: recentSessions.map((s) => ({
         gameTitle: s.game.title,
         durationMin: s.durationMin ?? 0,
-        mood: s.mood,
+        mood: s.mood as Mood[],
         startedAt: s.startedAt,
       })),
     };

@@ -1,4 +1,4 @@
-import { GameStatus, UserGame } from '@grimoire/shared';
+import { GameStatus, Genre, Mood, UserGame } from '@grimoire/shared';
 import { describe, expect, it } from 'vitest';
 
 import type { GameStats } from '@/api/gamesApi';
@@ -25,13 +25,13 @@ const initialState = reducer(undefined, { type: '@@INIT' });
 function makeGame(overrides: Partial<UserGame> = {}): UserGame {
   return {
     id: 'game-1',
-    userId: 'user-1',
-    igdbId: 1001,
+    userID: 'user-1',
+    igdbID: 1001,
     title: 'Hollow Knight',
-    genres: ['Metroidvania'],
+    genres: [Genre.Action],
     status: GameStatus.PLAYING,
     playtimeHours: 12,
-    moods: ['Atmospheric'],
+    moods: [Mood.ATMOSPHERIC],
     addedAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-02'),
     ...overrides,

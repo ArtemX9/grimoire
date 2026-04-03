@@ -1,3 +1,5 @@
+import {Genre, Mood} from '../constants';
+
 export enum GameStatus {
   BACKLOG = 'BACKLOG',
   PLAYING = 'PLAYING',
@@ -6,28 +8,28 @@ export enum GameStatus {
   WISHLIST = 'WISHLIST',
 }
 
-export interface UserGame {
+export type UserGame = {
   id: string
-  userId: string
-  igdbId: number
-  steamAppId?: number
+  userID: string
+  igdbID: number
+  steamAppID?: number
   title: string
-  coverUrl?: string
-  genres: string[]
+  coverURL?: string
+  genres: Genre[]
   status: GameStatus
   playtimeHours: number
   userRating?: number
   notes?: string
-  moods: string[]
+  moods: Mood[]
   addedAt: Date
   updatedAt: Date
 }
 
-export interface IgdbGame {
+export type IgdbGame = {
   id: number
   name: string
   cover?: { url: string }
-  genres?: Array<{ name: string }>
+  genres?: Genre[]
   summary?: string
   first_release_date?: number
   total_rating?: number

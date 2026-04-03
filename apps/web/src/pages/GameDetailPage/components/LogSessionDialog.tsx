@@ -1,4 +1,4 @@
-import { MOODS } from '@grimoire/shared';
+import { Mood } from '@grimoire/shared';
 import { useState } from 'react';
 
 import { useCreateSessionMutation } from '@/api/sessionsApi';
@@ -65,7 +65,7 @@ function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
           <div className='flex flex-col gap-1.5'>
             <label className='font-sans text-xs text-grimoire-muted'>Mood (optional)</label>
             <div className='flex flex-wrap gap-1.5'>
-              {MOODS.map((mood) => (
+              {Object.values(Mood).map((mood) => (
                 <button
                   key={mood}
                   onClick={() => handleMoodToggle(mood)}

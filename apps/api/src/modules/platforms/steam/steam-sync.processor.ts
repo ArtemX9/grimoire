@@ -1,4 +1,5 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { BadRequestException } from '@nestjs/common';
 
 import { Job } from 'bullmq';
 
@@ -8,7 +9,6 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { GamesService } from '../../games/games.service';
 import { IgdbService } from '../../igdb/igdb.service';
 import { SteamService } from './steam.service';
-import {BadRequestException} from '@nestjs/common';
 
 @Processor('steam-sync')
 export class SteamSyncProcessor extends WorkerHost {
@@ -48,7 +48,7 @@ export class SteamSyncProcessor extends WorkerHost {
             steamAppId: steamGame.appid,
             title: igdbGame.name,
             coverUrl: igdbGame.cover?.url,
-            genres: igdbGame.genres?.map((g) => g.name) ?? [],
+            genres: igdbGame.genres ?? [],
             status: GameStatus.BACKLOG,
             moods: [],
           });

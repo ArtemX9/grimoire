@@ -1,11 +1,11 @@
-import { NotFoundException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import {NotFoundException} from '@nestjs/common';
+import {Test, TestingModule} from '@nestjs/testing';
 
-import { GameStatus } from '@grimoire/shared';
+import {GameStatus} from '@grimoire/shared';
 
-import { GamesController } from './games.controller';
-import { GamesService } from './games.service';
-import { GameResponse, GameStatsResponse } from './games.types';
+import {GamesController} from './games.controller';
+import {GamesService} from './games.service';
+import {GameResponse, GameStatsResponse} from './games.types';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -14,11 +14,11 @@ import { GameResponse, GameStatsResponse } from './games.types';
 function makeGameResponse(overrides: Partial<GameResponse> = {}): GameResponse {
   return {
     id: 'game-1',
-    userId: 'user-1',
-    igdbId: 12345,
+    userID: 'user-1',
+    igdbID: 12345,
     title: 'The Witcher 3',
     genres: ['RPG'],
-    status: 'PLAYING',
+    status: GameStatus.PLAYING,
     playtimeHours: 42,
     moods: ['focused'],
     addedAt: new Date('2024-01-01T00:00:00Z'),
@@ -51,9 +51,7 @@ describe('GamesController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [GamesController],
-      providers: [
-        { provide: GamesService, useValue: mockGamesService },
-      ],
+      providers: [{ provide: GamesService, useValue: mockGamesService }],
     }).compile();
 
     controller = module.get<GamesController>(GamesController);
@@ -243,7 +241,7 @@ describe('GamesController', () => {
 
     it('delegates to gamesService.update with user id, game id, and body', async () => {
       const user = makeUser();
-      const updated = makeGameResponse({ status: 'COMPLETED', playtimeHours: 100 });
+      const updated = makeGameResponse({ status: GameStatus.COMPLETED, playtimeHours: 100 });
       gamesService.update.mockResolvedValue(updated);
 
       const result = await controller.update(user, 'game-1', body);
@@ -259,7 +257,7 @@ describe('GamesController', () => {
       await expect(controller.update(user, 'nonexistent', body)).rejects.toThrow(NotFoundException);
     });
 
-    it('propagates NotFoundException when trying to update another user\'s game', async () => {
+    it("propagates NotFoundException when trying to update another user's game", async () => {
       const user = makeUser('user-2');
       gamesService.update.mockRejectedValue(new NotFoundException('Game not found'));
 
@@ -298,7 +296,7 @@ describe('GamesController', () => {
       await expect(controller.remove(user, 'nonexistent')).rejects.toThrow(NotFoundException);
     });
 
-    it('propagates NotFoundException when trying to delete another user\'s game', async () => {
+    it("propagates NotFoundException when trying to delete another user's game", async () => {
       const user = makeUser('user-2');
       gamesService.remove.mockRejectedValue(new NotFoundException('Game not found'));
 

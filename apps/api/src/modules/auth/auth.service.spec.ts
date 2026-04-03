@@ -1,8 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
 
-import { AuthService } from './auth.service';
+import { betterAuth } from 'better-auth';
+
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuthService } from './auth.service';
 
 // better-auth initialises network connections during construction via the
 // prismaAdapter.  Mock the entire module so that no real DB or HTTP traffic
@@ -26,7 +28,6 @@ jest.mock('bcryptjs', () => ({
   compare: jest.fn(),
 }));
 
-import { betterAuth } from 'better-auth';
 const mockedBetterAuth = betterAuth as jest.MockedFunction<typeof betterAuth>;
 
 describe('AuthService', () => {
@@ -51,11 +52,7 @@ describe('AuthService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AuthService,
-        { provide: PrismaService, useValue: mockPrisma },
-        { provide: ConfigService, useValue: mockConfig },
-      ],
+      providers: [AuthService, { provide: PrismaService, useValue: mockPrisma }, { provide: ConfigService, useValue: mockConfig }],
     }).compile();
 
     service = module.get<AuthService>(AuthService);

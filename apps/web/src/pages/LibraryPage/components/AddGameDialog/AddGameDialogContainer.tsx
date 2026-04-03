@@ -32,7 +32,7 @@ function AddGameDialogContainer({ open, onOpenChange }: IAddGameDialogContainer)
         igdbId: game.id,
         title: game.name,
         coverUrl: coverURL,
-        genres: game.genres?.map((g) => g.name) ?? [],
+        genres: game.genres?.map((g) => g) ?? [],
         status,
         moods: [],
       }).unwrap();

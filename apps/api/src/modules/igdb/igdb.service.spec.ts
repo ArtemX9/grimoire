@@ -1,5 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { Test, TestingModule } from '@nestjs/testing';
 
 import { IgdbService } from './igdb.service';
 
@@ -60,10 +60,7 @@ describe('IgdbService', () => {
     });
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        IgdbService,
-        { provide: ConfigService, useValue: mockConfig },
-      ],
+      providers: [IgdbService, { provide: ConfigService, useValue: mockConfig }],
     }).compile();
 
     service = module.get<IgdbService>(IgdbService);
@@ -101,10 +98,7 @@ describe('IgdbService', () => {
       global.fetch = initFetch;
 
       const freshModule = await Test.createTestingModule({
-        providers: [
-          IgdbService,
-          { provide: ConfigService, useValue: mockConfig },
-        ],
+        providers: [IgdbService, { provide: ConfigService, useValue: mockConfig }],
       }).compile();
 
       const freshService = freshModule.get<IgdbService>(IgdbService);
@@ -125,10 +119,7 @@ describe('IgdbService', () => {
       global.fetch = initFetch;
 
       const freshModule = await Test.createTestingModule({
-        providers: [
-          IgdbService,
-          { provide: ConfigService, useValue: mockConfig },
-        ],
+        providers: [IgdbService, { provide: ConfigService, useValue: mockConfig }],
       }).compile();
 
       await freshModule.get<IgdbService>(IgdbService).onModuleInit();
@@ -164,10 +155,7 @@ describe('IgdbService', () => {
 
       await service.search('halo');
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.igdb.com/v4/games',
-        expect.objectContaining({ method: 'POST' }),
-      );
+      expect(mockFetch).toHaveBeenCalledWith('https://api.igdb.com/v4/games', expect.objectContaining({ method: 'POST' }));
     });
 
     it('sends the search term and default limit of 10 in the request body', async () => {

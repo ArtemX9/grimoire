@@ -1,23 +1,25 @@
-export interface RecommendationRequest {
-  moods: string[]
+import {Genre, Mood} from '../constants';
+
+export type RecommendationRequest = {
+  moods: Mood[]
   sessionLengthMinutes: number
-  userId: string
+  userID: string
 }
 
-export interface RecommendationContext {
+export type RecommendationContext = {
   moods: string[]
   sessionLengthMinutes: number
   games: Array<{
     title: string
     status: string
-    genres: string[]
+    genres: Genre[]
     playtimeHours: number
-    moods: string[]
+    moods: Mood[]
   }>
   recentSessions: Array<{
     gameTitle: string
     durationMin: number
-    mood: string[]
+    mood: Mood[]
     startedAt: Date
   }>
 }
