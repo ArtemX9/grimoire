@@ -1,8 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
 
-import { api } from '@/api/api';
 // Import API slices to trigger endpoint injection
 import '@/api/adminApi';
+import { api } from '@/api/api';
 import '@/api/authApi';
 import '@/api/gamesApi';
 import '@/api/igdbApi';

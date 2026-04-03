@@ -49,7 +49,7 @@ describe('GamesService', () => {
             userGame: {
               findMany: jest.fn(),
               findFirst: jest.fn(),
-              create: jest.fn(),
+              upsert: jest.fn(),
               update: jest.fn(),
               delete: jest.fn(),
               count: jest.fn(),
@@ -248,21 +248,36 @@ describe('GamesService', () => {
       moods: [] as string[],
     };
 
-    it('creates a game with the correct userId and dto data', async () => {
-      const created = makePrismaGame({ status: GameStatus.BACKLOG });
-      (prisma.userGame.create as jest.Mock).mockResolvedValue(created);
+    it('upserts a game using the composite unique key (userId, igdbId)', async () => {
+      const upserted = makePrismaGame({ status: GameStatus.BACKLOG });
+      (prisma.userGame.upsert as jest.Mock).mockResolvedValue(upserted);
 
       const result = await service.create('user-1', dto);
 
-      expect(prisma.userGame.create).toHaveBeenCalledWith({
-        data: { ...dto, userId: 'user-1' },
-      });
+      expect(prisma.userGame.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId_igdbId: { userId: 'user-1', igdbId: dto.igdbId } },
+        }),
+      );
       expect(result.id).toBe('game-1');
     });
 
+    it('passes the full dto + userId in the create block', async () => {
+      const upserted = makePrismaGame({ status: GameStatus.BACKLOG });
+      (prisma.userGame.upsert as jest.Mock).mockResolvedValue(upserted);
+
+      await service.create('user-1', dto);
+
+      expect(prisma.userGame.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: { ...dto, userId: 'user-1' },
+        }),
+      );
+    });
+
     it('returns a mapped response — not the raw Prisma object', async () => {
-      const created = makePrismaGame();
-      (prisma.userGame.create as jest.Mock).mockResolvedValue(created);
+      const upserted = makePrismaGame();
+      (prisma.userGame.upsert as jest.Mock).mockResolvedValue(upserted);
 
       const result = await service.create('user-1', dto);
 
@@ -284,24 +299,40 @@ describe('GamesService', () => {
         moods: ['competitive'],
         notes: 'My favourite',
       };
-      const created = makePrismaGame({ ...fullDto });
-      (prisma.userGame.create as jest.Mock).mockResolvedValue(created);
+      const upserted = makePrismaGame({ ...fullDto });
+      (prisma.userGame.upsert as jest.Mock).mockResolvedValue(upserted);
 
       await service.create('user-1', fullDto);
 
-      expect(prisma.userGame.create).toHaveBeenCalledWith({
-        data: { ...fullDto, userId: 'user-1' },
-      });
+      expect(prisma.userGame.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: { ...fullDto, userId: 'user-1' },
+        }),
+      );
     });
 
     it('injects the caller userId — never uses a userId from the dto', async () => {
-      const created = makePrismaGame();
-      (prisma.userGame.create as jest.Mock).mockResolvedValue(created);
+      const upserted = makePrismaGame();
+      (prisma.userGame.upsert as jest.Mock).mockResolvedValue(upserted);
 
       await service.create('user-99', dto);
 
-      const callArg = (prisma.userGame.create as jest.Mock).mock.calls[0][0];
-      expect(callArg.data.userId).toBe('user-99');
+      const callArg = (prisma.userGame.upsert as jest.Mock).mock.calls[0][0];
+      expect(callArg.create.userId).toBe('user-99');
+      expect(callArg.where.userId_igdbId.userId).toBe('user-99');
+    });
+
+    it('does not overwrite user-controlled fields (status, userRating, notes, moods) on update', async () => {
+      const upserted = makePrismaGame();
+      (prisma.userGame.upsert as jest.Mock).mockResolvedValue(upserted);
+
+      await service.create('user-1', dto);
+
+      const callArg = (prisma.userGame.upsert as jest.Mock).mock.calls[0][0];
+      expect(callArg.update).not.toHaveProperty('status');
+      expect(callArg.update).not.toHaveProperty('userRating');
+      expect(callArg.update).not.toHaveProperty('notes');
+      expect(callArg.update).not.toHaveProperty('moods');
     });
   });
 

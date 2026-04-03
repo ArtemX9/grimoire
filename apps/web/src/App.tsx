@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 
+import { useGetSessionQuery } from '@/api/authApi';
 import Layout from '@/components/Layout/Layout';
 import { AdminRoute } from '@/components/ProtectedRoute/AdminRoute';
 import { MustChangePasswordRoute } from '@/components/ProtectedRoute/MustChangePasswordRoute';
@@ -15,6 +16,8 @@ import { LoginPage } from '@/pages/LoginPage/LoginPage';
 import { SettingsPage } from '@/pages/SettingsPage/SettingsPage';
 
 export default function App() {
+  useGetSessionQuery();
+
   return (
     <>
       <Routes>

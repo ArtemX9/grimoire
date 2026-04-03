@@ -1,13 +1,7 @@
 import type { Mood } from '@grimoire/shared';
 import { describe, expect, it } from 'vitest';
 
-import reducer, {
-  appendToken,
-  setSessionLength,
-  startStreaming,
-  stopStreaming,
-  toggleMood,
-} from '@/store/aiSlice';
+import reducer, { appendToken, setSessionLength, startStreaming, stopStreaming, toggleMood } from '@/store/aiSlice';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -252,10 +246,7 @@ describe('aiSlice — appendToken', () => {
   });
 
   it('does not affect selectedMoods, sessionLengthMinutes, or isStreaming', () => {
-    const preset = reducer(
-      reducer(reducer(initialState, toggleMood(DARK)), setSessionLength(60)),
-      startStreaming(),
-    );
+    const preset = reducer(reducer(reducer(initialState, toggleMood(DARK)), setSessionLength(60)), startStreaming());
     const next = reducer(preset, appendToken('token'));
 
     expect(next.selectedMoods).toContain(DARK);
