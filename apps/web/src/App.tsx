@@ -13,8 +13,11 @@ import { GameDetailPage } from '@/pages/GameDetailPage/GameDetailPage';
 import { LibraryPage } from '@/pages/LibraryPage/LibraryPage';
 import { LoginPage } from '@/pages/LoginPage/LoginPage';
 import { SettingsPage } from '@/pages/SettingsPage/SettingsPage';
+import {useGetSessionQuery} from '@/api/authApi';
 
 export default function App() {
+  useGetSessionQuery();
+
   return (
     <>
       <Routes>

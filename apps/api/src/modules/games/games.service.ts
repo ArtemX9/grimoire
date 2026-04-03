@@ -60,7 +60,19 @@ export class GamesService {
   }
 
   async create(userId: string, dto: CreateGameDto): Promise<GameResponse> {
-    const game = await this.prisma.userGame.create({ data: { ...dto, userId } });
+    const game = await this.prisma.userGame.upsert({
+      where: { userId_igdbId: { userId, igdbId: dto.igdbId } },
+      create: { ...dto, userId },
+      update: {
+        // Back-fill Steam-sourced fields that may be absent on a manually added game.
+        // User-controlled fields (status, userRating, notes, moods) are intentionally
+        // excluded so a sync never overwrites deliberate user data.
+        ...(dto.steamAppId !== undefined && { steamAppId: dto.steamAppId }),
+        ...(dto.title !== undefined && { title: dto.title }),
+        ...(dto.coverUrl !== undefined && { coverUrl: dto.coverUrl }),
+        ...(dto.genres !== undefined && { genres: dto.genres }),
+      },
+    });
     return this._toResponse(game);
   }
 

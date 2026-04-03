@@ -73,6 +73,7 @@ export class AdminService {
           role: Role.ADMIN,
           passwordHash: hash,
           mustChangePassword: false,
+          plan: Plan.LIFETIME,
         },
         select: this.userSelect,
       });
