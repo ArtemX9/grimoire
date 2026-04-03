@@ -136,8 +136,8 @@ export function GameDetailPage() {
     return (
       <div className='w-28 shrink-0 sm:w-36'>
         <div className='aspect-[3/4] overflow-hidden rounded-lg border border-grimoire-border bg-grimoire-hover'>
-          {game?.coverUrl ? (
-            <img src={game.coverUrl} alt={game.title} className='h-full w-full object-cover' />
+          {game?.coverURL ? (
+            <img src={game.coverURL} alt={game.title} className='h-full w-full object-cover' />
           ) : (
             <div className='flex h-full w-full items-center justify-center'>
               <span className='font-grimoire text-4xl text-grimoire-faint'>G</span>

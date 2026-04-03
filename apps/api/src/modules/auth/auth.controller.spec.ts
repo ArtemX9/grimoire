@@ -1,3 +1,10 @@
+import { ForbiddenException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { UsersService } from '../users/users.service';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+
 // better-auth ships as ESM and would cause a "Cannot use import statement
 // outside a module" error when Jest (CJS mode) tries to parse it.  Mock the
 // entire package so the import in auth.service.ts resolves to a plain object.
@@ -14,13 +21,6 @@ jest.mock('better-auth', () => ({
 jest.mock('better-auth/adapters/prisma', () => ({
   prismaAdapter: jest.fn(() => ({})),
 }));
-
-import { ForbiddenException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { UsersService } from '../users/users.service';
 
 // ---------------------------------------------------------------------------
 // Helpers

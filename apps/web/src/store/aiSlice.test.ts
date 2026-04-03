@@ -1,4 +1,4 @@
-import type { Mood } from '@grimoire/shared';
+import { Mood } from '@grimoire/shared';
 import { describe, expect, it } from 'vitest';
 
 import reducer, { appendToken, setSessionLength, startStreaming, stopStreaming, toggleMood } from '@/store/aiSlice';
@@ -9,9 +9,9 @@ import reducer, { appendToken, setSessionLength, startStreaming, stopStreaming, 
 
 const initialState = reducer(undefined, { type: '@@INIT' });
 
-const DARK: Mood = 'Dark & tense';
-const CHILL: Mood = 'Chill';
-const INTENSE: Mood = 'Intense';
+const DARK = Mood.DARK_AND_TENSE;
+const CHILL = Mood.CHILL;
+const INTENSE = Mood.INTENSE;
 
 // ---------------------------------------------------------------------------
 // Initial state

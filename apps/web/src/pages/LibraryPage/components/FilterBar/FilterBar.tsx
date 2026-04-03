@@ -1,4 +1,4 @@
-import { GENRES, GameStatus } from '@grimoire/shared';
+import { GameStatus, Genre } from '@grimoire/shared';
 import { Search, X } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
@@ -76,7 +76,7 @@ function FilterBar({ activeStatus, activeGenre, search, onStatusChange, onGenreC
   function renderGenreFilters() {
     return (
       <div className='flex flex-wrap gap-1.5'>
-        {GENRES.map((genre) => (
+        {Object.values(Genre).map((genre) => (
           <button
             key={genre}
             onClick={() => onGenreChange(activeGenre === genre ? null : genre)}

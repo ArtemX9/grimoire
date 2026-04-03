@@ -85,9 +85,7 @@ describe('SessionsService', () => {
     });
 
     it('maps null endedAt to undefined in the response', async () => {
-      (prisma.playSession.findMany as jest.Mock).mockResolvedValue([
-        makeSession({ endedAt: null }),
-      ]);
+      (prisma.playSession.findMany as jest.Mock).mockResolvedValue([makeSession({ endedAt: null })]);
 
       const [result] = await service.findByGame('user-1', 'game-1');
 
@@ -95,9 +93,7 @@ describe('SessionsService', () => {
     });
 
     it('maps null durationMin to undefined in the response', async () => {
-      (prisma.playSession.findMany as jest.Mock).mockResolvedValue([
-        makeSession({ durationMin: null }),
-      ]);
+      (prisma.playSession.findMany as jest.Mock).mockResolvedValue([makeSession({ durationMin: null })]);
 
       const [result] = await service.findByGame('user-1', 'game-1');
 
@@ -105,9 +101,7 @@ describe('SessionsService', () => {
     });
 
     it('maps null notes to undefined in the response', async () => {
-      (prisma.playSession.findMany as jest.Mock).mockResolvedValue([
-        makeSession({ notes: null }),
-      ]);
+      (prisma.playSession.findMany as jest.Mock).mockResolvedValue([makeSession({ notes: null })]);
 
       const [result] = await service.findByGame('user-1', 'game-1');
 
@@ -122,7 +116,7 @@ describe('SessionsService', () => {
       expect(result).toEqual([]);
     });
 
-    it('scopes the query to the requesting user — never leaks another user\'s sessions', async () => {
+    it("scopes the query to the requesting user — never leaks another user's sessions", async () => {
       (prisma.playSession.findMany as jest.Mock).mockResolvedValue([]);
 
       await service.findByGame('user-2', 'game-1');
@@ -153,9 +147,7 @@ describe('SessionsService', () => {
 
       await service.findRecent('user-1');
 
-      expect(prisma.playSession.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ take: 10 }),
-      );
+      expect(prisma.playSession.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 10 }));
     });
 
     it('respects a custom limit when one is provided', async () => {
@@ -163,9 +155,7 @@ describe('SessionsService', () => {
 
       await service.findRecent('user-1', 5);
 
-      expect(prisma.playSession.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ take: 5 }),
-      );
+      expect(prisma.playSession.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 5 }));
     });
 
     it('includes the game title via the correct Prisma include clause', async () => {
@@ -185,9 +175,7 @@ describe('SessionsService', () => {
 
       await service.findRecent('user-1');
 
-      expect(prisma.playSession.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ orderBy: { startedAt: 'desc' } }),
-      );
+      expect(prisma.playSession.findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { startedAt: 'desc' } }));
     });
   });
 
@@ -216,9 +204,7 @@ describe('SessionsService', () => {
     });
 
     it('does not update playtimeHours on the game when durationMin is absent', async () => {
-      (prisma.playSession.create as jest.Mock).mockResolvedValue(
-        makeSession({ durationMin: null }),
-      );
+      (prisma.playSession.create as jest.Mock).mockResolvedValue(makeSession({ durationMin: null }));
 
       await service.create('user-1', dto);
 

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { Job } from 'bullmq';
 
-import { GameStatus, Platform } from '@grimoire/shared';
+import { Genre, GameStatus, Platform } from '@grimoire/shared';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { GamesService } from '../../games/games.service';
@@ -33,7 +33,7 @@ function makeIgdbGame(overrides: Partial<Record<string, unknown>> = {}) {
     id: 1942,
     name: 'The Witcher 3: Wild Hunt',
     cover: { url: '//images.igdb.com/cover.jpg' },
-    genres: [{ name: 'RPG' }],
+    genres: [Genre.RPG],
     summary: 'Open world RPG',
     ...overrides,
   };
@@ -112,7 +112,7 @@ describe('SteamSyncProcessor', () => {
         steamAppId: 292030,
         title: 'The Witcher 3: Wild Hunt',
         coverUrl: '//images.igdb.com/cover.jpg',
-        genres: ['RPG'],
+        genres: [Genre.RPG],
         status: GameStatus.BACKLOG,
         moods: [],
       });
@@ -139,10 +139,7 @@ describe('SteamSyncProcessor', () => {
 
       await processor.process(makeJob({ userId: 'user-1', steamId: 'steam-id' }));
 
-      expect(gamesService.create).toHaveBeenCalledWith(
-        'user-1',
-        expect.objectContaining({ coverUrl: undefined }),
-      );
+      expect(gamesService.create).toHaveBeenCalledWith('user-1', expect.objectContaining({ coverUrl: undefined }));
     });
 
     it('handles a Steam game with no genres in the IGDB result (genres defaults to [])', async () => {
@@ -154,10 +151,7 @@ describe('SteamSyncProcessor', () => {
 
       await processor.process(makeJob({ userId: 'user-1', steamId: 'steam-id' }));
 
-      expect(gamesService.create).toHaveBeenCalledWith(
-        'user-1',
-        expect.objectContaining({ genres: [] }),
-      );
+      expect(gamesService.create).toHaveBeenCalledWith('user-1', expect.objectContaining({ genres: [] }));
     });
   });
 
@@ -168,9 +162,7 @@ describe('SteamSyncProcessor', () => {
   describe('process (existing games)', () => {
     it('updates playtimeHours for a game that already exists in the library', async () => {
       const existingGame = makeUserGame();
-      steamService.getOwnedGames.mockResolvedValue([
-        makeSteamGame({ playtime_forever: 6000 }),
-      ]);
+      steamService.getOwnedGames.mockResolvedValue([makeSteamGame({ playtime_forever: 6000 })]);
       (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(existingGame);
       (prisma.userGame.update as jest.Mock).mockResolvedValue({});
       (prisma.userPlatform.update as jest.Mock).mockResolvedValue({});
@@ -224,10 +216,7 @@ describe('SteamSyncProcessor', () => {
     });
 
     it('processes multiple Steam games in a single job', async () => {
-      const steamGames = [
-        makeSteamGame({ appid: 1, name: 'Game A' }),
-        makeSteamGame({ appid: 2, name: 'Game B' }),
-      ];
+      const steamGames = [makeSteamGame({ appid: 1, name: 'Game A' }), makeSteamGame({ appid: 2, name: 'Game B' })];
       steamService.getOwnedGames.mockResolvedValue(steamGames);
       (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(null);
       igdbService.search

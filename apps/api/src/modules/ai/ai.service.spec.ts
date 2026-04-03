@@ -2,16 +2,19 @@ import { ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { Mood } from '@grimoire/shared';
+
 import { PrismaService } from '../../prisma/prisma.service';
 import { GamesService } from '../games/games.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { AiService } from './ai.service';
 import { ClaudeProvider } from './providers/claude.provider';
 import { GrokProvider } from './providers/grok.provider';
+import { OllamaProvider } from './providers/ollama.provider';
 
 const MOCK_REQUEST: import('@grimoire/shared').RecommendationRequest = {
-  userId: 'user-1',
-  moods: ['chill'],
+  userID: 'user-1',
+  moods: [Mood.CHILL],
   sessionLengthMinutes: 60,
 };
 
@@ -50,6 +53,10 @@ describe('AiService._checkAndIncrementAiUsage (via buildContext)', () => {
         },
         {
           provide: ClaudeProvider,
+          useValue: { recommend: jest.fn() },
+        },
+        {
+          provide: OllamaProvider,
           useValue: { recommend: jest.fn() },
         },
       ],

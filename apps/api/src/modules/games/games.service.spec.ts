@@ -117,7 +117,7 @@ describe('GamesService', () => {
       expect(result).toEqual([]);
     });
 
-    it('scopes the query to the requesting user — never leaks another user\'s games', async () => {
+    it("scopes the query to the requesting user — never leaks another user's games", async () => {
       (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
 
       await service.findAll('user-2');
@@ -134,8 +134,8 @@ describe('GamesService', () => {
 
       const [result] = await service.findAll('user-1');
 
-      expect(result.steamAppId).toBeUndefined();
-      expect(result.coverUrl).toBeUndefined();
+      expect(result.steamAppID).toBeUndefined();
+      expect(result.coverURL).toBeUndefined();
       expect(result.userRating).toBeUndefined();
       expect(result.notes).toBeUndefined();
     });
@@ -147,8 +147,8 @@ describe('GamesService', () => {
 
       const [result] = await service.findAll('user-1');
 
-      expect(result.steamAppId).toBe(730);
-      expect(result.coverUrl).toBe('https://img.example.com/cover.jpg');
+      expect(result.steamAppID).toBe(730);
+      expect(result.coverURL).toBe('https://img.example.com/cover.jpg');
       expect(result.userRating).toBe(9);
       expect(result.notes).toBe('Great!');
     });
@@ -201,8 +201,8 @@ describe('GamesService', () => {
 
       const result = await service.findOne('user-1', 'game-1');
 
-      expect(result.steamAppId).toBeUndefined();
-      expect(result.coverUrl).toBeUndefined();
+      expect(result.steamAppID).toBeUndefined();
+      expect(result.coverURL).toBeUndefined();
       expect(result.userRating).toBeUndefined();
       expect(result.notes).toBeUndefined();
     });
@@ -220,13 +220,13 @@ describe('GamesService', () => {
 
       expect(result).toMatchObject<Partial<GameResponse>>({
         id: 'game-1',
-        userId: 'user-1',
-        igdbId: 12345,
-        steamAppId: 570,
+        userID: 'user-1',
+        igdbID: 12345,
+        steamAppID: 570,
         title: 'The Witcher 3',
-        coverUrl: 'https://example.com/cover.png',
+        coverURL: 'https://example.com/cover.png',
         genres: ['RPG', 'Open World'],
-        status: 'PLAYING',
+        status: GameStatus.PLAYING,
         playtimeHours: 42,
         userRating: 8,
         notes: 'Brilliant',
@@ -282,8 +282,8 @@ describe('GamesService', () => {
       const result = await service.create('user-1', dto);
 
       // Raw Prisma object has null for optional fields; response must have undefined
-      expect(result.steamAppId).toBeUndefined();
-      expect(result.coverUrl).toBeUndefined();
+      expect(result.steamAppID).toBeUndefined();
+      expect(result.coverURL).toBeUndefined();
       expect(result.userRating).toBeUndefined();
       expect(result.notes).toBeUndefined();
     });
@@ -392,8 +392,8 @@ describe('GamesService', () => {
 
       const result = await service.update('user-1', 'game-1', dto);
 
-      expect(result.steamAppId).toBeUndefined();
-      expect(result.coverUrl).toBeUndefined();
+      expect(result.steamAppID).toBeUndefined();
+      expect(result.coverURL).toBeUndefined();
       expect(result.userRating).toBeUndefined();
       expect(result.notes).toBeUndefined();
     });
@@ -558,9 +558,7 @@ describe('GamesService', () => {
 
       await service.getStats('user-1');
 
-      expect(prisma.userGame.groupBy).toHaveBeenCalledWith(
-        expect.objectContaining({ by: ['status'], _count: true }),
-      );
+      expect(prisma.userGame.groupBy).toHaveBeenCalledWith(expect.objectContaining({ by: ['status'], _count: true }));
     });
 
     it('uses the correct aggregate sum field for total playtime', async () => {
@@ -570,9 +568,7 @@ describe('GamesService', () => {
 
       await service.getStats('user-1');
 
-      expect(prisma.userGame.aggregate).toHaveBeenCalledWith(
-        expect.objectContaining({ _sum: { playtimeHours: true } }),
-      );
+      expect(prisma.userGame.aggregate).toHaveBeenCalledWith(expect.objectContaining({ _sum: { playtimeHours: true } }));
     });
   });
 });

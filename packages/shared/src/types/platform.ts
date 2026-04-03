@@ -8,9 +8,9 @@ export enum Platform {
 
 export interface UserPlatform {
   id: string
-  userId: string
+  userID: string
   platform: Platform
-  externalId: string
+  externalID: string
   lastSyncAt?: Date
 }
 

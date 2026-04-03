@@ -1,10 +1,12 @@
+import {Mood} from '../constants';
+
 export interface PlaySession {
   id: string
-  userId: string
-  gameId: string
+  userID: string
+  gameID: string
   startedAt: Date
   endedAt?: Date
   durationMin?: number
-  mood: string[]
+  mood: Mood[]
   notes?: string
 }

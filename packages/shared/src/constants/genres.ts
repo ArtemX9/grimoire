@@ -1,18 +1,17 @@
-export const GENRES = [
-  'Action',
-  'RPG',
-  'Strategy',
-  'Horror',
-  'Gothic / Victorian',
-  'Sci-fi',
-  'Stealth',
-  'Platformer',
-  'Adventure',
-  'Noir',
-  'Souls-like',
-  'Shooter',
-  'Puzzle',
-  'Simulation',
-] as const
-
-export type Genre = typeof GENRES[number]
+export enum Genre {
+  Action = 'Action',
+  RPG = 'RPG',
+  Strategy = 'Strategy',
+  Horror = 'Horror',
+  GothicVictorian = 'Gothic / Victorian',
+  SciFi = 'Sci-fi',
+  Stealth = 'Stealth',
+  Platformer = 'Platformer',
+  Adventure = 'Adventure',
+  Noir = 'Noir',
+  SoulsLike = 'Souls-like',
+  Shooter = 'Shooter',
+  Puzzle = 'Puzzle',
+  Simulation = 'Simulation',
+  Metroidvania = 'Metroidvania',
+}

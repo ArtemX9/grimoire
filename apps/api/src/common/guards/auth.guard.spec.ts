@@ -1,14 +1,14 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { AuthGuard } from './auth.guard';
+
 // better-auth and its prisma adapter ship ESM-only and cannot be parsed by
 // Jest's CommonJS transform. Stub them out before any module that imports them
 // is evaluated. jest.mock calls are hoisted above imports by Babel/ts-jest.
 jest.mock('better-auth', () => ({ betterAuth: jest.fn(() => ({})) }));
 jest.mock('better-auth/adapters/prisma', () => ({ prismaAdapter: jest.fn() }));
-
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
-import { AuthGuard } from './auth.guard';
 
 function makeContext(headers: Record<string, string> = {}): ExecutionContext {
   const handler = () => {};
@@ -78,10 +78,7 @@ describe('AuthGuard', () => {
 
       await guard.canActivate(ctx);
 
-      expect(reflector.getAllAndOverride).toHaveBeenCalledWith(IS_PUBLIC_KEY, [
-        ctx.getHandler(),
-        ctx.getClass(),
-      ]);
+      expect(reflector.getAllAndOverride).toHaveBeenCalledWith(IS_PUBLIC_KEY, [ctx.getHandler(), ctx.getClass()]);
     });
   });
 

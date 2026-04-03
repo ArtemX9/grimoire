@@ -31,9 +31,9 @@ function GameCard({ game }: IGameCard) {
   function renderCover() {
     return (
       <div className='relative aspect-[3/4] w-full overflow-hidden bg-grimoire-hover'>
-        {game.coverUrl ? (
+        {game.coverURL ? (
           <img
-            src={game.coverUrl}
+            src={game.coverURL}
             alt={game.title}
             className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-105'
           />

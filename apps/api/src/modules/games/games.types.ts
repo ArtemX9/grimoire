@@ -1,12 +1,14 @@
+import { GameStatus } from '@grimoire/shared';
+
 export interface GameResponse {
   id: string;
-  userId: string;
-  igdbId: number;
-  steamAppId?: number;
+  userID: string;
+  igdbID: number;
+  steamAppID?: number;
   title: string;
-  coverUrl?: string;
+  coverURL?: string;
   genres: string[];
-  status: string;
+  status: GameStatus;
   playtimeHours: number;
   userRating?: number;
   notes?: string;

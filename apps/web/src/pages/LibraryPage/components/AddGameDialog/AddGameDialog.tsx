@@ -122,7 +122,7 @@ function AddGameDialog({
                 <span className='font-sans text-xs text-grimoire-muted'>
                   {game.genres
                     .slice(0, 2)
-                    .map((g) => g.name)
+                    .map((g) => g)
                     .join(', ')}
                 </span>
               )}

@@ -1,4 +1,4 @@
-import { IgdbGame } from '@grimoire/shared';
+import { Genre, IgdbGame } from '@grimoire/shared';
 import { describe, expect, it } from 'vitest';
 
 import reducer, {
@@ -22,7 +22,7 @@ function makeIgdbGame(overrides: Partial<IgdbGame> = {}): IgdbGame {
     id: 1,
     name: 'Elden Ring',
     cover: { url: '//images.igdb.com/igdb/image/upload/t_thumb/co4jni.jpg' },
-    genres: [{ name: 'Role-playing (RPG)' }],
+    genres: [Genre.RPG],
     summary: 'A dark fantasy action RPG.',
     first_release_date: 1645747200,
     total_rating: 96.4,

@@ -1,4 +1,4 @@
-import { MOODS } from '@grimoire/shared';
+import { Mood } from '@grimoire/shared';
 import { Sparkles } from 'lucide-react';
 
 import { cn } from '@/utils/cn';
@@ -53,7 +53,7 @@ function AiPanel({
       <div className={cn('flex flex-col gap-2', !aiEnabled && 'opacity-40')}>
         <p className='font-sans text-xs text-grimoire-muted'>How are you feeling?</p>
         <div className='flex flex-wrap gap-1.5'>
-          {MOODS.map((mood) => (
+          {Object.values(Mood).map((mood) => (
             <button
               key={mood}
               onClick={() => onMoodToggle(mood)}

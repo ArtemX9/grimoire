@@ -1,41 +1,26 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
+import { UserGame } from '@prisma/client';
+
 import { CreateGameDto, GameStatus, UpdateGameDto } from '@grimoire/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { GameResponse, GameStatsResponse } from './games.types';
 
-type PrismaGame = {
-  id: string;
-  userId: string;
-  igdbId: number;
-  steamAppId: number | null;
-  title: string;
-  coverUrl: string | null;
-  genres: string[];
-  status: string;
-  playtimeHours: number;
-  userRating: number | null;
-  notes: string | null;
-  moods: string[];
-  addedAt: Date;
-  updatedAt: Date;
-};
-
 @Injectable()
 export class GamesService {
   constructor(private prisma: PrismaService) {}
 
-  private _toResponse(game: PrismaGame): GameResponse {
+  private _toResponse(game: UserGame): GameResponse {
     return {
       id: game.id,
-      userId: game.userId,
-      igdbId: game.igdbId,
-      steamAppId: game.steamAppId ?? undefined,
+      userID: game.userId,
+      igdbID: game.igdbId,
+      steamAppID: game.steamAppId ?? undefined,
       title: game.title,
-      coverUrl: game.coverUrl ?? undefined,
+      coverURL: game.coverUrl ?? undefined,
       genres: game.genres,
-      status: game.status,
+      status: game.status as GameStatus,
       playtimeHours: game.playtimeHours,
       userRating: game.userRating ?? undefined,
       notes: game.notes ?? undefined,
