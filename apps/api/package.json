@@ -12,7 +12,14 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "prisma": "prisma"
+    "prisma": "prisma",
+    "seed": "tsx prisma/seed.ts",
+    "seed:test": "DOTENV_CONFIG_PATH=.env.test tsx prisma/seed.ts",
+    "migrate:test": "dotenv -e .env.test -- prisma migrate deploy",
+    "e2e:setup": "pnpm migrate:test && pnpm seed:test"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@grimoire/shared": "workspace:*",
@@ -37,6 +44,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "dotenv-cli": "^8.0.0",
     "@nestjs/cli": "^10.3.2",
     "@nestjs/testing": "^10.3.9",
     "@trivago/prettier-plugin-sort-imports": "^5.0.0",

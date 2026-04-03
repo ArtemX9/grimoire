@@ -51,8 +51,15 @@ export class AuthController {
       res.status(response.status);
       response.headers.forEach((value, key) => res.setHeader(key, value));
 
-      const body = await response.text();
-      res.send(body);
+      if (response.status === 200) {
+        const parsed = await response.json();
+        const extraUserInfo = await this.usersService.findById(parsed.user.id);
+        const user = { ...parsed.user, ...extraUserInfo };
+        res.send(JSON.stringify({ ...parsed, user }));
+      } else {
+        const body = await response.text();
+        res.send(body);
+      }
     } catch (error) {
       throw new ForbiddenException(error);
     }
