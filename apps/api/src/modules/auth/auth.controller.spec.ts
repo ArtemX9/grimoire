@@ -177,13 +177,16 @@ describe('AuthController', () => {
 
   describe('emailSignIn', () => {
     it('proxies a successful sign-in response to the client', async () => {
+      const fakeUser = { id: 'user-1', email: 'user@example.com' };
+      const extraInfo = { role: 'USER', plan: 'FREE', mustChangePassword: false };
       const fakeSignInResponse = {
         status: 200,
         headers: new Map([['set-cookie', 'session=new']]),
-        text: jest.fn().mockResolvedValue(JSON.stringify({ token: 'abc' })),
+        json: jest.fn().mockResolvedValue({ user: fakeUser, token: 'abc' }),
       };
 
       authApiMock.signInEmail.mockResolvedValue(fakeSignInResponse);
+      usersService.findById.mockResolvedValue(extraInfo);
 
       const req = { body: { email: 'user@example.com', password: 'secret' } } as any;
       const res = makeResponse() as any;
@@ -195,7 +198,8 @@ describe('AuthController', () => {
         asResponse: true,
       });
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.send).toHaveBeenCalledWith(JSON.stringify({ token: 'abc' }));
+      const sentBody = JSON.parse((res.send as jest.Mock).mock.calls[0][0]);
+      expect(sentBody.user).toMatchObject({ ...fakeUser, ...extraInfo });
     });
 
     it('proxies a 401 response when credentials are invalid', async () => {
@@ -228,10 +232,11 @@ describe('AuthController', () => {
       const fakeSignInResponse = {
         status: 200,
         headers: new Map([['set-cookie', 'session=abc']]),
-        text: jest.fn().mockResolvedValue('{}'),
+        json: jest.fn().mockResolvedValue({ user: { id: 'u1', email: 'u@u.com' } }),
       };
 
       authApiMock.signInEmail.mockResolvedValue(fakeSignInResponse);
+      usersService.findById.mockResolvedValue({});
 
       const req = { body: { email: 'u@u.com', password: 'pw' } } as any;
       const res = makeResponse() as any;
@@ -245,8 +250,9 @@ describe('AuthController', () => {
       authApiMock.signInEmail.mockResolvedValue({
         status: 200,
         headers: new Map(),
-        text: jest.fn().mockResolvedValue('{}'),
+        json: jest.fn().mockResolvedValue({ user: { id: 'u1', email: 'admin@company.com' } }),
       });
+      usersService.findById.mockResolvedValue({});
 
       const req = { body: { email: 'admin@company.com', password: 'strongPw!' } } as any;
       const res = makeResponse() as any;

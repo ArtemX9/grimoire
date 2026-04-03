@@ -52,14 +52,7 @@ const igdbSlice = createSlice({
   },
 });
 
-export const {
-  searchLoadingStarted,
-  searchLoaded,
-  searchFailed,
-  searchCleared,
-  igdbGameLoadingStarted,
-  igdbGameLoaded,
-  igdbGameFailed,
-} = igdbSlice.actions;
+export const { searchLoadingStarted, searchLoaded, searchFailed, searchCleared, igdbGameLoadingStarted, igdbGameLoaded, igdbGameFailed } =
+  igdbSlice.actions;
 
 export default igdbSlice.reducer;

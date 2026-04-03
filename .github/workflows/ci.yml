@@ -97,6 +97,9 @@ jobs:
       - name: Build shared package
         run: pnpm --filter shared build
 
+      - name: Generate Prisma client
+        run: pnpm --filter api prisma generate
+
       - name: Migrate and seed database
         run: pnpm --filter api e2e:setup
 

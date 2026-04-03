@@ -358,7 +358,12 @@ describe('adminSlice — statsLoaded', () => {
 
   it('overwrites previous stats', () => {
     const first = reducer(initialState, statsLoaded(makeStats({ users: [] })));
-    const next = reducer(first, statsLoaded(makeStats({ users: [{ id: 'u-99', email: 'x@x.com', gamesCount: 9, sessionsCount: 1, aiRequestsUsed: 0, aiRequestsLimit: null }] })));
+    const next = reducer(
+      first,
+      statsLoaded(
+        makeStats({ users: [{ id: 'u-99', email: 'x@x.com', gamesCount: 9, sessionsCount: 1, aiRequestsUsed: 0, aiRequestsLimit: null }] }),
+      ),
+    );
 
     expect(next.stats?.users).toHaveLength(1);
     expect(next.stats?.users[0].id).toBe('u-99');

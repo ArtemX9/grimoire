@@ -210,7 +210,7 @@ describe('igdbSlice — igdbGameLoadingStarted', () => {
 
 describe('igdbSlice — igdbGameLoaded', () => {
   it('stores the game and clears isSelectedGameLoading', () => {
-    const game = makeIgdbGame({ id: 10, name: 'Demon\'s Souls' });
+    const game = makeIgdbGame({ id: 10, name: "Demon's Souls" });
     const loading = reducer(initialState, igdbGameLoadingStarted());
     const next = reducer(loading, igdbGameLoaded(game));
 
