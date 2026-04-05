@@ -3,6 +3,7 @@ export enum Platform {
   PSN = 'PSN',
   XBOX = 'XBOX',
   EPIC = 'EPIC',
+  RETROACHIEVEMENTS = 'RETROACHIEVEMENTS',
   MANUAL = 'MANUAL',
 }
 

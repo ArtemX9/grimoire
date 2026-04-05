@@ -38,13 +38,13 @@
     "bullmq": "^5.7.0",
     "class-transformer": "^0.5.1",
     "pg": "^8.20.0",
+    "psn-api": "^2.18.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "zod": "^4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
-    "dotenv-cli": "^8.0.0",
     "@nestjs/cli": "^10.3.2",
     "@nestjs/testing": "^10.3.9",
     "@trivago/prettier-plugin-sort-imports": "^5.0.0",
@@ -54,6 +54,7 @@
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.12",
     "@types/pg": "^8.20.0",
+    "dotenv-cli": "^8.0.0",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-import": "^2.31.0",

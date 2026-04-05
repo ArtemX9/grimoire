@@ -4,7 +4,10 @@ import { useNavigate } from 'react-router-dom';
 
 import { api } from '@/api/api';
 import { useSignOutMutation } from '@/api/authApi';
+import { useConnectPsnMutation, useGetPsnStatusQuery, useSyncPsnMutation } from '@/api/psnApi';
+import { useConnectRaMutation, useGetRaStatusQuery, useSyncRaMutation } from '@/api/retroachievementsApi';
 import { useConnectSteamMutation, useGetSteamStatusQuery, useSyncSteamMutation } from '@/api/steamApi';
+import { useConnectXboxMutation, useGetXboxStatusQuery, useSyncXboxMutation } from '@/api/xboxApi';
 import { useGetMeQuery, useUpdateMeMutation } from '@/api/usersApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -142,49 +145,45 @@ function PlatformsSection() {
       <h2 className='mb-3 font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>Platform connections</h2>
       <div className='flex flex-col divide-y divide-grimoire-border rounded-lg border border-grimoire-border bg-grimoire-card'>
         <SteamRow />
-        <InactivePlatformRow label='PlayStation Network' />
-        <InactivePlatformRow label='Xbox' />
+        <PsnRow />
+        <XboxRow />
+        <RetroAchievementsRow />
         <InactivePlatformRow label='Epic Games' />
       </div>
     </section>
   );
 }
 
-function SteamRow() {
-  const { data: status, isLoading } = useGetSteamStatusQuery();
-  const [connectSteam, { isLoading: isConnecting }] = useConnectSteamMutation();
-  const [syncSteam, { isLoading: isSyncing }] = useSyncSteamMutation();
-  const [steamIdInput, setSteamIdInput] = useState('');
-  const [showInput, setShowInput] = useState(false);
+// ─── Shared platform row shell ───────────────────────────────────────────────
 
-  const connected = status?.connected ?? false;
+interface PlatformRowProps {
+  label: string;
+  isLoading: boolean;
+  connected: boolean;
+  lastSyncAt?: string;
+  isSyncing: boolean;
+  onSync: () => void;
+  showInput: boolean;
+  onShowInput: () => void;
+  inputNode: React.ReactNode;
+}
 
-  async function handleConnect() {
-    if (!steamIdInput.trim()) return;
-    try {
-      await connectSteam({ steamId: steamIdInput.trim() }).unwrap();
-      toast({ title: 'Steam account connected' });
-      setShowInput(false);
-      setSteamIdInput('');
-    } catch {
-      toast({ title: 'Failed to connect Steam', variant: 'destructive' });
-    }
-  }
-
-  async function handleSync() {
-    try {
-      await syncSteam().unwrap();
-      toast({ title: 'Steam sync started — this may take a moment' });
-    } catch {
-      toast({ title: 'Failed to start sync', variant: 'destructive' });
-    }
-  }
-
+function PlatformRow({
+  label,
+  isLoading,
+  connected,
+  lastSyncAt,
+  isSyncing,
+  onSync,
+  showInput,
+  onShowInput,
+  inputNode,
+}: PlatformRowProps) {
   return (
     <div className='flex flex-col gap-3 px-4 py-4'>
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-2'>
-          <span className='font-sans text-sm text-grimoire-ink'>Steam</span>
+          <span className='font-sans text-sm text-grimoire-ink'>{label}</span>
           {isLoading ? (
             <Skeleton className='h-4 w-16 rounded' />
           ) : connected ? (
@@ -203,7 +202,7 @@ function SteamRow() {
         <div className='flex items-center gap-2'>
           {connected && (
             <button
-              onClick={handleSync}
+              onClick={onSync}
               disabled={isSyncing}
               className={cn(
                 'flex items-center gap-1.5 rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink disabled:opacity-50',
@@ -215,7 +214,7 @@ function SteamRow() {
           )}
           {!connected && !showInput && (
             <button
-              onClick={() => setShowInput(true)}
+              onClick={onShowInput}
               className='rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
             >
               Connect
@@ -224,10 +223,10 @@ function SteamRow() {
         </div>
       </div>
 
-      {status?.lastSyncAt && (
+      {lastSyncAt && (
         <p className='font-sans text-xs text-grimoire-muted'>
           Last synced:{' '}
-          {new Date(status.lastSyncAt).toLocaleDateString('en-US', {
+          {new Date(lastSyncAt).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
@@ -237,26 +236,269 @@ function SteamRow() {
         </p>
       )}
 
-      {showInput && (
+      {showInput && inputNode}
+    </div>
+  );
+}
+
+// ─── Steam ───────────────────────────────────────────────────────────────────
+
+function SteamRow() {
+  const { data: status, isLoading } = useGetSteamStatusQuery();
+  const [connectSteam, { isLoading: isConnecting }] = useConnectSteamMutation();
+  const [syncSteam, { isLoading: isSyncing }] = useSyncSteamMutation();
+  const [input, setInput] = useState('');
+  const [showInput, setShowInput] = useState(false);
+
+  const connected = status?.connected ?? false;
+
+  async function handleConnect() {
+    if (!input.trim()) return;
+    try {
+      await connectSteam({ steamId: input.trim() }).unwrap();
+      toast({ title: 'Steam account connected' });
+      setShowInput(false);
+      setInput('');
+    } catch {
+      toast({ title: 'Failed to connect Steam', variant: 'destructive' });
+    }
+  }
+
+  async function handleSync() {
+    try {
+      await syncSteam().unwrap();
+      toast({ title: 'Steam sync started — this may take a moment' });
+    } catch {
+      toast({ title: 'Failed to start sync', variant: 'destructive' });
+    }
+  }
+
+  return (
+    <PlatformRow
+      label='Steam'
+      isLoading={isLoading}
+      connected={connected}
+      lastSyncAt={status?.lastSyncAt}
+      isSyncing={isSyncing}
+      onSync={handleSync}
+      showInput={showInput}
+      onShowInput={() => setShowInput(true)}
+      inputNode={
         <div className='flex gap-2'>
           <Input
-            value={steamIdInput}
-            onChange={(e) => setSteamIdInput(e.target.value)}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
             placeholder='Your Steam ID (e.g. 76561198…)'
             autoFocus
             onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
           />
-          <Button size='sm' onClick={handleConnect} disabled={isConnecting || !steamIdInput.trim()}>
+          <Button size='sm' onClick={handleConnect} disabled={isConnecting || !input.trim()}>
             {isConnecting ? 'Connecting…' : 'Save'}
           </Button>
           <Button variant='ghost' size='sm' onClick={() => setShowInput(false)}>
             Cancel
           </Button>
         </div>
-      )}
-    </div>
+      }
+    />
   );
 }
+
+// ─── PSN ─────────────────────────────────────────────────────────────────────
+
+function PsnRow() {
+  const { data: status, isLoading } = useGetPsnStatusQuery();
+  const [connectPsn, { isLoading: isConnecting }] = useConnectPsnMutation();
+  const [syncPsn, { isLoading: isSyncing }] = useSyncPsnMutation();
+  const [input, setInput] = useState('');
+  const [showInput, setShowInput] = useState(false);
+
+  const connected = status?.connected ?? false;
+
+  async function handleConnect() {
+    if (!input.trim()) return;
+    try {
+      await connectPsn({ psnUsername: input.trim() }).unwrap();
+      toast({ title: 'PlayStation Network account connected' });
+      setShowInput(false);
+      setInput('');
+    } catch {
+      toast({ title: 'Failed to connect PSN', variant: 'destructive' });
+    }
+  }
+
+  async function handleSync() {
+    try {
+      await syncPsn().unwrap();
+      toast({ title: 'PSN sync started — make sure your profile is set to Public' });
+    } catch {
+      toast({ title: 'Failed to start PSN sync', variant: 'destructive' });
+    }
+  }
+
+  return (
+    <PlatformRow
+      label='PlayStation Network'
+      isLoading={isLoading}
+      connected={connected}
+      lastSyncAt={status?.lastSyncAt}
+      isSyncing={isSyncing}
+      onSync={handleSync}
+      showInput={showInput}
+      onShowInput={() => setShowInput(true)}
+      inputNode={
+        <div className='flex flex-col gap-2'>
+          <p className='font-sans text-xs text-grimoire-muted'>
+            Your PSN profile must be set to <strong>Public</strong> in PlayStation privacy settings.
+          </p>
+          <div className='flex gap-2'>
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder='Your PSN username'
+              autoFocus
+              onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
+            />
+            <Button size='sm' onClick={handleConnect} disabled={isConnecting || !input.trim()}>
+              {isConnecting ? 'Connecting…' : 'Save'}
+            </Button>
+            <Button variant='ghost' size='sm' onClick={() => setShowInput(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      }
+    />
+  );
+}
+
+// ─── Xbox ─────────────────────────────────────────────────────────────────────
+
+function XboxRow() {
+  const { data: status, isLoading } = useGetXboxStatusQuery();
+  const [connectXbox, { isLoading: isConnecting }] = useConnectXboxMutation();
+  const [syncXbox, { isLoading: isSyncing }] = useSyncXboxMutation();
+  const [input, setInput] = useState('');
+  const [showInput, setShowInput] = useState(false);
+
+  const connected = status?.connected ?? false;
+
+  async function handleConnect() {
+    if (!input.trim()) return;
+    try {
+      await connectXbox({ gamertag: input.trim() }).unwrap();
+      toast({ title: 'Xbox account connected' });
+      setShowInput(false);
+      setInput('');
+    } catch {
+      toast({ title: 'Failed to connect Xbox', variant: 'destructive' });
+    }
+  }
+
+  async function handleSync() {
+    try {
+      await syncXbox().unwrap();
+      toast({ title: 'Xbox sync started — this may take a moment' });
+    } catch {
+      toast({ title: 'Failed to start Xbox sync', variant: 'destructive' });
+    }
+  }
+
+  return (
+    <PlatformRow
+      label='Xbox'
+      isLoading={isLoading}
+      connected={connected}
+      lastSyncAt={status?.lastSyncAt}
+      isSyncing={isSyncing}
+      onSync={handleSync}
+      showInput={showInput}
+      onShowInput={() => setShowInput(true)}
+      inputNode={
+        <div className='flex gap-2'>
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder='Your Xbox gamertag'
+            autoFocus
+            onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
+          />
+          <Button size='sm' onClick={handleConnect} disabled={isConnecting || !input.trim()}>
+            {isConnecting ? 'Connecting…' : 'Save'}
+          </Button>
+          <Button variant='ghost' size='sm' onClick={() => setShowInput(false)}>
+            Cancel
+          </Button>
+        </div>
+      }
+    />
+  );
+}
+
+// ─── RetroAchievements ────────────────────────────────────────────────────────
+
+function RetroAchievementsRow() {
+  const { data: status, isLoading } = useGetRaStatusQuery();
+  const [connectRa, { isLoading: isConnecting }] = useConnectRaMutation();
+  const [syncRa, { isLoading: isSyncing }] = useSyncRaMutation();
+  const [input, setInput] = useState('');
+  const [showInput, setShowInput] = useState(false);
+
+  const connected = status?.connected ?? false;
+
+  async function handleConnect() {
+    if (!input.trim()) return;
+    try {
+      await connectRa({ raUsername: input.trim() }).unwrap();
+      toast({ title: 'RetroAchievements account connected' });
+      setShowInput(false);
+      setInput('');
+    } catch {
+      toast({ title: 'Failed to connect RetroAchievements', variant: 'destructive' });
+    }
+  }
+
+  async function handleSync() {
+    try {
+      await syncRa().unwrap();
+      toast({ title: 'RetroAchievements sync started' });
+    } catch {
+      toast({ title: 'Failed to start RetroAchievements sync', variant: 'destructive' });
+    }
+  }
+
+  return (
+    <PlatformRow
+      label='RetroAchievements'
+      isLoading={isLoading}
+      connected={connected}
+      lastSyncAt={status?.lastSyncAt}
+      isSyncing={isSyncing}
+      onSync={handleSync}
+      showInput={showInput}
+      onShowInput={() => setShowInput(true)}
+      inputNode={
+        <div className='flex gap-2'>
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder='Your RetroAchievements username'
+            autoFocus
+            onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
+          />
+          <Button size='sm' onClick={handleConnect} disabled={isConnecting || !input.trim()}>
+            {isConnecting ? 'Connecting…' : 'Save'}
+          </Button>
+          <Button variant='ghost' size='sm' onClick={() => setShowInput(false)}>
+            Cancel
+          </Button>
+        </div>
+      }
+    />
+  );
+}
+
+// ─── Inactive (coming soon) ───────────────────────────────────────────────────
 
 interface IInactivePlatformRow {
   label: string;
