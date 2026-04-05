@@ -152,5 +152,6 @@ enum Platform {
   PSN
   XBOX
   EPIC
+  RETROACHIEVEMENTS
   MANUAL
 }
