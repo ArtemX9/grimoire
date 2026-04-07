@@ -1,9 +1,10 @@
 import { Mood } from '@grimoire/shared';
 import { Sparkles } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 import { cn } from '@/utils/cn';
 
-const SESSION_OPTIONS = [60, 120, 240] as const;
+const SESSION_OPTIONS = [60, 120, 240, 480, 720] as const;
 
 interface IAiPanel {
   selectedMoods: string[];
@@ -31,7 +32,7 @@ function AiPanel({
       {renderHeader()}
       {renderMoods()}
       {renderSessionLength()}
-      {streamedTokens && renderRecommendation()}
+      {renderRecommendation()}
       {renderButton()}
     </aside>
   );
@@ -101,12 +102,34 @@ function AiPanel({
   }
 
   function renderRecommendation() {
+    if (!streamedTokens && !isStreaming) {
+      return (
+        <div className='rounded border border-grimoire-border bg-grimoire-deep p-3'>
+          <p className='font-sans text-xs text-grimoire-faint text-center leading-relaxed'>Select moods and ask for a recommendation</p>
+        </div>
+      );
+    }
+
     return (
       <div className='rounded border border-grimoire-border bg-grimoire-deep p-3'>
-        <p className='font-grimoire text-sm leading-relaxed text-grimoire-ink'>
-          {streamedTokens}
-          {isStreaming && <span className='ml-0.5 inline-block h-4 w-px animate-pulse bg-grimoire-gold' />}
-        </p>
+        <div
+          className={cn(
+            'font-grimoire text-sm leading-relaxed text-grimoire-ink',
+            '[&_h1]:font-grimoire [&_h1]:text-base [&_h1]:font-normal [&_h1]:text-grimoire-ink [&_h1]:mb-1',
+            '[&_h2]:font-grimoire [&_h2]:text-sm [&_h2]:font-normal [&_h2]:text-grimoire-ink [&_h2]:mb-1',
+            '[&_h3]:font-grimoire [&_h3]:text-sm [&_h3]:font-normal [&_h3]:text-grimoire-ink [&_h3]:mb-1',
+            '[&_p]:mb-2 [&_p:last-child]:mb-0',
+            '[&_ul]:mb-2 [&_ul]:pl-4 [&_ul]:list-disc [&_ul:last-child]:mb-0',
+            '[&_ol]:mb-2 [&_ol]:pl-4 [&_ol]:list-decimal [&_ol:last-child]:mb-0',
+            '[&_li]:mb-0.5',
+            '[&_strong]:text-grimoire-ink [&_strong]:font-semibold',
+            '[&_em]:text-grimoire-muted [&_em]:italic',
+            '[&_code]:font-mono [&_code]:text-xs [&_code]:text-grimoire-muted [&_code]:bg-grimoire-hover [&_code]:px-1 [&_code]:rounded',
+          )}
+        >
+          <ReactMarkdown>{streamedTokens}</ReactMarkdown>
+          {isStreaming && <span className='inline-block h-4 w-px animate-pulse bg-grimoire-gold ml-0.5 align-middle' />}
+        </div>
       </div>
     );
   }

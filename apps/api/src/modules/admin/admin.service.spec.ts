@@ -3,6 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import * as bcryptjs from 'bcryptjs';
 
+import { Role } from '@grimoire/shared';
+
 import { PrismaService } from '../../prisma/prisma.service';
 import { AdminService } from './admin.service';
 
@@ -53,6 +55,7 @@ describe('AdminService', () => {
               create: jest.fn(),
               findMany: jest.fn(),
               findUnique: jest.fn(),
+              update: jest.fn(),
               delete: jest.fn(),
             },
             account: {
@@ -165,6 +168,67 @@ describe('AdminService', () => {
 
       await expect(service.deleteUser('admin-id', 'other-id')).resolves.toBeUndefined();
       expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: 'other-id' } });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // updateUserRole
+  // ---------------------------------------------------------------------------
+
+  describe('updateUserRole', () => {
+    it('throws BadRequestException when adminUserID equals targetUserID', async () => {
+      await expect(service.updateUserRole('admin-id', 'admin-id', Role.USER)).rejects.toThrow(BadRequestException);
+      await expect(service.updateUserRole('admin-id', 'admin-id', Role.USER)).rejects.toThrow('Cannot change your own role');
+    });
+
+    it('throws NotFoundException when the target user does not exist', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.updateUserRole('admin-id', 'other-id', Role.USER)).rejects.toThrow(NotFoundException);
+      await expect(service.updateUserRole('admin-id', 'other-id', Role.USER)).rejects.toThrow('User not found');
+    });
+
+    it('calls prisma.user.update with the correct where and data args', async () => {
+      const targetRow = makeAdminUserRow({ id: 'other-id', role: 'USER' });
+      const updatedRow = makeAdminUserRow({ id: 'other-id', role: 'ADMIN' });
+
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(targetRow);
+      (prisma.user.update as jest.Mock).mockResolvedValue(updatedRow);
+
+      await service.updateUserRole('admin-id', 'other-id', Role.ADMIN);
+
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'other-id' },
+          data: { role: Role.ADMIN },
+        }),
+      );
+    });
+
+    it('returns the mapped AdminUserResponse of the updated user', async () => {
+      const targetRow = makeAdminUserRow({ id: 'other-id', role: 'USER' });
+      const updatedRow = makeAdminUserRow({ id: 'other-id', role: 'ADMIN' });
+
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(targetRow);
+      (prisma.user.update as jest.Mock).mockResolvedValue(updatedRow);
+
+      const result = await service.updateUserRole('admin-id', 'other-id', Role.ADMIN);
+
+      expect(result.id).toBe('other-id');
+      expect(result.role).toBe('ADMIN');
+      expect(result.gamesCount).toBe(0);
+    });
+
+    it('does not call prisma.user.update when the self-change guard fires', async () => {
+      await expect(service.updateUserRole('same-id', 'same-id', Role.USER)).rejects.toThrow(BadRequestException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    it('does not call prisma.user.update when the target user is not found', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.updateUserRole('admin-id', 'ghost-id', Role.USER)).rejects.toThrow(NotFoundException);
+      expect(prisma.user.update).not.toHaveBeenCalled();
     });
   });
 });

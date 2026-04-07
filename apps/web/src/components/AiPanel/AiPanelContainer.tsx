@@ -1,8 +1,9 @@
 import { Mood } from '@grimoire/shared';
+import { useEffect } from 'react';
 
 import { useGetMeQuery } from '@/api/usersApi';
 import { useAiStream } from '@/hooks/useAiStream';
-import { setSessionLength, toggleMood } from '@/store/aiSlice';
+import { AI_LAST_RECOMMENDATION_KEY, loadRecommendation, setSessionLength, toggleMood } from '@/store/aiSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 
 import AiPanel from './AiPanel';
@@ -14,6 +15,23 @@ function AiPanelContainer() {
   const { streamRecommendation } = useAiStream(me);
 
   const aiEnabled = me?.aiEnabled ?? true;
+
+  useEffect(function rehydrateFromLocalStorage() {
+    if (streamedTokens) return;
+    const saved = localStorage.getItem(AI_LAST_RECOMMENDATION_KEY);
+    if (saved) {
+      dispatch(loadRecommendation(saved));
+    }
+  }, []);
+
+  useEffect(
+    function persistRecommendationToLocalStorage() {
+      if (!isStreaming && streamedTokens) {
+        localStorage.setItem(AI_LAST_RECOMMENDATION_KEY, streamedTokens);
+      }
+    },
+    [isStreaming, streamedTokens],
+  );
 
   function handleMoodToggle(mood: string) {
     dispatch(toggleMood(mood as Mood));

@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } fr
 
 import { z } from 'zod';
 
-import { Plan } from '@grimoire/shared';
+import { Plan, Role } from '@grimoire/shared';
 
 import { AdminOnly } from '../../common/decorators/admin-only.decorator';
 import { CurrentUser, RequestUser } from '../../common/decorators/current-user.decorator';
@@ -41,7 +41,11 @@ const ListUsersQuerySchema = z.object({
 });
 
 const UpdateUserPlanSchema = z.object({
-  plan: z.nativeEnum(Plan),
+  plan: z.enum(Plan),
+});
+
+const UpdateUserRoleSchema = z.object({
+  role: z.enum(Role),
 });
 
 type SetupAdminDto = z.infer<typeof SetupAdminSchema>;
@@ -50,6 +54,7 @@ type UpdateAiSettingsDto = z.infer<typeof UpdateAiSettingsSchema>;
 type UpdateUserAiDto = z.infer<typeof UpdateUserAiSchema>;
 type ListUsersQuery = z.infer<typeof ListUsersQuerySchema>;
 type UpdateUserPlanDto = z.infer<typeof UpdateUserPlanSchema>;
+type UpdateUserRoleDto = z.infer<typeof UpdateUserRoleSchema>;
 
 @Controller('admin')
 export class AdminController {
@@ -93,6 +98,16 @@ export class AdminController {
     @Body(new ZodValidationPipe(UpdateUserPlanSchema)) body: UpdateUserPlanDto,
   ) {
     return this.adminService.updateUserPlan(user.id, id, body.plan);
+  }
+
+  @Patch('users/:id/role')
+  @AdminOnly()
+  updateUserRole(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateUserRoleSchema)) body: UpdateUserRoleDto,
+  ) {
+    return this.adminService.updateUserRole(user.id, id, body.role);
   }
 
   @Get('stats')

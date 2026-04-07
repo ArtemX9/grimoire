@@ -15,8 +15,12 @@ export class AuthService {
     private config: ConfigService,
     private prisma: PrismaService,
   ) {
+    const trustedOrigins = (this.config.get<string>('app.cors.origin') ?? 'http://localhost:5173').split(',').map((o) => o.trim());
+
     this.auth = betterAuth({
       secret: this.config.get<string>('app.auth.secret'),
+      baseURL: this.config.get<string>('app.auth.url'),
+      trustedOrigins,
       database: prismaAdapter(this.prisma, { provider: 'postgresql' }),
       emailAndPassword: {
         enabled: true,

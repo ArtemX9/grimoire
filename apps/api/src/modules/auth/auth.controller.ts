@@ -23,7 +23,7 @@ export class AuthController {
         returnHeaders: true,
         // asResponse: true
       });
-      res.status(response.response ? 200 : 400);
+      res.status(200);
       let body = '';
       if (response.response) {
         const extraUserInfo = await this.usersService.findById(response.response.user.id);

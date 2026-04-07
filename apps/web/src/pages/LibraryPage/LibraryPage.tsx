@@ -1,9 +1,16 @@
 import { GameStatus } from '@grimoire/shared';
-import { Plus } from 'lucide-react';
+import { Plus, Sparkles, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { useGetGameStatsQuery } from '@/api/gamesApi';
 import AiPanelContainer from '@/components/AiPanel/AiPanelContainer';
+import {
+  BottomDrawer,
+  BottomDrawerClose,
+  BottomDrawerContent,
+  BottomDrawerOverlay,
+  BottomDrawerPortal,
+} from '@/components/ui/bottom-drawer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import AddGameDialogContainer from '@/pages/LibraryPage/components/AddGameDialog/AddGameDialogContainer';
@@ -15,9 +22,9 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 export function LibraryPage() {
   const dispatch = useAppDispatch();
   const filters = useAppSelector((s) => s.filters);
-  const stats = useAppSelector((s) => s.games.stats);
-  const statsLoading = useAppSelector((s) => s.games.isStatsLoading);
+  const { stats, isStatsLoading } = useAppSelector((s) => s.games);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
 
   // Trigger the RTK Query fetch so onQueryStarted populates the slice.
   useGetGameStatsQuery();
@@ -73,12 +80,40 @@ export function LibraryPage() {
         <AiPanelContainer />
       </div>
 
+      <button
+        onClick={() => setAiDrawerOpen(true)}
+        aria-label='Open AI recommendations'
+        className='fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-grimoire-gold text-grimoire-deep shadow-lg transition-colors hover:bg-grimoire-gold-bright lg:hidden'
+      >
+        <Sparkles className='h-5 w-5' />
+      </button>
+
+      <BottomDrawer open={aiDrawerOpen} onOpenChange={setAiDrawerOpen}>
+        <BottomDrawerPortal>
+          <BottomDrawerOverlay />
+          <BottomDrawerContent>
+            <div className='rounded-t-xl border-t border-grimoire-border bg-grimoire-card'>
+              <div className='flex items-center justify-between border-b border-grimoire-border px-4 py-3'>
+                <span className='font-grimoire text-sm text-grimoire-ink'>Tonight&apos;s pick</span>
+                <BottomDrawerClose className='rounded p-1 text-grimoire-muted transition-colors hover:text-grimoire-ink'>
+                  <X className='h-4 w-4' />
+                  <span className='sr-only'>Close</span>
+                </BottomDrawerClose>
+              </div>
+              <ScrollArea className='max-h-[70svh]'>
+                <AiPanelContainer />
+              </ScrollArea>
+            </div>
+          </BottomDrawerContent>
+        </BottomDrawerPortal>
+      </BottomDrawer>
+
       <AddGameDialogContainer open={addDialogOpen} onOpenChange={setAddDialogOpen} />
     </div>
   );
 
   function renderStats() {
-    if (statsLoading) {
+    if (isStatsLoading) {
       return (
         <div className='flex items-center gap-3'>
           <Skeleton className='h-4 w-16 rounded' />

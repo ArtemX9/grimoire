@@ -1,3 +1,4 @@
+import { Role } from '@grimoire/shared';
 import { useState } from 'react';
 
 import {
@@ -7,6 +8,7 @@ import {
   useUpdateAiGlobalSettingsMutation,
   useUpdateUserAiSettingsMutation,
   useUpdateUserPlanMutation,
+  useUpdateUserRoleMutation,
 } from '@/api/adminApi';
 import { useAppSelector } from '@/store/hooks';
 
@@ -22,11 +24,13 @@ export function AdminDashboardContainer() {
   const isUsersLoading = useAppSelector((s) => s.admin.isUsersLoading);
   const aiSettings = useAppSelector((s) => s.admin.aiSettings);
   const isAiSettingsLoading = useAppSelector((s) => s.admin.isAiSettingsLoading);
+  const currentUserID = useAppSelector((s) => s.auth.session?.user.id ?? null);
 
   const [deleteUser] = useDeleteAdminUserMutation();
   const [updateAiGlobal] = useUpdateAiGlobalSettingsMutation();
   const [updateUserAi] = useUpdateUserAiSettingsMutation();
   const [updateUserPlan] = useUpdateUserPlanMutation();
+  const [updateUserRole] = useUpdateUserRoleMutation();
 
   const globalAiEnabled = aiSettings?.aiEnabled ?? true;
   const isLoading = isUsersLoading || isAiSettingsLoading;
@@ -55,17 +59,23 @@ export function AdminDashboardContainer() {
     await updateUserPlan({ id, plan });
   }
 
+  async function handleRoleChange(userID: string, role: Role) {
+    await updateUserRole({ userID, role });
+  }
+
   return (
     <AdminDashboard
       users={users}
       isLoading={isLoading}
       globalAiEnabled={globalAiEnabled}
       isCreateDialogOpen={isCreateDialogOpen}
+      currentUserID={currentUserID}
       onToggleGlobalAi={handleToggleGlobalAi}
       onDeleteUser={handleDeleteUser}
       onAiEnabledChange={handleAiEnabledChange}
       onAiLimitChange={handleAiLimitChange}
       onPlanChange={handlePlanChange}
+      onRoleChange={handleRoleChange}
       onOpenCreateDialog={() => setIsCreateDialogOpen(true)}
       onCloseCreateDialog={() => setIsCreateDialogOpen(false)}
     />

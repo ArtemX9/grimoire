@@ -153,9 +153,9 @@ export class AdminService {
     await this.prisma.user.delete({ where: { id: targetId } });
   }
 
-  async updateUserPlan(adminId: string, targetId: string, plan: Plan): Promise<AdminUserResponse> {
+  async updateUserPlan(adminUserID: string, targetUserID: string, plan: Plan): Promise<AdminUserResponse> {
     const target = await this.prisma.user.findUnique({
-      where: { id: targetId },
+      where: { id: targetUserID },
       select: { role: true },
     });
     if (!target) throw new NotFoundException('User not found');
@@ -165,8 +165,25 @@ export class AdminService {
     }
 
     const updated = await this.prisma.user.update({
-      where: { id: targetId },
+      where: { id: targetUserID },
       data: { plan },
+      select: this.userSelect,
+    });
+
+    return this._toResponse(updated);
+  }
+
+  async updateUserRole(adminUserID: string, targetUserID: string, role: Role): Promise<AdminUserResponse> {
+    if (adminUserID === targetUserID) {
+      throw new BadRequestException('Cannot change your own role');
+    }
+
+    const target = await this.prisma.user.findUnique({ where: { id: targetUserID } });
+    if (!target) throw new NotFoundException('User not found');
+
+    const updated = await this.prisma.user.update({
+      where: { id: targetUserID },
+      data: { role },
       select: this.userSelect,
     });
 
