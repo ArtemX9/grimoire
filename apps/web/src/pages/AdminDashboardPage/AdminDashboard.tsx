@@ -1,3 +1,5 @@
+import { Role } from '@grimoire/shared';
+
 import { AdminUserRow } from '@/api/adminApi';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,11 +13,13 @@ interface IAdminDashboard {
   isLoading: boolean;
   globalAiEnabled: boolean;
   isCreateDialogOpen: boolean;
+  currentUserID: string | null;
   onToggleGlobalAi: (enabled: boolean) => void;
   onDeleteUser: (id: string) => void;
   onAiEnabledChange: (id: string, enabled: boolean) => void;
   onAiLimitChange: (id: string, limit: number | null) => void;
   onPlanChange: (id: string, plan: string) => void;
+  onRoleChange: (userID: string, role: Role) => void;
   onOpenCreateDialog: () => void;
   onCloseCreateDialog: () => void;
 }
@@ -25,11 +29,13 @@ export function AdminDashboard({
   isLoading,
   globalAiEnabled,
   isCreateDialogOpen,
+  currentUserID,
   onToggleGlobalAi,
   onDeleteUser,
   onAiEnabledChange,
   onAiLimitChange,
   onPlanChange,
+  onRoleChange,
   onOpenCreateDialog,
   onCloseCreateDialog,
 }: IAdminDashboard) {
@@ -88,10 +94,12 @@ export function AdminDashboard({
                   key={user.id}
                   user={user}
                   globalAiEnabled={globalAiEnabled}
+                  isSelf={user.id === currentUserID}
                   onDelete={onDeleteUser}
                   onAiEnabledChange={onAiEnabledChange}
                   onAiLimitChange={onAiLimitChange}
                   onPlanChange={onPlanChange}
+                  onRoleChange={onRoleChange}
                 />
               ))}
           </TableBody>

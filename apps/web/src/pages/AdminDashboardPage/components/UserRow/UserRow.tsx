@@ -21,10 +21,12 @@ import { Switch } from '@/components/ui/switch';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { cn } from '@/utils/cn';
 
-const ROLE_STYLES: Record<string, string> = {
-  ADMIN: 'border-grimoire-gold/40 bg-grimoire-gold/10 text-grimoire-gold',
-  USER: 'border-grimoire-border bg-grimoire-hover text-grimoire-muted',
+const ROLE_STYLES: Record<Role, string> = {
+  [Role.ADMIN]: 'border-grimoire-gold/40 bg-grimoire-gold/10 text-grimoire-gold',
+  [Role.USER]: 'border-grimoire-border bg-grimoire-hover text-grimoire-muted',
 };
+
+const ROLE_OPTIONS = [Role.ADMIN, Role.USER];
 
 const PLAN_STYLES: Record<Plan, string> = {
   [Plan.LIFETIME]: 'border-grimoire-gold-dim bg-grimoire-gold/10 text-grimoire-gold',
@@ -37,13 +39,24 @@ const PLAN_OPTIONS = [Plan.FREE, Plan.PRO, Plan.LIFETIME];
 interface IUserRow {
   user: AdminUserRow;
   globalAiEnabled: boolean;
+  isSelf: boolean;
   onDelete: (id: string) => void;
   onAiEnabledChange: (id: string, enabled: boolean) => void;
   onAiLimitChange: (id: string, limit: number | null) => void;
   onPlanChange: (id: string, plan: string) => void;
+  onRoleChange: (userID: string, role: Role) => void;
 }
 
-export function UserRow({ user, globalAiEnabled, onDelete, onAiEnabledChange, onAiLimitChange, onPlanChange }: IUserRow) {
+export function UserRow({
+  user,
+  globalAiEnabled,
+  isSelf,
+  onDelete,
+  onAiEnabledChange,
+  onAiLimitChange,
+  onPlanChange,
+  onRoleChange,
+}: IUserRow) {
   const [limitInput, setLimitInput] = useState(user.aiRequestsLimit !== null ? String(user.aiRequestsLimit) : '');
 
   function handleLimitBlur() {
@@ -72,9 +85,18 @@ export function UserRow({ user, globalAiEnabled, onDelete, onAiEnabledChange, on
       </TableCell>
 
       <TableCell>
-        <span className={cn('rounded-full border px-2 py-0.5 font-sans text-xs', ROLE_STYLES[user.role] ?? ROLE_STYLES.USER)}>
-          {user.role}
-        </span>
+        <Select value={user.role} onValueChange={(value) => onRoleChange(user.id, value as Role)} disabled={isSelf}>
+          <SelectTrigger className={cn('w-24 font-sans text-xs rounded-full border px-2 py-0.5 h-auto', ROLE_STYLES[user.role])}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ROLE_OPTIONS.map((role) => (
+              <SelectItem key={role} value={role} className='font-sans text-xs'>
+                {role}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </TableCell>
 
       <TableCell>

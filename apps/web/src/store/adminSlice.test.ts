@@ -323,6 +323,44 @@ describe('adminSlice — userPatched', () => {
 
     expect(next.users[0].aiEnabled).toBe(false);
   });
+
+  it('updates the role field when a role change is patched', () => {
+    const user = makeUser({ id: 'user-1', role: Role.USER });
+    const state = reducer(initialState, usersLoaded({ data: [user], total: 1 }));
+    const patched = makeUser({ id: 'user-1', role: Role.ADMIN });
+    const next = reducer(state, userPatched(patched));
+
+    expect(next.users[0].role).toBe(Role.ADMIN);
+  });
+
+  it('role change on one user does not affect another user role', () => {
+    const target = makeUser({ id: 'user-1', role: Role.USER });
+    const bystander = makeUser({ id: 'user-2', email: 'bob@grimoire.app', role: Role.USER });
+    let state = reducer(initialState, usersLoaded({ data: [target, bystander], total: 2 }));
+    state = reducer(state, userPatched(makeUser({ id: 'user-1', role: Role.ADMIN })));
+
+    const bystanderInList = state.users.find((u) => u.id === 'user-2');
+    expect(bystanderInList?.role).toBe(Role.USER);
+  });
+
+  it('role change to an unknown id is a no-op', () => {
+    const user = makeUser({ id: 'user-1', role: Role.USER });
+    const state = reducer(initialState, usersLoaded({ data: [user], total: 1 }));
+    const next = reducer(state, userPatched(makeUser({ id: 'ghost-id', role: Role.ADMIN })));
+
+    expect(next.users[0].role).toBe(Role.USER);
+  });
+
+  it('replaces the entire user record, not just the changed field', () => {
+    const user = makeUser({ id: 'user-1', role: Role.USER, plan: 'free', aiEnabled: true });
+    const state = reducer(initialState, usersLoaded({ data: [user], total: 1 }));
+    const patched = makeUser({ id: 'user-1', role: Role.ADMIN, plan: 'pro', aiEnabled: false });
+    const next = reducer(state, userPatched(patched));
+
+    expect(next.users[0].role).toBe(Role.ADMIN);
+    expect(next.users[0].plan).toBe('pro');
+    expect(next.users[0].aiEnabled).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------

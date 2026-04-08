@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { Job } from 'bullmq';
 
-import { Genre, GameStatus, Platform } from '@grimoire/shared';
+import { GameStatus, Genre, Platform } from '@grimoire/shared';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { GamesService } from '../../games/games.service';

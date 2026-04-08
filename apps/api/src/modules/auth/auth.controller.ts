@@ -23,15 +23,14 @@ export class AuthController {
         returnHeaders: true,
         // asResponse: true
       });
-      res.status(response.response ? 200 : 400);
-      let body = '';
       if (response.response) {
         const extraUserInfo = await this.usersService.findById(response.response.user.id);
         response.headers.forEach((value, key) => res.setHeader(key, value));
         const user = { ...response.response.user, ...extraUserInfo };
-        body = JSON.stringify({ ...response.response, user });
+        res.status(200).send(JSON.stringify({ ...response.response, user }));
+      } else {
+        res.status(400).send('');
       }
-      res.send(body);
     } catch (error) {
       throw new ForbiddenException(error);
     }

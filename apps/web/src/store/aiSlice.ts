@@ -3,6 +3,8 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 export const AI_SLICE = 'ai';
 
+export const AI_LAST_RECOMMENDATION_KEY = 'grimoire:ai:lastRecommendation';
+
 export interface AiState {
   selectedMoods: Mood[];
   sessionLengthMinutes: number;
@@ -42,9 +44,12 @@ const aiSlice = createSlice({
     stopStreaming: (state) => {
       state.isStreaming = false;
     },
+    loadRecommendation: (state, action: PayloadAction<string>) => {
+      state.streamedTokens = action.payload;
+    },
   },
 });
 
-export const { toggleMood, setSessionLength, appendToken, startStreaming, stopStreaming } = aiSlice.actions;
+export const { toggleMood, setSessionLength, appendToken, startStreaming, stopStreaming, loadRecommendation } = aiSlice.actions;
 
 export default aiSlice.reducer;

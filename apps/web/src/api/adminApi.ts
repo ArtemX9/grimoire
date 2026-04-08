@@ -74,6 +74,11 @@ export type UpdateUserPlanArgs = {
   plan: string;
 };
 
+export type UpdateUserRoleArgs = {
+  userID: string;
+  role: Role;
+};
+
 export type SetupAdminArgs = {
   email: string;
   password: string;
@@ -183,6 +188,19 @@ export const adminApi = api.injectEndpoints({
       },
     }),
 
+    updateUserRole: builder.mutation<AdminUserRow, UpdateUserRoleArgs>({
+      query: ({ userID, role }) => ({ url: `${BASE_URL_PATH}/users/${userID}/role`, method: 'PATCH', body: { role } }),
+      invalidatesTags: ['AdminUser'],
+      onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(userPatched(data));
+        } catch {
+          // leave slice state unchanged — component handles the error toast
+        }
+      },
+    }),
+
     setupAdmin: builder.mutation<AdminUserRow, SetupAdminArgs>({
       query: (body) => ({ url: `${BASE_URL_PATH}/setup`, method: 'POST', body }),
     }),
@@ -197,6 +215,7 @@ export const {
   useUpdateAiGlobalSettingsMutation,
   useUpdateUserAiSettingsMutation,
   useUpdateUserPlanMutation,
+  useUpdateUserRoleMutation,
   useGetAdminStatsQuery,
   useSetupAdminMutation,
 } = adminApi;

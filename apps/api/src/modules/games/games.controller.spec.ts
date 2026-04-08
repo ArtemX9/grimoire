@@ -1,11 +1,11 @@
-import {NotFoundException} from '@nestjs/common';
-import {Test, TestingModule} from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 
-import {GameStatus} from '@grimoire/shared';
+import { GameStatus } from '@grimoire/shared';
 
-import {GamesController} from './games.controller';
-import {GamesService} from './games.service';
-import {GameResponse, GameStatsResponse} from './games.types';
+import { GamesController } from './games.controller';
+import { GamesService } from './games.service';
+import { GameResponse, GameStatsResponse } from './games.types';
 
 // ---------------------------------------------------------------------------
 // Fixtures
