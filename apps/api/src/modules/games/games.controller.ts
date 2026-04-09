@@ -3,7 +3,6 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } f
 import { CreateGameSchema, GameStatus, UpdateGameSchema } from '@grimoire/shared';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { AuthGuard } from '../../common/guards/auth.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { GamesService } from './games.service';
 

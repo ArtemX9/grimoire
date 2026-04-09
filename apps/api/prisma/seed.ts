@@ -1,9 +1,10 @@
 import 'dotenv/config';
 
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@prisma/client';
+import {PrismaPg} from '@prisma/adapter-pg';
+import {PrismaClient} from '@prisma/client';
 import * as bcryptjs from 'bcryptjs';
 import * as pg from 'pg';
+import {GameStatus, Genre, Mood, Plan, Role} from '@grimoire/shared';
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -17,8 +18,8 @@ async function upsertUser(
   email: string,
   name: string,
   passwordHash: string,
-  role: 'USER' | 'ADMIN',
-  plan: 'FREE' | 'LIFETIME',
+  role: Role,
+  plan: Plan,
   mustChangePassword: boolean,
 ) {
   const user = await prisma.user.upsert({
@@ -59,8 +60,8 @@ async function main() {
     REGULAR_USER.email,
     REGULAR_USER.name,
     regularHash,
-    'USER',
-    'FREE',
+    Role.USER,
+    Plan.FREE,
     false,
   );
 
@@ -68,8 +69,8 @@ async function main() {
     REGULAR_USER_2.email,
     REGULAR_USER_2.name,
     regular2Hash,
-    'USER',
-    'FREE',
+    Role.USER,
+    Plan.FREE,
     false,
   );
 
@@ -77,8 +78,8 @@ async function main() {
     ADMIN_USER.email,
     ADMIN_USER.name,
     adminHash,
-    'ADMIN',
-    'LIFETIME',
+    Role.ADMIN,
+    Plan.LIFETIME,
     false,
   );
 
@@ -91,8 +92,8 @@ async function main() {
       igdbId: 1177,
       title: 'Hollow Knight',
       coverUrl: '//images.igdb.com/igdb/image/upload/t_cover_big/co1rgi.jpg',
-      genres: ['Platformer', 'Adventure'],
-      status: 'BACKLOG',
+      genres: [Genre.Platformer, Genre.Adventure],
+      status: GameStatus.BACKLOG,
       moods: [],
     },
   });
@@ -106,8 +107,8 @@ async function main() {
       igdbId: 26765,
       title: 'Celeste',
       coverUrl: '//images.igdb.com/igdb/image/upload/t_cover_big/co1tmu.jpg',
-      genres: ['Platformer', 'Adventure'],
-      status: 'COMPLETED',
+      genres: [Genre.Platformer, Genre.Adventure],
+      status: GameStatus.COMPLETED,
       moods: [],
     },
   });
@@ -124,7 +125,7 @@ async function main() {
         startedAt: new Date('2024-01-15T10:00:00Z'),
         endedAt: new Date('2024-01-15T12:00:00Z'),
         durationMin: 120,
-        mood: ['focused'],
+        mood: [Mood.FOCUSED],
       },
     });
   }
@@ -141,7 +142,7 @@ async function main() {
         startedAt: new Date('2024-02-20T18:00:00Z'),
         endedAt: new Date('2024-02-20T19:30:00Z'),
         durationMin: 90,
-        mood: ['relaxed'],
+        mood: [Mood.Relaxed],
       },
     });
   }

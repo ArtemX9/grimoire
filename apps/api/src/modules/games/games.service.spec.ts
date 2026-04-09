@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { GameStatus } from '@grimoire/shared';
+import { GameStatus, Genre, Mood } from '@grimoire/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { GamesService } from './games.service';
@@ -243,9 +243,9 @@ describe('GamesService', () => {
     const dto = {
       igdbId: 12345,
       title: 'The Witcher 3',
-      genres: ['RPG'],
+      genres: [Genre.RPG],
       status: GameStatus.BACKLOG,
-      moods: [] as string[],
+      moods: [] as Mood[],
     };
 
     it('upserts a game using the composite unique key (userId, igdbId)', async () => {
@@ -294,9 +294,9 @@ describe('GamesService', () => {
         steamAppId: 730,
         title: 'CS:GO',
         coverUrl: 'https://example.com/csgo.jpg',
-        genres: ['FPS'],
+        genres: [Genre.Shooter],
         status: GameStatus.PLAYING,
-        moods: ['competitive'],
+        moods: [Mood.INTENSE],
         notes: 'My favourite',
       };
       const upserted = makePrismaGame({ ...fullDto });

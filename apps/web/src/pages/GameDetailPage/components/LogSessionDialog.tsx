@@ -17,12 +17,12 @@ interface ILogSessionDialog {
 
 function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
   const [durationMin, setDurationMin] = useState('');
-  const [selectedMoods, setSelectedMoods] = useState<string[]>([]);
+  const [selectedMoods, setSelectedMoods] = useState<Mood[]>([]);
   const [notes, setNotes] = useState('');
 
   const [createSession, { isLoading }] = useCreateSessionMutation();
 
-  function handleMoodToggle(mood: string) {
+  function handleMoodToggle(mood: Mood) {
     setSelectedMoods((prev) => (prev.includes(mood) ? prev.filter((m) => m !== mood) : [...prev, mood]));
   }
 

@@ -1,14 +1,15 @@
 import { z } from 'zod'
 import { GameStatus } from '../types/game'
+import {Genre, Mood} from '../constants';
 
 export const CreateGameSchema = z.object({
   igdbId: z.number().int().positive(),
   steamAppId: z.number().int().positive().optional(),
   title: z.string().min(1).max(255),
   coverUrl: z.string().url().optional(),
-  genres: z.array(z.string()).default([]),
+  genres: z.array(z.enum(Genre)).default([]),
   status: z.enum(GameStatus).default(GameStatus.BACKLOG),
-  moods: z.array(z.string()).default([]),
+  moods: z.array(z.enum(Mood)).default([]),
   notes: z.string().max(2000).optional(),
 })
 
