@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { UserGame } from '@prisma/client';
+import { UserGame } from '../../generated/prisma/client';
 
 import { CreateGameDto, GameStatus, UpdateGameDto } from '@grimoire/shared';
 
