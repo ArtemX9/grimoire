@@ -12,7 +12,10 @@ function makeIgdbGame(overrides: Partial<Record<string, unknown>> = {}) {
     id: 1942,
     name: 'The Witcher 3: Wild Hunt',
     cover: { url: '//images.igdb.com/igdb/image/upload/t_thumb/co1r76.jpg' },
-    genres: [{ id: 1, name: 'Role-playing (RPG)' }, { id: 2, name: 'Adventure' }],
+    genres: [
+      { id: 1, name: 'Role-playing (RPG)' },
+      { id: 2, name: 'Adventure' },
+    ],
     summary: 'An open world action RPG.',
     first_release_date: 1431648000,
     total_rating: 93.5,

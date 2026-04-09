@@ -1,15 +1,14 @@
-import {Injectable, OnModuleInit} from '@nestjs/common';
-import {ConfigService} from '@nestjs/config';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
-import {IgdbGame, IgdbGameRaw} from '@grimoire/shared';
+import { IgdbGame, IgdbGameRaw } from '@grimoire/shared';
 
 @Injectable()
 export class IgdbService implements OnModuleInit {
   private accessToken: string = '';
   private tokenExpiry: number = 0;
 
-  constructor(private config: ConfigService) {
-  }
+  constructor(private config: ConfigService) {}
 
   async onModuleInit() {
     await this.refreshToken();
@@ -18,7 +17,10 @@ export class IgdbService implements OnModuleInit {
   private async refreshToken() {
     const clientId = this.config.get('app.igdb.clientId');
     const clientSecret = this.config.get('app.igdb.clientSecret');
-    const res = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials`, {method: 'POST'});
+    const res = await fetch(
+      `https://id.twitch.tv/oauth2/token?client_id=${clientId}&client_secret=${clientSecret}&grant_type=client_credentials`,
+      { method: 'POST' },
+    );
     const data = await res.json();
     this.accessToken = data.access_token;
     this.tokenExpiry = Date.now() + data.expires_in * 1000;
@@ -41,9 +43,9 @@ export class IgdbService implements OnModuleInit {
       body: `search "${query}"; fields id,name,cover.url,genres.name,summary,first_release_date,total_rating; limit ${limit};`,
     });
     const games: IgdbGameRaw[] = await res.json();
-    return games.map(game => ({
+    return games.map((game) => ({
       ...game,
-      genres: game.genres?.map(genre => genre.name),
+      genres: game.genres?.map((genre) => genre.name),
     }));
   }
 
@@ -55,10 +57,10 @@ export class IgdbService implements OnModuleInit {
       body: `where id = ${id}; fields id,name,cover.url,genres.name,summary,first_release_date,total_rating;`,
     });
     const data: IgdbGameRaw[] = await res.json();
-    const game = {...data?.[0]} as IgdbGame;
+    const game = { ...data?.[0] } as IgdbGame;
     if (!!data[0]) {
-      game.genres = data[0].genres?.map(genre => genre?.name) ?? [];
-      return game
+      game.genres = data[0].genres?.map((genre) => genre?.name) ?? [];
+      return game;
     }
     return undefined;
   }

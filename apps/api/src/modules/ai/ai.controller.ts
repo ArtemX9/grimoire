@@ -6,7 +6,6 @@ import { RecommendationRequest, RecommendationRequestSchema } from '@grimoire/sh
 
 import { CurrentUser, RequestUser } from '../../common/decorators/current-user.decorator';
 import { PlanFeature } from '../../common/decorators/plan-feature.decorator';
-
 import { PlanGuard } from '../../common/guards/plan.guard';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { AiService } from './ai.service';
