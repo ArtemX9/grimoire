@@ -1,4 +1,5 @@
-import {Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
+
 import {
   CreateUserDto,
   CreateUserSchema,
@@ -16,17 +17,19 @@ import {
   UpdateUserRoleSchema,
 } from '@grimoire/shared';
 
-import {AdminOnly} from '../../common/decorators/admin-only.decorator';
-import {CurrentUser, RequestUser} from '../../common/decorators/current-user.decorator';
-import {Public} from '../../common/decorators/public.decorator';
-import {ZodValidationPipe} from '../../common/pipes/zod-validation.pipe';
-import {AdminAiService} from './admin-ai.service';
-import {AdminService} from './admin.service';
+import { AdminOnly } from '../../common/decorators/admin-only.decorator';
+import { CurrentUser, RequestUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { AdminAiService } from './admin-ai.service';
+import { AdminService } from './admin.service';
 
 @Controller('admin')
 export class AdminController {
-  constructor(private adminService: AdminService, private adminAiService: AdminAiService) {
-  }
+  constructor(
+    private adminService: AdminService,
+    private adminAiService: AdminAiService,
+  ) {}
 
   @Post('setup') @Public() @HttpCode(201) setup(@Body(new ZodValidationPipe(SetupAdminSchema)) body: SetupAdminDto) {
     return this.adminService.setupAdmin(body);
@@ -44,11 +47,19 @@ export class AdminController {
     await this.adminService.deleteUser(user.id, targetId);
   }
 
-  @Patch('users/:id/plan') @AdminOnly() updateUserPlan(@CurrentUser() user: RequestUser, @Param('id') id: string, @Body(new ZodValidationPipe(UpdateUserPlanSchema)) body: UpdateUserPlanDto) {
+  @Patch('users/:id/plan') @AdminOnly() updateUserPlan(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateUserPlanSchema)) body: UpdateUserPlanDto,
+  ) {
     return this.adminService.updateUserPlan(user.id, id, body.plan);
   }
 
-  @Patch('users/:id/role') @AdminOnly() updateUserRole(@CurrentUser() user: RequestUser, @Param('id') id: string, @Body(new ZodValidationPipe(UpdateUserRoleSchema)) body: UpdateUserRoleDto) {
+  @Patch('users/:id/role') @AdminOnly() updateUserRole(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateUserRoleSchema)) body: UpdateUserRoleDto,
+  ) {
     return this.adminService.updateUserRole(user.id, id, body.role);
   }
 
@@ -64,7 +75,10 @@ export class AdminController {
     return this.adminAiService.updateSettings(body);
   }
 
-  @Patch('users/:id/ai') @AdminOnly() @HttpCode(204) async updateUserAiSettings(@Param('id') userId: string, @Body(new ZodValidationPipe(UpdateUserAiSchema)) body: UpdateUserAiDto) {
+  @Patch('users/:id/ai') @AdminOnly() @HttpCode(204) async updateUserAiSettings(
+    @Param('id') userId: string,
+    @Body(new ZodValidationPipe(UpdateUserAiSchema)) body: UpdateUserAiDto,
+  ) {
     await this.adminAiService.updateUserAiSettings(userId, body);
   }
 }

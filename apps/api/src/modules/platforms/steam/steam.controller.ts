@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-
 import { SteamService } from './steam.service';
 
 @Controller('platforms/steam')

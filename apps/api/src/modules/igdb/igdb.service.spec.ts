@@ -12,7 +12,10 @@ function makeIgdbGame(overrides: Partial<Record<string, unknown>> = {}) {
     id: 1942,
     name: 'The Witcher 3: Wild Hunt',
     cover: { url: '//images.igdb.com/igdb/image/upload/t_thumb/co1r76.jpg' },
-    genres: [{ name: 'Role-playing (RPG)' }, { name: 'Adventure' }],
+    genres: [
+      { id: 1, name: 'Role-playing (RPG)' },
+      { id: 2, name: 'Adventure' },
+    ],
     summary: 'An open world action RPG.',
     first_release_date: 1431648000,
     total_rating: 93.5,
@@ -239,8 +242,8 @@ describe('IgdbService', () => {
 
       const result = await service.findById(1942);
 
-      expect(result.id).toBe(1942);
-      expect(result.name).toBe('The Witcher 3: Wild Hunt');
+      expect(result?.id).toBe(1942);
+      expect(result?.name).toBe('The Witcher 3: Wild Hunt');
     });
 
     it('posts the correct where clause containing the game ID', async () => {
@@ -256,7 +259,6 @@ describe('IgdbService', () => {
       mockFetch.mockResolvedValueOnce(makeJsonFetchResponse([]));
 
       const result = await service.findById(999999);
-
       // Implementation returns data[0] which is undefined for an empty array.
       expect(result).toBeUndefined();
     });

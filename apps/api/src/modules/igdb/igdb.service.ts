@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { IgdbGame } from '@grimoire/shared';
+import { IgdbGame, IgdbGameRaw } from '@grimoire/shared';
 
 @Injectable()
 export class IgdbService implements OnModuleInit {
@@ -42,17 +42,26 @@ export class IgdbService implements OnModuleInit {
       headers,
       body: `search "${query}"; fields id,name,cover.url,genres.name,summary,first_release_date,total_rating; limit ${limit};`,
     });
-    return res.json();
+    const games: IgdbGameRaw[] = await res.json();
+    return games.map((game) => ({
+      ...game,
+      genres: game.genres?.map((genre) => genre.name),
+    }));
   }
 
-  async findById(id: number): Promise<IgdbGame> {
+  async findById(id: number): Promise<IgdbGame | undefined> {
     const headers = await this.getHeaders();
     const res = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
       headers,
       body: `where id = ${id}; fields id,name,cover.url,genres.name,summary,first_release_date,total_rating;`,
     });
-    const data = await res.json();
-    return data[0];
+    const data: IgdbGameRaw[] = await res.json();
+    const game = { ...data?.[0] } as IgdbGame;
+    if (!!data[0]) {
+      game.genres = data[0].genres?.map((genre) => genre?.name) ?? [];
+      return game;
+    }
+    return undefined;
   }
 }

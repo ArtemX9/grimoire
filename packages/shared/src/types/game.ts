@@ -34,3 +34,13 @@ export type IgdbGame = {
   first_release_date?: number
   total_rating?: number
 }
+
+export type IgdbGameRaw = {
+  id: number
+  name: string
+  cover?: { url: string }
+  genres?: { id: number; name: Genre }[]
+  summary?: string
+  first_release_date?: number
+  total_rating?: number
+}

@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 import {PrismaPg} from '@prisma/adapter-pg';
-import {PrismaClient} from '@prisma/client';
+import {PrismaClient} from '../src/generated/prisma/client';
 import * as bcryptjs from 'bcryptjs';
 import * as pg from 'pg';
 import {GameStatus, Genre, Mood, Plan, Role} from '@grimoire/shared';
