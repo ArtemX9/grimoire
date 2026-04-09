@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { GameStatus } from '../types/game'
+import { GameStatus } from '../types'
 import {Genre, Mood} from '../constants';
 
 export const CreateGameSchema = z.object({
