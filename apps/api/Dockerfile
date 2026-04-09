@@ -14,7 +14,8 @@ COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_module
 COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY . .
 RUN pnpm --filter shared build
-RUN pnpm --filter api prisma generate
+ARG DATABASE_URL=postgresql://placeholder:placeholder@localhost:5432/placeholder
+RUN DATABASE_URL=$DATABASE_URL pnpm --filter api prisma generate
 RUN pnpm --filter api build
 
 FROM node:20-alpine AS runner

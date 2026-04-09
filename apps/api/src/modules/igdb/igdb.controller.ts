@@ -1,6 +1,5 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 
-import { AuthGuard } from '../../common/guards/auth.guard';
 import { IgdbService } from './igdb.service';
 
 @Controller('igdb')

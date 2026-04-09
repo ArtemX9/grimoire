@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { Mood } from '@grimoire/shared';
+
 import { PrismaService } from '../../prisma/prisma.service';
 import { SessionsService } from './sessions.service';
 
@@ -187,7 +189,7 @@ describe('SessionsService', () => {
     const dto = {
       gameId: 'game-1',
       startedAt: new Date('2024-06-01T10:00:00Z'),
-      mood: [] as string[],
+      mood: [] as Mood[],
     };
 
     it('creates a session directly when durationMin is absent', async () => {
@@ -221,7 +223,7 @@ describe('SessionsService', () => {
       gameId: 'game-1',
       startedAt: new Date('2024-06-01T10:00:00Z'),
       durationMin: 120,
-      mood: ['excited'] as string[],
+      mood: [Mood.INTENSE],
     };
 
     it('uses a transaction to create the session and increment playtimeHours', async () => {
@@ -280,7 +282,7 @@ describe('SessionsService', () => {
         durationMin: 60,
         endedAt: new Date('2024-06-01T11:00:00Z'),
         notes: 'txn note',
-        mood: ['calm'],
+        mood: [Mood.CHILL],
       });
       (prisma.$transaction as jest.Mock).mockResolvedValue([created, {}]);
 
