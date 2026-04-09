@@ -17,7 +17,7 @@ function makeSession(overrides: Partial<Record<string, unknown>> = {}) {
     startedAt: new Date('2024-06-01T10:00:00Z'),
     endedAt: new Date('2024-06-01T12:00:00Z'),
     durationMin: 120,
-    mood: ['focused'],
+    mood: [Mood.FOCUSED],
     notes: 'Great session',
     ...overrides,
   };
@@ -223,7 +223,7 @@ describe('SessionsService', () => {
       gameId: 'game-1',
       startedAt: new Date('2024-06-01T10:00:00Z'),
       durationMin: 120,
-      mood: [Mood.INTENSE],
+      mood: [Mood.EXCITED],
     };
 
     it('uses a transaction to create the session and increment playtimeHours', async () => {
@@ -282,7 +282,7 @@ describe('SessionsService', () => {
         durationMin: 60,
         endedAt: new Date('2024-06-01T11:00:00Z'),
         notes: 'txn note',
-        mood: [Mood.CHILL],
+        mood: [Mood.CALM],
       });
       (prisma.$transaction as jest.Mock).mockResolvedValue([created, {}]);
 
@@ -291,7 +291,7 @@ describe('SessionsService', () => {
       expect(result.id).toBe('sess-tx');
       expect(result.durationMin).toBe(60);
       expect(result.notes).toBe('txn note');
-      expect(result.mood).toEqual(['calm']);
+      expect(result.mood).toEqual([Mood.CALM]);
     });
   });
 });

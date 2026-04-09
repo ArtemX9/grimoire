@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import * as request from 'supertest';
 
-import { Role } from '@grimoire/shared';
+import {Plan, Role} from '@grimoire/shared';
 
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
@@ -22,7 +22,7 @@ import { AdminService } from '../src/modules/admin/admin.service';
  * Swapped per test via the `activeUser` reference.
  */
 const activeUser: { value: Record<string, unknown> | null } = {
-  value: { id: 'admin-1', email: 'admin@example.com', role: 'ADMIN', plan: 'LIFETIME', mustChangePassword: false },
+  value: { id: 'admin-1', email: 'admin@example.com', role: Role.ADMIN, plan: Plan.LIFETIME, mustChangePassword: false },
 };
 
 class FakeAuthGuard implements CanActivate {
@@ -39,8 +39,8 @@ function makeAdminUserResponse(overrides: Record<string, unknown> = {}) {
     id: 'user-2',
     email: 'user@example.com',
     name: undefined,
-    role: 'USER',
-    plan: 'FREE',
+    role: Role.USER,
+    plan: Plan.FREE,
     mustChangePassword: false,
     aiEnabled: true,
     aiRequestsUsed: 0,
@@ -107,8 +107,8 @@ describe('PATCH /api/v1/admin/users/:id/role (e2e)', () => {
     activeUser.value = {
       id: 'admin-1',
       email: 'admin@example.com',
-      role: 'ADMIN',
-      plan: 'LIFETIME',
+      role: Role.ADMIN,
+      plan: Plan,
       mustChangePassword: false,
     };
   });
@@ -118,7 +118,7 @@ describe('PATCH /api/v1/admin/users/:id/role (e2e)', () => {
   // -------------------------------------------------------------------------
 
   it('returns 200 with the updated user when called with a valid Role', async () => {
-    const updated = makeAdminUserResponse({ role: 'ADMIN' });
+    const updated = makeAdminUserResponse({ role: Role.ADMIN });
     (adminService.updateUserRole as jest.Mock).mockResolvedValue(updated);
 
     const res = await request(app.getHttpServer())
@@ -126,12 +126,12 @@ describe('PATCH /api/v1/admin/users/:id/role (e2e)', () => {
       .send({ role: Role.ADMIN });
 
     expect(res.status).toBe(200);
-    expect(res.body.role).toBe('ADMIN');
+    expect(res.body.role).toBe(Role.ADMIN);
     expect(adminService.updateUserRole).toHaveBeenCalledWith('admin-1', 'user-2', Role.ADMIN);
   });
 
   it('returns 200 and passes USER role through correctly', async () => {
-    const updated = makeAdminUserResponse({ role: 'USER' });
+    const updated = makeAdminUserResponse({ role: Role.USER });
     (adminService.updateUserRole as jest.Mock).mockResolvedValue(updated);
 
     const res = await request(app.getHttpServer())
@@ -139,7 +139,7 @@ describe('PATCH /api/v1/admin/users/:id/role (e2e)', () => {
       .send({ role: Role.USER });
 
     expect(res.status).toBe(200);
-    expect(res.body.role).toBe('USER');
+    expect(res.body.role).toBe(Role.USER);
   });
 
   // -------------------------------------------------------------------------
@@ -213,8 +213,8 @@ describe('PATCH /api/v1/admin/users/:id/role (e2e)', () => {
     activeUser.value = {
       id: 'regular-user',
       email: 'user@example.com',
-      role: 'USER',
-      plan: 'FREE',
+      role: Role.USER,
+      plan: Plan.LIFETIME,
       mustChangePassword: false,
     };
 
