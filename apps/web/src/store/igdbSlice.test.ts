@@ -21,7 +21,7 @@ function makeIgdbGame(overrides: Partial<IgdbGame> = {}): IgdbGame {
   return {
     id: 1,
     name: 'Elden Ring',
-    cover: { url: '//images.igdb.com/igdb/image/upload/t_thumb/co4jni.jpg' },
+    cover: '//images.igdb.com/igdb/image/upload/t_thumb/co4jni.jpg',
     genres: [Genre.RPG],
     summary: 'A dark fantasy action RPG.',
     first_release_date: 1645747200,

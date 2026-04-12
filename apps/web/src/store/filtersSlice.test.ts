@@ -1,7 +1,7 @@
-import { GameStatus } from '@grimoire/shared';
-import { describe, expect, it } from 'vitest';
+import {GameStatus, Genre} from '@grimoire/shared';
+import {describe, expect, it} from 'vitest';
 
-import reducer, { resetFilters, setGenreFilter, setSearch, setStatusFilter } from '@/store/filtersSlice';
+import reducer, {resetFilters, setGenreFilter, setSearch, setStatusFilter} from '@/store/filtersSlice';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -51,7 +51,7 @@ describe('filtersSlice — setStatusFilter', () => {
   });
 
   it('does not affect genre or search', () => {
-    const withGenre = reducer(initialState, setGenreFilter('RPG'));
+    const withGenre = reducer(initialState, setGenreFilter(Genre.RPG, ));
     const withSearch = reducer(withGenre, setSearch('castlevania'));
     const next = reducer(withSearch, setStatusFilter(GameStatus.BACKLOG));
 
@@ -66,25 +66,25 @@ describe('filtersSlice — setStatusFilter', () => {
 
 describe('filtersSlice — setGenreFilter', () => {
   it('sets a genre string', () => {
-    const next = reducer(initialState, setGenreFilter('Gothic / Victorian'));
-    expect(next.genre).toBe('Gothic / Victorian');
+    const next = reducer(initialState, setGenreFilter(Genre.Action));
+    expect(next.genre).toBe(Genre.Action);
   });
 
   it('clears genre when payload is null', () => {
-    const withGenre = reducer(initialState, setGenreFilter('Action'));
+    const withGenre = reducer(initialState, setGenreFilter(Genre.Action));
     const next = reducer(withGenre, setGenreFilter(null));
     expect(next.genre).toBeNull();
   });
 
-  it('sets an empty-string genre (treated as "no filter" by the UI, but accepted by the reducer)', () => {
-    const next = reducer(initialState, setGenreFilter(''));
+  it('sets a null genre (treated as "no filter" by the UI, but accepted by the reducer)', () => {
+    const next = reducer(initialState, setGenreFilter(null));
     expect(next.genre).toBe('');
   });
 
   it('does not affect status or search', () => {
     const withStatus = reducer(initialState, setStatusFilter(GameStatus.DROPPED));
     const withSearch = reducer(withStatus, setSearch('hollow'));
-    const next = reducer(withSearch, setGenreFilter('Metroidvania'));
+    const next = reducer(withSearch, setGenreFilter(Genre.Metroidvania));
 
     expect(next.status).toBe(GameStatus.DROPPED);
     expect(next.search).toBe('hollow');
@@ -120,11 +120,11 @@ describe('filtersSlice — setSearch', () => {
 
   it('does not affect status or genre', () => {
     const withStatus = reducer(initialState, setStatusFilter(GameStatus.WISHLIST));
-    const withGenre = reducer(withStatus, setGenreFilter('Horror'));
+    const withGenre = reducer(withStatus, setGenreFilter(Genre.Horror));
     const next = reducer(withGenre, setSearch('amnesia'));
 
     expect(next.status).toBe(GameStatus.WISHLIST);
-    expect(next.genre).toBe('Horror');
+    expect(next.genre).toBe(Genre.Horror);
   });
 });
 
@@ -135,7 +135,7 @@ describe('filtersSlice — setSearch', () => {
 describe('filtersSlice — resetFilters', () => {
   it('resets all fields to initial state', () => {
     const dirty = reducer(
-      reducer(reducer(initialState, setStatusFilter(GameStatus.PLAYING)), setGenreFilter('Action')),
+      reducer(reducer(initialState, setStatusFilter(GameStatus.PLAYING)), setGenreFilter(Genre.Action, )),
       setSearch('sekiro'),
     );
 
