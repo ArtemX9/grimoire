@@ -8,10 +8,10 @@ const STATUS_OPTIONS = Object.values(GameStatus);
 
 interface IFilterBar {
   activeStatus: GameStatus | null;
-  activeGenre: string | null;
+  activeGenre: Genre | null;
   search: string;
   onStatusChange: (status: GameStatus | null) => void;
-  onGenreChange: (genre: string | null) => void;
+  onGenreChange: (genre: Genre | null) => void;
   onSearchChange: (search: string) => void;
 }
 

@@ -1,11 +1,11 @@
-import { GameStatus } from '@grimoire/shared';
+import { GameStatus, Genre } from '@grimoire/shared';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 export const FILTERS_SLICE = 'filters';
 
 export interface FiltersState {
   status: GameStatus | null;
-  genre: string | null;
+  genre: Genre | null;
   search: string;
 }
 
@@ -22,7 +22,7 @@ const filtersSlice = createSlice({
     setStatusFilter: (state, action: PayloadAction<GameStatus | null>) => {
       state.status = action.payload;
     },
-    setGenreFilter: (state, action: PayloadAction<string | null>) => {
+    setGenreFilter: (state, action: PayloadAction<Genre | null>) => {
       state.genre = action.payload;
     },
     setSearch: (state, action: PayloadAction<string>) => {

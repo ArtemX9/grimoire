@@ -28,7 +28,7 @@ export type UserGame = {
 export type IgdbGame = {
   id: number
   name: string
-  cover?: { url: string }
+  cover?: string
   genres?: Genre[]
   summary?: string
   first_release_date?: number

@@ -106,11 +106,7 @@ function AddGameDialog({
             className='flex items-center gap-3 rounded p-2 text-left transition-colors hover:bg-grimoire-hover'
           >
             {game.cover ? (
-              <img
-                src={game.cover.url.replace('t_thumb', 't_cover_small')}
-                alt={game.name}
-                className='h-10 w-7 rounded object-cover shrink-0'
-              />
+              <img src={game.cover} alt={game.name} className='h-10 w-7 rounded object-cover shrink-0' />
             ) : (
               <div className='h-10 w-7 rounded bg-grimoire-hover shrink-0 flex items-center justify-center'>
                 <span className='font-grimoire text-xs text-grimoire-faint'>G</span>
@@ -140,11 +136,7 @@ function AddGameDialog({
       <div className='flex flex-col gap-4 mt-1'>
         <div className='flex items-center gap-3 rounded border border-grimoire-border p-3'>
           {selectedGame.cover ? (
-            <img
-              src={selectedGame.cover.url.replace('t_thumb', 't_cover_small')}
-              alt={selectedGame.name}
-              className='h-12 w-8 rounded object-cover shrink-0'
-            />
+            <img src={selectedGame.cover} alt={selectedGame.name} className='h-12 w-8 rounded object-cover shrink-0' />
           ) : (
             <div className='h-12 w-8 rounded bg-grimoire-hover shrink-0' />
           )}

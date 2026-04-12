@@ -1,4 +1,4 @@
-import { GameStatus } from '@grimoire/shared';
+import { GameStatus, Genre } from '@grimoire/shared';
 import { Plus, Sparkles, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -33,7 +33,7 @@ export function LibraryPage() {
     dispatch(setStatusFilter(status));
   }
 
-  function handleGenreChange(genre: string | null) {
+  function handleGenreChange(genre: Genre | null) {
     dispatch(setGenreFilter(genre));
   }
 

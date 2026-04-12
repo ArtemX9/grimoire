@@ -32,7 +32,7 @@ function makeIgdbGame(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: 1942,
     name: 'The Witcher 3: Wild Hunt',
-    cover: { url: '//images.igdb.com/cover.jpg' },
+    cover: '//images.igdb.com/cover.jpg',
     genres: [Genre.RPG],
     summary: 'Open world RPG',
     ...overrides,

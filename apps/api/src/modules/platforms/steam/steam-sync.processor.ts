@@ -47,7 +47,7 @@ export class SteamSyncProcessor extends WorkerHost {
             igdbId: igdbGame.id,
             steamAppId: steamGame.appid,
             title: igdbGame.name,
-            coverUrl: igdbGame.cover?.url,
+            coverUrl: igdbGame.cover,
             genres: igdbGame.genres ?? [],
             status: GameStatus.BACKLOG,
             moods: [],
