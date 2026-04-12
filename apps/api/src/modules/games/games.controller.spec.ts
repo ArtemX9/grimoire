@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { GameStatus } from '@grimoire/shared';
+import {GameStatus, Genre, Mood, Plan, Role} from '@grimoire/shared';
 
 import { GamesController } from './games.controller';
 import { GamesService } from './games.service';
@@ -17,10 +17,10 @@ function makeGameResponse(overrides: Partial<GameResponse> = {}): GameResponse {
     userID: 'user-1',
     igdbID: 12345,
     title: 'The Witcher 3',
-    genres: ['RPG'],
+    genres: [Genre.RPG],
     status: GameStatus.PLAYING,
     playtimeHours: 42,
-    moods: ['focused'],
+    moods: [Mood.FOCUSED],
     addedAt: new Date('2024-01-01T00:00:00Z'),
     updatedAt: new Date('2024-06-01T00:00:00Z'),
     ...overrides,
@@ -28,7 +28,7 @@ function makeGameResponse(overrides: Partial<GameResponse> = {}): GameResponse {
 }
 
 function makeUser(id = 'user-1') {
-  return { id, email: `${id}@example.com`, name: 'Test User', role: 'USER', plan: 'FREE' };
+  return { id, email: `${id}@example.com`, name: 'Test User', role: Role.USER, plan: Plan.FREE };
 }
 
 // ---------------------------------------------------------------------------
@@ -72,7 +72,7 @@ describe('GamesController', () => {
 
       const result = await controller.findAll(user);
 
-      expect(gamesService.findAll).toHaveBeenCalledWith('user-1', undefined);
+      expect(gamesService.findAll).toHaveBeenCalledWith('user-1', undefined, undefined, undefined);
       expect(result).toBe(games);
     });
 
@@ -82,7 +82,7 @@ describe('GamesController', () => {
 
       await controller.findAll(user, GameStatus.COMPLETED);
 
-      expect(gamesService.findAll).toHaveBeenCalledWith('user-1', GameStatus.COMPLETED);
+      expect(gamesService.findAll).toHaveBeenCalledWith('user-1', GameStatus.COMPLETED, undefined, undefined);
     });
 
     it('returns the service result directly', async () => {
@@ -102,7 +102,7 @@ describe('GamesController', () => {
 
       await controller.findAll(user);
 
-      expect(gamesService.findAll).toHaveBeenCalledWith('user-99', undefined);
+      expect(gamesService.findAll).toHaveBeenCalledWith('user-99', undefined, undefined, undefined);
     });
   });
 
@@ -126,7 +126,7 @@ describe('GamesController', () => {
       const user = makeUser();
       const stats: GameStatsResponse = {
         total: 5,
-        byStatus: [{ status: 'PLAYING', _count: 3 }],
+        byStatus: [{ status: GameStatus.PLAYING, _count: 3 }],
         totalHours: 42,
       };
       gamesService.getStats.mockResolvedValue(stats);
@@ -196,7 +196,7 @@ describe('GamesController', () => {
     const body = {
       igdbId: 12345,
       title: 'The Witcher 3',
-      genres: ['RPG'],
+      genres: [Genre.RPG],
       status: GameStatus.BACKLOG,
       moods: [] as string[],
     };

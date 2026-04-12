@@ -51,11 +51,11 @@ describe('filtersSlice — setStatusFilter', () => {
   });
 
   it('does not affect genre or search', () => {
-    const withGenre = reducer(initialState, setGenreFilter(Genre.RPG, ));
+    const withGenre = reducer(initialState, setGenreFilter(Genre.RPG ));
     const withSearch = reducer(withGenre, setSearch('castlevania'));
     const next = reducer(withSearch, setStatusFilter(GameStatus.BACKLOG));
 
-    expect(next.genre).toBe('RPG');
+    expect(next.genre).toBe(Genre.RPG);
     expect(next.search).toBe('castlevania');
   });
 });
@@ -78,7 +78,7 @@ describe('filtersSlice — setGenreFilter', () => {
 
   it('sets a null genre (treated as "no filter" by the UI, but accepted by the reducer)', () => {
     const next = reducer(initialState, setGenreFilter(null));
-    expect(next.genre).toBe('');
+    expect(next.genre).toBe(null);
   });
 
   it('does not affect status or search', () => {

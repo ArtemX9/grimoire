@@ -10,10 +10,12 @@
     "test": "pnpm -r test",
     "db:migrate": "pnpm --filter api prisma migrate dev",
     "db:generate": "pnpm --filter api prisma generate",
-    "db:studio": "pnpm --filter api prisma studio"
+    "db:studio": "pnpm --filter api prisma studio",
+    "prepare": "husky"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
+    "husky": "^9.1.7",
     "typescript": "^5.4.5"
   }
 }

@@ -16,7 +16,7 @@ export enum Genre {
   Puzzle = 'Puzzle',
   QuizTrivia = 'Quiz/Trivia',
   Racing = 'Racing',
-  RPG = 'RPG',
+  RPG = 'Role-playing (RPG)',
   SciFi = 'Sci-fi',
   Shooter = 'Shooter',
   Simulation = 'Simulation',
