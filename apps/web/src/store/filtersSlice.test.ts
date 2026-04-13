@@ -1,7 +1,7 @@
-import {GameStatus, Genre} from '@grimoire/shared';
-import {describe, expect, it} from 'vitest';
+import { GameStatus, Genre } from '@grimoire/shared';
+import { describe, expect, it } from 'vitest';
 
-import reducer, {resetFilters, setGenreFilter, setSearch, setStatusFilter} from '@/store/filtersSlice';
+import reducer, { resetFilters, setGenreFilter, setSearch, setStatusFilter } from '@/store/filtersSlice';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -51,7 +51,7 @@ describe('filtersSlice — setStatusFilter', () => {
   });
 
   it('does not affect genre or search', () => {
-    const withGenre = reducer(initialState, setGenreFilter(Genre.RPG ));
+    const withGenre = reducer(initialState, setGenreFilter(Genre.RPG));
     const withSearch = reducer(withGenre, setSearch('castlevania'));
     const next = reducer(withSearch, setStatusFilter(GameStatus.BACKLOG));
 
@@ -135,7 +135,7 @@ describe('filtersSlice — setSearch', () => {
 describe('filtersSlice — resetFilters', () => {
   it('resets all fields to initial state', () => {
     const dirty = reducer(
-      reducer(reducer(initialState, setStatusFilter(GameStatus.PLAYING)), setGenreFilter(Genre.Action, )),
+      reducer(reducer(initialState, setStatusFilter(GameStatus.PLAYING)), setGenreFilter(Genre.Action)),
       setSearch('sekiro'),
     );
 

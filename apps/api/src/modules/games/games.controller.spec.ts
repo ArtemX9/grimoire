@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import {GameStatus, Genre, Mood, Plan, Role} from '@grimoire/shared';
+import { GameStatus, Genre, Mood, Plan, Role } from '@grimoire/shared';
 
 import { GamesController } from './games.controller';
 import { GamesService } from './games.service';

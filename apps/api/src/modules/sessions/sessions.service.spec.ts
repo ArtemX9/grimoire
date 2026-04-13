@@ -15,7 +15,6 @@ function makeSession(overrides: Partial<Record<string, unknown>> = {}) {
     userId: 'user-1',
     gameId: 'game-1',
     startedAt: new Date('2024-06-01T10:00:00Z'),
-    endedAt: new Date('2024-06-01T12:00:00Z'),
     durationMin: 120,
     mood: [Mood.FOCUSED],
     notes: 'Great session',
@@ -48,6 +47,7 @@ describe('SessionsService', () => {
             playSession: {
               findMany: jest.fn(),
               create: jest.fn(),
+              aggregate: jest.fn(),
             },
             userGame: {
               update: jest.fn(),
@@ -62,6 +62,9 @@ describe('SessionsService', () => {
     prisma = module.get(PrismaService);
 
     jest.clearAllMocks();
+
+    // Default: no prior playtime for the day — satisfies the daily cap check.
+    (prisma.playSession.aggregate as jest.Mock).mockResolvedValue({ _sum: { durationMin: 0 } });
   });
 
   // ---------------------------------------------------------------------------
@@ -84,14 +87,6 @@ describe('SessionsService', () => {
       });
       expect(result).toHaveLength(2);
       expect(result[0].id).toBe('sess-2');
-    });
-
-    it('maps null endedAt to undefined in the response', async () => {
-      (prisma.playSession.findMany as jest.Mock).mockResolvedValue([makeSession({ endedAt: null })]);
-
-      const [result] = await service.findByGame('user-1', 'game-1');
-
-      expect(result.endedAt).toBeUndefined();
     });
 
     it('maps null durationMin to undefined in the response', async () => {
@@ -193,7 +188,7 @@ describe('SessionsService', () => {
     };
 
     it('creates a session directly when durationMin is absent', async () => {
-      const created = makeSession({ durationMin: null, endedAt: null, notes: null, mood: [] });
+      const created = makeSession({ durationMin: null, notes: null, mood: [] });
       (prisma.playSession.create as jest.Mock).mockResolvedValue(created);
 
       const result = await service.create('user-1', dto);
@@ -280,7 +275,6 @@ describe('SessionsService', () => {
       const created = makeSession({
         id: 'sess-tx',
         durationMin: 60,
-        endedAt: new Date('2024-06-01T11:00:00Z'),
         notes: 'txn note',
         mood: [Mood.CALM],
       });

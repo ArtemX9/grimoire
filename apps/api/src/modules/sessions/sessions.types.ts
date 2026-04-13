@@ -3,7 +3,6 @@ export interface SessionResponse {
   userId: string;
   gameId: string;
   startedAt: Date;
-  endedAt?: Date;
   durationMin?: number;
   mood: string[];
   notes?: string;

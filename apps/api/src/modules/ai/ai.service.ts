@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { Observable } from 'rxjs';
 
-import { Genre, Mood, RecommendationContext, RecommendationRequest } from '@grimoire/shared';
+import { GameStatus, Genre, Mood, RecommendationContext, RecommendationRequest } from '@grimoire/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { GamesService } from '../games/games.service';
@@ -66,14 +66,17 @@ export class AiService {
   async buildContext(userId: string, request: RecommendationRequest): Promise<RecommendationContext> {
     await this._checkAndIncrementAiUsage(userId);
 
-    const [games, recentSessions] = await Promise.all([this.gamesService.findAll(userId), this.sessionsService.findRecent(userId, 5)]);
+    const [games, recentSessions] = await Promise.all([
+      this.gamesService.findAll(userId, undefined, undefined, undefined),
+      this.sessionsService.findRecent(userId, 5),
+    ]);
 
     return {
       moods: request.moods,
       sessionLengthMinutes: request.sessionLengthMinutes,
       games: games.map((g) => ({
         title: g.title,
-        status: g.status,
+        status: g.status as GameStatus,
         genres: g.genres as Genre[],
         playtimeHours: g.playtimeHours,
         moods: g.moods as Mood[],
@@ -83,6 +86,7 @@ export class AiService {
         durationMin: s.durationMin ?? 0,
         mood: s.mood as Mood[],
         startedAt: s.startedAt,
+        notes: s.notes,
       })),
     };
   }

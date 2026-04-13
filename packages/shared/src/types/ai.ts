@@ -21,5 +21,6 @@ export type RecommendationContext = {
     durationMin: number
     mood: Mood[]
     startedAt: Date
+    notes?: string
   }>
 }

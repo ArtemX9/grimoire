@@ -30,25 +30,29 @@ export class GamesService {
   }
 
   async findAll(userId: string, status?: GameStatus, search?: string, genre?: Genre): Promise<GameResponse[]> {
-    const games = await this.prisma.userGame.findMany({
-      where: {
-        userId,
-        ...(status && { status }),
-        ...(search && {
-          title: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        }),
-        ...(genre && {
-          genres: {
-            has: genre,
-          },
-        }),
-      },
-      orderBy: { updatedAt: 'desc' },
-    });
-    return games.map((g) => this._toResponse(g));
+    try {
+      const games = await this.prisma.userGame.findMany({
+        where: {
+          userId,
+          ...(status && { status }),
+          ...(search && {
+            title: {
+              contains: search,
+              mode: 'insensitive',
+            },
+          }),
+          ...(genre && {
+            genres: {
+              has: genre,
+            },
+          }),
+        },
+        orderBy: { updatedAt: 'desc' },
+      });
+      return games.map((g) => this._toResponse(g));
+    } catch (e) {
+      throw new NotFoundException('Games could not be obtained', JSON.stringify(e));
+    }
   }
 
   async findOne(userId: string, id: string): Promise<GameResponse> {

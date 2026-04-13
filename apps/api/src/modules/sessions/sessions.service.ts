@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 
 import { CreateSessionDto } from '@grimoire/shared';
 
@@ -10,12 +10,11 @@ type PrismaSession = {
   userId: string;
   gameId: string;
   startedAt: Date;
-  endedAt: Date | null;
   durationMin: number | null;
   mood: string[];
   notes: string | null;
 };
-
+const FULL_DAY_HOURS = 24 * 60;
 type PrismaSessionWithGame = PrismaSession & { game: { title: string } };
 
 @Injectable()
@@ -28,7 +27,6 @@ export class SessionsService {
       userId: session.userId,
       gameId: session.gameId,
       startedAt: session.startedAt,
-      endedAt: session.endedAt ?? undefined,
       durationMin: session.durationMin ?? undefined,
       mood: session.mood,
       notes: session.notes ?? undefined,
@@ -51,19 +49,43 @@ export class SessionsService {
   }
 
   async findRecent(userId: string, limit = 10): Promise<SessionWithGameResponse[]> {
-    const sessions = await this.prisma.playSession.findMany({
-      where: { userId },
-      orderBy: { startedAt: 'desc' },
-      take: limit,
-      include: { game: { select: { title: true } } },
-    });
-    return sessions.map((s) => this._toResponseWithGame(s));
+    try {
+      const sessions = await this.prisma.playSession.findMany({
+        where: { userId },
+        orderBy: { startedAt: 'desc' },
+        take: limit,
+        include: { game: { select: { title: true } } },
+      });
+      return sessions.map((s) => this._toResponseWithGame(s));
+    } catch (e) {
+      throw new NotFoundException('Sessions could not be obtained', JSON.stringify(e));
+    }
   }
 
   async create(userId: string, dto: CreateSessionDto): Promise<SessionResponse> {
+    const sessionDay = dto.startedAt.getDate();
+    const sessionMonth = dto.startedAt.getMonth() + 1;
+    const sessionYear = dto.startedAt.getFullYear();
+
+    const playedTime = dto.durationMin ?? 0;
+    if (playedTime && playedTime > FULL_DAY_HOURS) {
+      throw new HttpException('Played time should be less than day', HttpStatus.CONFLICT);
+    }
+
+    const totalPlayedTimeForDay = await this.prisma.playSession.aggregate({
+      _sum: { durationMin: true },
+      where: {
+        userId,
+        startedAt: new Date(`${sessionYear}-${sessionMonth}-${sessionDay}`),
+      },
+    });
+    const totalPlayedTimesSession = totalPlayedTimeForDay._sum.durationMin ?? 0;
+    if (totalPlayedTimesSession + playedTime > FULL_DAY_HOURS) {
+      throw new HttpException('Played time should be less than day', HttpStatus.CONFLICT);
+    }
     if (dto.durationMin) {
       const [session] = await this.prisma.$transaction([
-        this.prisma.playSession.create({ data: { ...dto, userId } }),
+        this.prisma.playSession.create({ data: { ...dto, userId, startedAt: new Date(`${sessionYear}-${sessionMonth}-${sessionDay}`) } }),
         this.prisma.userGame.update({
           where: { id: dto.gameId },
           data: { playtimeHours: { increment: dto.durationMin / 60 } },

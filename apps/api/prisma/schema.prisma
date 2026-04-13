@@ -120,16 +120,15 @@ enum GameStatus {
 }
 
 model PlaySession {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   userId      String
   gameId      String
   startedAt   DateTime
-  endedAt     DateTime?
   durationMin Int?
   mood        String[]
   notes       String?
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  game        UserGame  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game        UserGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@index([userId, startedAt])
   @@index([userId, gameId])
