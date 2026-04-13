@@ -1,21 +1,22 @@
 import { GameStatus, IgdbGame } from '@grimoire/shared';
 import { useState } from 'react';
 
-import { useCreateGameMutation } from '@/api/gamesApi';
 import { useSearchIgdbQuery } from '@/api/igdbApi';
 import { toast } from '@/components/ui/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAppSelector } from '@/store/hooks';
 
-import AddGameDialog from './AddGameDialog';
+import IGDBGameSearchDialog from './IGDBGameSearchDialog';
 
 interface IAddGameDialogContainer {
   open: boolean;
+  onGameSelect: (game: IgdbGame, status: GameStatus, onSuccessCallback: () => void, onErrorCallback: () => void) => void;
   onOpenChange: (open: boolean) => void;
 }
 
-function AddGameDialogContainer({ open, onOpenChange }: IAddGameDialogContainer) {
+function IGDBGameSearchDialogContainer({ open, onGameSelect, onOpenChange }: IAddGameDialogContainer) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const debouncedQuery = useDebounce(searchQuery, 1000);
 
   useSearchIgdbQuery(debouncedQuery, { skip: debouncedQuery.length < 2 });
@@ -23,33 +24,26 @@ function AddGameDialogContainer({ open, onOpenChange }: IAddGameDialogContainer)
   const searchResults = useAppSelector((s) => s.igdb.searchResults);
   const isSearching = useAppSelector((s) => s.igdb.isSearchLoading);
 
-  const [createGame, { isLoading: isAdding }] = useCreateGameMutation();
-
-  async function handleAddGame(game: IgdbGame, status: GameStatus) {
-    try {
-      await createGame({
-        igdbId: game.id,
-        title: game.name,
-        coverUrl: game.cover,
-        genres: game.genres?.map((g) => g) ?? [],
-        status,
-        moods: [],
-      }).unwrap();
+  function handleAddGame(game: IgdbGame, status: GameStatus) {
+    setIsLoading(true);
+    onGameSelect(game, status, () => {
+      setIsLoading(false);
       toast({ title: `${game.name} added to your library` });
       onOpenChange(false);
       setSearchQuery('');
-    } catch {
+    }, () => {
+      setIsLoading(false);
       toast({ title: 'Failed to add game', variant: 'destructive' });
-    }
+    });
   }
 
   return (
-    <AddGameDialog
+    <IGDBGameSearchDialog
       open={open}
       searchQuery={searchQuery}
       searchResults={searchResults}
       isSearching={isSearching}
-      isAdding={isAdding}
+      isLoading={isLoading}
       onOpenChange={onOpenChange}
       onSearchChange={setSearchQuery}
       onAddGame={handleAddGame}
@@ -57,4 +51,4 @@ function AddGameDialogContainer({ open, onOpenChange }: IAddGameDialogContainer)
   );
 }
 
-export default AddGameDialogContainer;
+export default IGDBGameSearchDialogContainer;

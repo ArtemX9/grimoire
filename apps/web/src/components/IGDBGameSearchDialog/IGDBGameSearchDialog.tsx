@@ -13,18 +13,18 @@ interface IAddGameDialog {
   searchQuery: string;
   searchResults: IgdbGame[];
   isSearching: boolean;
-  isAdding: boolean;
+  isLoading: boolean;
   onOpenChange: (open: boolean) => void;
   onSearchChange: (q: string) => void;
   onAddGame: (game: IgdbGame, status: GameStatus) => void;
 }
 
-function AddGameDialog({
+function IGDBGameSearchDialog({
   open,
   searchQuery,
   searchResults,
   isSearching,
-  isAdding,
+  isLoading,
   onOpenChange,
   onSearchChange,
   onAddGame,
@@ -167,8 +167,8 @@ function AddGameDialog({
           <Button variant='ghost' size='sm' onClick={() => setSelectedGame(null)}>
             Back
           </Button>
-          <Button size='sm' onClick={handleConfirm} disabled={isAdding}>
-            {isAdding ? (
+          <Button size='sm' onClick={handleConfirm} disabled={isLoading}>
+            {isLoading ? (
               <>
                 <Loader2 className='h-3.5 w-3.5 animate-spin' />
                 Adding…
@@ -183,4 +183,4 @@ function AddGameDialog({
   }
 }
 
-export default AddGameDialog;
+export default IGDBGameSearchDialog;

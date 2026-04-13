@@ -11,7 +11,7 @@ import { AdminDashboardPage } from '@/pages/AdminDashboardPage/AdminDashboardPag
 import { AdminSetupPage } from '@/pages/AdminSetupPage/AdminSetupPage';
 import { ChangePasswordPage } from '@/pages/ChangePasswordPage/ChangePasswordPage';
 import { GameDetailPage } from '@/pages/GameDetailPage/GameDetailPage';
-import { LibraryPage } from '@/pages/LibraryPage/LibraryPage';
+import { LibraryPageContainer } from '@/pages/LibraryPage/LibraryPageContainer';
 import { LoginPage } from '@/pages/LoginPage/LoginPage';
 import { SettingsPage } from '@/pages/SettingsPage/SettingsPage';
 
@@ -35,7 +35,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route path={ROUTES.DEFAULT} element={<Navigate to={ROUTES.LIBRARY} replace />} />
-            <Route path={ROUTES.LIBRARY} element={<LibraryPage />} />
+            <Route path={ROUTES.LIBRARY} element={<LibraryPageContainer />} />
             <Route path={ROUTES.GAME_DETAILS} element={<GameDetailPage />} />
             <Route path={ROUTES.USER_SETTINGS} element={<SettingsPage />} />
           </Route>
