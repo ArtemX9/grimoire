@@ -1,4 +1,4 @@
-import {CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable} from '@nestjs/common';
+import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class IsValidSteamIDGuard implements CanActivate {
@@ -6,7 +6,7 @@ export class IsValidSteamIDGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
-    const steamId = request.query.steamId;
+    const { steamId } = request.body;
 
     const steamIDRegex = /^\d{17}$/;
     if (!steamIDRegex.test(steamId)) {
