@@ -1,5 +1,7 @@
+import { useState } from 'react';
+
 import { GameStatus, Genre, IgdbGame } from '@grimoire/shared';
-import { Plus, Sparkles, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Sparkles, X } from 'lucide-react';
 
 import { GameStats } from '@/api/gamesApi';
 import AiPanelContainer from '@/components/AiPanel/AiPanelContainer';
@@ -44,24 +46,38 @@ export function LibraryPage({
   onSearchChange,
   onGameSelect,
 }: ILibraryPage) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
   return (
     <div className='flex h-full'>
       <div className='flex flex-1 flex-col overflow-hidden'>
-        <header className='flex items-center justify-between border-b border-grimoire-border px-5 py-4'>
-          <div className='flex items-baseline gap-4'>
+        {/* Header — stacks title+stats above the action row on very small screens */}
+        <header className='flex flex-col gap-2 border-b border-grimoire-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4'>
+          <div className='flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-1'>
             <h1 className='font-grimoire text-xl text-grimoire-ink'>My Library</h1>
             {renderStats()}
           </div>
-          <button
-            onClick={onAddDialogOpen.bind(null, true)}
-            className='flex items-center gap-1.5 rounded border border-grimoire-border bg-grimoire-card px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
-          >
-            <Plus className='h-3.5 w-3.5' />
-            Add game
-          </button>
+          <div className='flex shrink-0 items-center gap-2'>
+            {/* Filters toggle — mobile only */}
+            <button
+              onClick={() => setFiltersOpen((prev) => !prev)}
+              className='sm:hidden flex items-center gap-1.5 rounded border border-grimoire-border bg-grimoire-card px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
+            >
+              {filtersOpen ? <ChevronUp className='h-3.5 w-3.5' /> : <ChevronDown className='h-3.5 w-3.5' />}
+              Filters
+            </button>
+            <button
+              onClick={onAddDialogOpen.bind(null, true)}
+              className='flex items-center gap-1.5 rounded border border-grimoire-border bg-grimoire-card px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
+            >
+              <Plus className='h-3.5 w-3.5' />
+              Add game
+            </button>
+          </div>
         </header>
 
-        <div className='border-b border-grimoire-border px-5 py-3'>
+        {/* Filter bar — always visible on sm+, collapsible on mobile */}
+        <div className={`border-b border-grimoire-border px-4 py-3 sm:block sm:px-5 ${filtersOpen ? 'block' : 'hidden'}`}>
           <FilterBar
             activeStatus={filters.status}
             activeGenre={filters.genre}
