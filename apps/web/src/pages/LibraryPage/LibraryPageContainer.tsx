@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useCreateGameMutation, useGetGameStatsQuery } from '@/api/gamesApi';
 import { GameStatus, Genre, IgdbGame } from '@grimoire/shared';
 import { setGenreFilter, setSearch, setStatusFilter } from '@/store/filtersSlice';
+import { toast } from '@/components/ui/use-toast';
 
 export function LibraryPageContainer() {
   const dispatch = useAppDispatch();
@@ -30,8 +31,10 @@ export function LibraryPageContainer() {
         status,
         moods: [],
       }).unwrap();
+      toast({ title: `${game.name} added to your library` });
       onSuccessCallback();
     } catch {
+      toast({ title: 'Failed to add game', variant: 'destructive' });
       onErrorCallback();
     }
   }

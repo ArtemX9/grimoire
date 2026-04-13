@@ -2,7 +2,6 @@ import { GameStatus, IgdbGame } from '@grimoire/shared';
 import { useState } from 'react';
 
 import { useSearchIgdbQuery } from '@/api/igdbApi';
-import { toast } from '@/components/ui/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useAppSelector } from '@/store/hooks';
 
@@ -28,12 +27,10 @@ function IGDBGameSearchDialogContainer({ open, onGameSelect, onOpenChange }: IAd
     setIsLoading(true);
     onGameSelect(game, status, () => {
       setIsLoading(false);
-      toast({ title: `${game.name} added to your library` });
       onOpenChange(false);
       setSearchQuery('');
     }, () => {
       setIsLoading(false);
-      toast({ title: 'Failed to add game', variant: 'destructive' });
     });
   }
 
