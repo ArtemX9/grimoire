@@ -15,6 +15,8 @@ import { ROUTES } from '@/constants/routes';
 import { useAppDispatch } from '@/store/hooks';
 import { cn } from '@/utils/cn';
 
+const steamIDRegex = /^\d{17}$/;
+
 export function SettingsPage() {
   return (
     <ScrollArea className='h-full'>
@@ -161,6 +163,11 @@ function SteamRow() {
 
   async function handleConnect() {
     if (!steamIdInput.trim()) return;
+
+    if (!steamIDRegex.test(steamIdInput)) {
+      return;
+    }
+
     try {
       await connectSteam({ steamId: steamIdInput.trim() }).unwrap();
       toast({ title: 'Steam account connected' });
