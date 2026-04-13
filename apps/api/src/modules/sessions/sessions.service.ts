@@ -63,9 +63,10 @@ export class SessionsService {
   }
 
   async create(userId: string, dto: CreateSessionDto): Promise<SessionResponse> {
-    const sessionDay = dto.startedAt.getDate();
-    const sessionMonth = dto.startedAt.getMonth() + 1;
-    const sessionYear = dto.startedAt.getFullYear();
+    const startOfDay = new Date(dto.startedAt);
+    startOfDay.setHours(0, 0, 0, 0);
+    const startOfNextDay = new Date(startOfDay);
+    startOfNextDay.setDate(startOfNextDay.getDate() + 1);
 
     const playedTime = dto.durationMin ?? 0;
     if (playedTime && playedTime > FULL_DAY_HOURS) {
@@ -76,7 +77,8 @@ export class SessionsService {
       _sum: { durationMin: true },
       where: {
         userId,
-        startedAt: new Date(`${sessionYear}-${sessionMonth}-${sessionDay}`),
+        gameId: dto.gameId,
+        startedAt: { gte: startOfDay, lt: startOfNextDay },
       },
     });
     const totalPlayedTimesSession = totalPlayedTimeForDay._sum.durationMin ?? 0;
@@ -85,7 +87,7 @@ export class SessionsService {
     }
     if (dto.durationMin) {
       const [session] = await this.prisma.$transaction([
-        this.prisma.playSession.create({ data: { ...dto, userId, startedAt: new Date(`${sessionYear}-${sessionMonth}-${sessionDay}`) } }),
+        this.prisma.playSession.create({ data: { ...dto, userId } }),
         this.prisma.userGame.update({
           where: { id: dto.gameId },
           data: { playtimeHours: { increment: dto.durationMin / 60 } },
