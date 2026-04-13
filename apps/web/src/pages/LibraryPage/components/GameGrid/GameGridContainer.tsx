@@ -1,5 +1,7 @@
 import { useGetGamesQuery } from '@/api/gamesApi';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useSliceSync } from '@/hooks/useSliceSync';
+import { gamesLoaded } from '@/store/gamesSlice';
 import { useAppSelector } from '@/store/hooks';
 
 import GameGrid from './GameGrid';
@@ -10,12 +12,13 @@ function GameGridContainer() {
   const isLoading = useAppSelector((s) => s.games.isGamesLoading);
   const debouncedSearch = useDebounce(filters.search, 300);
 
-  // Trigger the RTK Query fetch so onQueryStarted populates the slice.
-  useGetGamesQuery({
+  const args = {
     status: filters.status ?? undefined,
     genre: filters.genre ?? undefined,
     search: debouncedSearch || undefined,
-  });
+  };
+
+  useSliceSync(useGetGamesQuery, args, gamesLoaded);
 
   return <GameGrid games={games} isLoading={isLoading} />;
 }

@@ -1,9 +1,6 @@
 import { CreateGameDto, GameStatus, UpdateGameDto, UserGame } from '@grimoire/shared';
 
 import {
-  gamesFailed,
-  gamesLoaded,
-  gamesLoadingStarted,
   selectedGameFailed,
   selectedGameLoaded,
   selectedGameLoadingStarted,
@@ -43,15 +40,6 @@ export const gamesApi = api.injectEndpoints({
         params: Object.fromEntries(Object.entries(params).filter(([, v]) => v !== undefined && v !== '')),
       }),
       providesTags: ['Game'],
-      onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
-        dispatch(gamesLoadingStarted());
-        try {
-          const { data } = await queryFulfilled;
-          dispatch(gamesLoaded(data));
-        } catch {
-          dispatch(gamesFailed());
-        }
-      },
     }),
 
     getGameStats: builder.query<GameStats, void>({

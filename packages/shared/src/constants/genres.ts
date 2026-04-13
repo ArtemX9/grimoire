@@ -19,7 +19,6 @@ export enum Genre {
   RPG = 'Role-playing (RPG)',
   SciFi = 'Sci-fi',
   Shooter = 'Shooter',
-  Simulation = 'Simulation',
   Simulator = 'Simulator',
   SoulsLike = 'Souls-like',
   Sport = 'Sport',
