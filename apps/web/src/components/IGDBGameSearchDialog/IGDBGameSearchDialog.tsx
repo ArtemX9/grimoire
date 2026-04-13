@@ -11,18 +11,26 @@ import { cn } from '@/utils/cn';
 interface IAddGameDialog {
   open: boolean;
   searchQuery: string;
+  dialogTitle: string;
+  progressIndicatorText: string;
+  actionButtonTitle: string;
   searchResults: IgdbGame[];
   isSearching: boolean;
   isLoading: boolean;
+  gameStatusOptions?: GameStatus[];
   onOpenChange: (open: boolean) => void;
   onSearchChange: (q: string) => void;
   onAddGame: (game: IgdbGame, status: GameStatus) => void;
 }
 
 function IGDBGameSearchDialog({
+  gameStatusOptions,
   open,
   searchQuery,
   searchResults,
+  dialogTitle,
+  actionButtonTitle,
+  progressIndicatorText,
   isSearching,
   isLoading,
   onOpenChange,
@@ -31,8 +39,6 @@ function IGDBGameSearchDialog({
 }: IAddGameDialog) {
   const [selectedGame, setSelectedGame] = useState<IgdbGame | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<GameStatus>(GameStatus.BACKLOG);
-
-  const STATUS_OPTIONS = Object.values(GameStatus);
 
   function handleConfirm() {
     if (!selectedGame) return;
@@ -53,7 +59,7 @@ function IGDBGameSearchDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className='max-w-md'>
         <DialogHeader>
-          <DialogTitle>Add a game</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
         </DialogHeader>
 
         {renderSearch()}
@@ -143,25 +149,7 @@ function IGDBGameSearchDialog({
           <span className='font-grimoire text-sm text-grimoire-ink'>{selectedGame.name}</span>
         </div>
 
-        <div className='flex flex-col gap-2'>
-          <p className='font-sans text-xs text-grimoire-muted'>Add to list</p>
-          <div className='flex flex-wrap gap-1.5'>
-            {STATUS_OPTIONS.map((status) => (
-              <button
-                key={status}
-                onClick={() => setSelectedStatus(status)}
-                className={cn(
-                  'rounded-full border px-3 py-1 font-sans text-xs transition-colors',
-                  selectedStatus === status
-                    ? 'border-grimoire-gold bg-grimoire-gold/10 text-grimoire-gold'
-                    : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg hover:text-grimoire-ink',
-                )}
-              >
-                {status.charAt(0) + status.slice(1).toLowerCase()}
-              </button>
-            ))}
-          </div>
-        </div>
+        {renderGameStatus()}
 
         <div className='flex justify-end gap-2'>
           <Button variant='ghost' size='sm' onClick={() => setSelectedGame(null)}>
@@ -171,12 +159,40 @@ function IGDBGameSearchDialog({
             {isLoading ? (
               <>
                 <Loader2 className='h-3.5 w-3.5 animate-spin' />
-                Adding…
+                {progressIndicatorText}
               </>
             ) : (
-              'Add to library'
+              actionButtonTitle
             )}
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  function renderGameStatus() {
+    if (!gameStatusOptions) {
+      return null;
+    }
+
+    return (
+      <div className='flex flex-col gap-2'>
+        <p className='font-sans text-xs text-grimoire-muted'>Add to list</p>
+        <div className='flex flex-wrap gap-1.5'>
+          {gameStatusOptions.map((status) => (
+            <button
+              key={status}
+              onClick={() => setSelectedStatus(status)}
+              className={cn(
+                'rounded-full border px-3 py-1 font-sans text-xs transition-colors',
+                selectedStatus === status
+                  ? 'border-grimoire-gold bg-grimoire-gold/10 text-grimoire-gold'
+                  : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg hover:text-grimoire-ink',
+              )}
+            >
+              {status.charAt(0) + status.slice(1).toLowerCase()}
+            </button>
+          ))}
         </div>
       </div>
     );

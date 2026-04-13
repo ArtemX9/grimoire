@@ -8,12 +8,24 @@ import { useAppSelector } from '@/store/hooks';
 import IGDBGameSearchDialog from './IGDBGameSearchDialog';
 
 interface IAddGameDialogContainer {
+  dialogTitle: string;
+  progressIndicatorText: string;
+  actionButtonTitle: string;
   open: boolean;
+  gameStatusOptions?: GameStatus[];
   onGameSelect: (game: IgdbGame, status: GameStatus, onSuccessCallback: () => void, onErrorCallback: () => void) => void;
   onOpenChange: (open: boolean) => void;
 }
 
-function IGDBGameSearchDialogContainer({ open, onGameSelect, onOpenChange }: IAddGameDialogContainer) {
+function IGDBGameSearchDialogContainer({
+  gameStatusOptions,
+  dialogTitle,
+  progressIndicatorText,
+  actionButtonTitle,
+  open,
+  onGameSelect,
+  onOpenChange,
+}: IAddGameDialogContainer) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const debouncedQuery = useDebounce(searchQuery, 1000);
@@ -25,17 +37,26 @@ function IGDBGameSearchDialogContainer({ open, onGameSelect, onOpenChange }: IAd
 
   function handleAddGame(game: IgdbGame, status: GameStatus) {
     setIsLoading(true);
-    onGameSelect(game, status, () => {
-      setIsLoading(false);
-      onOpenChange(false);
-      setSearchQuery('');
-    }, () => {
-      setIsLoading(false);
-    });
+    onGameSelect(
+      game,
+      status,
+      () => {
+        setIsLoading(false);
+        onOpenChange(false);
+        setSearchQuery('');
+      },
+      () => {
+        setIsLoading(false);
+      },
+    );
   }
 
   return (
     <IGDBGameSearchDialog
+      gameStatusOptions={gameStatusOptions}
+      dialogTitle={dialogTitle}
+      progressIndicatorText={progressIndicatorText}
+      actionButtonTitle={actionButtonTitle}
       open={open}
       searchQuery={searchQuery}
       searchResults={searchResults}

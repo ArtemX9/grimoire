@@ -100,6 +100,19 @@ export const gamesApi = api.injectEndpoints({
       },
     }),
 
+    remapGame: builder.mutation<UserGame, UpdateGameArgs>({
+      query: ({ id, data }) => ({ url: `${BASE_URL_PATH}/${id}/remap`, method: 'PATCH', body: data }),
+      invalidatesTags: (_r, _e, { id }) => [{ type: 'Game', id }, 'Stats'],
+      onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(selectedGamePatched(data));
+        } catch {
+          // leave slice state unchanged on failure — component handles toast
+        }
+      },
+    }),
+
     deleteGame: builder.mutation<void, string>({
       query: (id) => ({ url: `${BASE_URL_PATH}/${id}`, method: 'DELETE' }),
       invalidatesTags: ['Game', 'Stats'],
@@ -119,6 +132,7 @@ export const {
   useGetGamesQuery,
   useGetGameStatsQuery,
   useGetGameQuery,
+  useRemapGameMutation,
   useCreateGameMutation,
   useUpdateGameMutation,
   useDeleteGameMutation,

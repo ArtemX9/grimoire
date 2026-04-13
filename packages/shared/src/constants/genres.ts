@@ -20,9 +20,11 @@ export enum Genre {
   SciFi = 'Sci-fi',
   Shooter = 'Shooter',
   Simulation = 'Simulation',
+  Simulator = 'Simulator',
   SoulsLike = 'Souls-like',
   Sport = 'Sport',
   Stealth = 'Stealth',
   Strategy = 'Strategy',
+  Tactical = 'Tactical',
   VisualNovel = 'Visual Novel',
 }

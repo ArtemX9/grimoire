@@ -18,5 +18,13 @@ export const UpdateGameSchema = CreateGameSchema.partial().extend({
   userRating: z.number().int().min(1).max(10).optional(),
 })
 
+export const RemapGameSchema = CreateGameSchema.partial().extend({
+  igdbId: z.number().int().positive(),
+  title: z.string().min(1).max(255),
+  coverUrl: z.string().url().optional(),
+  genres: z.array(z.enum(Genre)).default([]),
+})
+
 export type CreateGameDto = z.infer<typeof CreateGameSchema>
 export type UpdateGameDto = z.infer<typeof UpdateGameSchema>
+export type RemapGameDto = z.infer<typeof RemapGameSchema>

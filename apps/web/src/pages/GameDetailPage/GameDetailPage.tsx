@@ -1,19 +1,13 @@
-import { GameStatus, UpdateGameDto } from '@grimoire/shared';
-import { ArrowLeft, Clock, Star, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { GameStatus, IgdbGame, UserGame } from '@grimoire/shared';
+import { ArrowLeft, Clock, RefreshCcw, Star, Trash2 } from 'lucide-react';
 
-import { useDeleteGameMutation, useGetGameQuery, useUpdateGameMutation } from '@/api/gamesApi';
-import { useGetGameSessionsQuery } from '@/api/sessionsApi';
+import IGDBGameSearchDialogContainer from '@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/use-toast';
-import { ROUTES } from '@/constants/routes';
 import GameNotes from '@/pages/GameDetailPage/components/GameNotes/GameNotes';
 import LogSessionDialog from '@/pages/GameDetailPage/components/LogSessionDialog';
-import { useAppSelector } from '@/store/hooks';
 import { cn } from '@/utils/cn';
 
 const STATUS_STYLES: Record<GameStatus, string> = {
@@ -24,23 +18,51 @@ const STATUS_STYLES: Record<GameStatus, string> = {
   WISHLIST: 'bg-grimoire-status-wishlist-bg  text-grimoire-status-wishlist-text',
 };
 
-export function GameDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+type GameSession = {
+  id: string;
+  startedAt: string | Date;
+  durationMin?: number | null;
+};
 
-  const game = useAppSelector((s) => s.games.selectedGame);
-  const isLoading = useAppSelector((s) => s.games.isSelectedGameLoading);
+interface IGameDetailPage {
+  game: UserGame | null;
+  isLoading: boolean;
+  sessions: GameSession[];
+  isUpdating: boolean;
+  isDeleting: boolean;
+  deleteDialogOpen: boolean;
+  logSessionOpen: boolean;
+  remapDialogOpen: boolean;
+  onDeleteDialogOpen: (open: boolean) => void;
+  onLogSessionOpen: (open: boolean) => void;
+  onRemapDialogOpen: (open: boolean) => void;
+  onStatusChange: (status: GameStatus) => void;
+  onRatingChange: (rating: number) => void;
+  onSaveNotes: (notes: string) => void;
+  onDelete: () => void;
+  onRemapGame: (game: IgdbGame, status: GameStatus, onSuccess: () => void, onError: () => void) => void;
+  onBack: () => void;
+}
 
-  // Trigger the RTK Query fetch so onQueryStarted populates the slice.
-  useGetGameQuery(id!);
-
-  const { data: sessions = [] } = useGetGameSessionsQuery(id!);
-  const [updateGame, { isLoading: isUpdating }] = useUpdateGameMutation();
-  const [deleteGame, { isLoading: isDeleting }] = useDeleteGameMutation();
-
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [logSessionOpen, setLogSessionOpen] = useState(false);
-
+export function GameDetailPage({
+  game,
+  isLoading,
+  sessions,
+  isUpdating,
+  isDeleting,
+  deleteDialogOpen,
+  logSessionOpen,
+  remapDialogOpen,
+  onDeleteDialogOpen,
+  onLogSessionOpen,
+  onRemapDialogOpen,
+  onStatusChange,
+  onRatingChange,
+  onSaveNotes,
+  onDelete,
+  onRemapGame,
+  onBack,
+}: IGameDetailPage) {
   if (isLoading) return renderSkeleton();
 
   if (!game) {
@@ -51,47 +73,11 @@ export function GameDetailPage() {
     );
   }
 
-  async function handleStatusChange(status: GameStatus) {
-    try {
-      await updateGame({ id: game!.id, data: { status } }).unwrap();
-    } catch {
-      toast({ title: 'Failed to update status', variant: 'destructive' });
-    }
-  }
-
-  async function handleRatingChange(rating: number) {
-    const next = game!.userRating === rating ? undefined : rating;
-    try {
-      await updateGame({ id: game!.id, data: { userRating: next } as UpdateGameDto }).unwrap();
-    } catch {
-      toast({ title: 'Failed to update rating', variant: 'destructive' });
-    }
-  }
-
-  async function handleSaveNotes(notes: string) {
-    try {
-      await updateGame({ id: game!.id, data: { notes } }).unwrap();
-      toast({ title: 'Notes saved' });
-    } catch {
-      toast({ title: 'Failed to save notes', variant: 'destructive' });
-    }
-  }
-
-  async function handleDelete() {
-    try {
-      await deleteGame(game!.id).unwrap();
-      toast({ title: `${game!.title} removed from library` });
-      navigate(ROUTES.LIBRARY);
-    } catch {
-      toast({ title: 'Failed to delete game', variant: 'destructive' });
-    }
-  }
-
   return (
     <ScrollArea className='h-full'>
       <div className='mx-auto max-w-3xl p-5'>
         <button
-          onClick={() => navigate(-1)}
+          onClick={onBack}
           className='flex items-center gap-1.5 font-sans text-sm text-grimoire-muted transition-colors hover:text-grimoire-ink'
         >
           <ArrowLeft className='h-4 w-4' />
@@ -104,12 +90,12 @@ export function GameDetailPage() {
         </div>
 
         <div className='mt-6 grid gap-5 sm:grid-cols-2'>
-          <GameNotes notes={game.notes} isSaving={isUpdating} onSave={handleSaveNotes} />
+          <GameNotes notes={game.notes} isSaving={isUpdating} onSave={onSaveNotes} />
           {renderSessionsSection()}
         </div>
       </div>
 
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <Dialog open={deleteDialogOpen} onOpenChange={onDeleteDialogOpen}>
         <DialogContent className='max-w-sm'>
           <DialogHeader>
             <DialogTitle>Remove from library?</DialogTitle>
@@ -118,17 +104,26 @@ export function GameDetailPage() {
             This will permanently remove <span className='text-grimoire-ink'>{game.title}</span> and all its sessions.
           </p>
           <DialogFooter>
-            <Button variant='ghost' size='sm' onClick={() => setDeleteDialogOpen(false)}>
+            <Button variant='ghost' size='sm' onClick={() => onDeleteDialogOpen(false)}>
               Cancel
             </Button>
-            <Button variant='destructive' size='sm' onClick={handleDelete} disabled={isDeleting}>
+            <Button variant='destructive' size='sm' onClick={onDelete} disabled={isDeleting}>
               Remove
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <LogSessionDialog open={logSessionOpen} gameId={game.id} onOpenChange={setLogSessionOpen} />
+      <LogSessionDialog open={logSessionOpen} gameId={game.id} onOpenChange={onLogSessionOpen} />
+
+      <IGDBGameSearchDialogContainer
+        dialogTitle='Remap game'
+        progressIndicatorText='Remapping...'
+        actionButtonTitle='Remap'
+        open={remapDialogOpen}
+        onOpenChange={onRemapDialogOpen}
+        onGameSelect={onRemapGame}
+      />
     </ScrollArea>
   );
 
@@ -181,7 +176,7 @@ export function GameDetailPage() {
           {Object.values(GameStatus).map((status) => (
             <button
               key={status}
-              onClick={() => handleStatusChange(status)}
+              onClick={() => onStatusChange(status)}
               disabled={isUpdating}
               className={cn(
                 'rounded-full border px-3 py-1 font-sans text-xs transition-colors disabled:opacity-50',
@@ -202,7 +197,7 @@ export function GameDetailPage() {
             return (
               <button
                 key={rating}
-                onClick={() => handleRatingChange(rating)}
+                onClick={() => onRatingChange(rating)}
                 disabled={isUpdating}
                 aria-label={`Rate ${rating}`}
                 className='transition-transform hover:scale-110 disabled:opacity-50'
@@ -218,15 +213,22 @@ export function GameDetailPage() {
           })}
         </div>
 
-        <div className='flex gap-2'>
+        <div className='flex flex-wrap gap-2'>
           <button
-            onClick={() => setLogSessionOpen(true)}
+            onClick={() => onLogSessionOpen(true)}
             className='rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
           >
             Log session
           </button>
           <button
-            onClick={() => setDeleteDialogOpen(true)}
+            onClick={() => onRemapDialogOpen(true)}
+            className='flex items-center gap-1 rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
+          >
+            <RefreshCcw className='h-3.5 w-3.5' />
+            Re-map game
+          </button>
+          <button
+            onClick={() => onDeleteDialogOpen(true)}
             className='flex items-center gap-1 rounded border border-grimoire-status-dropped-text/20 px-3 py-1.5 font-sans text-xs text-grimoire-status-dropped-text transition-colors hover:bg-grimoire-status-dropped-bg'
           >
             <Trash2 className='h-3.5 w-3.5' />

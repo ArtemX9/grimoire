@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { CreateGameDto, GameStatus, Genre, UpdateGameDto } from '@grimoire/shared';
+import { CreateGameDto, GameStatus, Genre, RemapGameDto, UpdateGameDto } from '@grimoire/shared';
 
 import { UserGame } from '../../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -86,6 +86,20 @@ export class GamesService {
         ...(dto.title !== undefined && { title: dto.title }),
         ...(dto.coverUrl !== undefined && { coverUrl: dto.coverUrl }),
         ...(dto.genres !== undefined && { genres: dto.genres }),
+      },
+    });
+    return this._toResponse(game);
+  }
+
+  async remap(userId: string, id: string, dto: RemapGameDto): Promise<GameResponse> {
+    await this._findOwned(userId, id);
+    const game = await this.prisma.userGame.update({
+      where: { id },
+      data: {
+        igdbId: dto.igdbId,
+        title: dto.title,
+        coverUrl: dto.coverUrl ?? null,
+        genres: dto.genres,
       },
     });
     return this._toResponse(game);
