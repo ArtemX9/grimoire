@@ -160,12 +160,12 @@ export function GameDetailPage({
   function renderCover() {
     return (
       <div className='mx-auto w-36 shrink-0 sm:mx-0 sm:w-48 lg:w-52'>
-        <div className='aspect-[3/4] overflow-hidden rounded-lg border border-grimoire-border bg-grimoire-hover shadow-lg'>
+        <div className='relative aspect-[3/4] overflow-hidden rounded-lg border border-grimoire-border bg-grimoire-hover shadow-lg'>
           {game?.coverURL ? (
             <img
               src={game.coverURL}
               alt={game.title}
-              className='h-full w-full object-cover'
+              className='absolute inset-0 h-full w-full object-cover'
             />
           ) : (
             <div className='flex h-full w-full flex-col items-center justify-center gap-2'>
