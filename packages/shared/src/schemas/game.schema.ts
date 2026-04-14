@@ -16,6 +16,9 @@ export const CreateGameSchema = z.object({
 export const UpdateGameSchema = CreateGameSchema.partial().extend({
   playtimeHours: z.number().min(0).optional(),
   userRating: z.number().int().min(1).max(10).optional(),
+  status: z.enum(GameStatus).optional(),
+  genres: z.array(z.enum(Genre)).optional(),
+  moods: z.array(z.enum(Mood)).optional(),
 })
 
 export const RemapGameSchema = CreateGameSchema.partial().extend({
