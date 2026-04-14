@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import reducer, { setSelectedGame, toggleSidebar } from '@/store/uiSlice';
+import reducer, { setSelectedGame, toggleAIDrawer, toggleSidebar } from '@/store/uiSlice';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -19,6 +19,10 @@ describe('uiSlice — initial state', () => {
 
   it('no game is selected by default', () => {
     expect(initialState.selectedGameId).toBeNull();
+  });
+
+  it('AI drawer is closed by default', () => {
+    expect(initialState.isAIDrawerOpen).toBe(false);
   });
 });
 
@@ -49,6 +53,43 @@ describe('uiSlice — toggleSidebar', () => {
   it('does not touch selectedGameId', () => {
     const withGame = reducer(initialState, setSelectedGame('game-42'));
     const next = reducer(withGame, toggleSidebar());
+    expect(next.selectedGameId).toBe('game-42');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// toggleAIDrawer
+// ---------------------------------------------------------------------------
+
+describe('uiSlice — toggleAIDrawer', () => {
+  it('opens a closed drawer', () => {
+    const next = reducer(initialState, toggleAIDrawer());
+    expect(next.isAIDrawerOpen).toBe(true);
+  });
+
+  it('closes an open drawer', () => {
+    const open = reducer(initialState, toggleAIDrawer());
+    const next = reducer(open, toggleAIDrawer());
+    expect(next.isAIDrawerOpen).toBe(false);
+  });
+
+  it('toggling three times ends up open', () => {
+    let state = initialState;
+    state = reducer(state, toggleAIDrawer());
+    state = reducer(state, toggleAIDrawer());
+    state = reducer(state, toggleAIDrawer());
+    expect(state.isAIDrawerOpen).toBe(true);
+  });
+
+  it('does not touch sidebarOpen', () => {
+    const closed = reducer(initialState, toggleSidebar());
+    const next = reducer(closed, toggleAIDrawer());
+    expect(next.sidebarOpen).toBe(false);
+  });
+
+  it('does not touch selectedGameId', () => {
+    const withGame = reducer(initialState, setSelectedGame('game-42'));
+    const next = reducer(withGame, toggleAIDrawer());
     expect(next.selectedGameId).toBe('game-42');
   });
 });

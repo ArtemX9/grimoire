@@ -1,8 +1,10 @@
-import { BookOpen, Library, Settings } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { BookOpen, Library, Settings, Sparkles } from 'lucide-react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '@/constants/routes';
 import { useIsMobile } from '@/hooks/useMobile';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { toggleAIDrawer } from '@/store/uiSlice';
 import { cn } from '@/utils/cn';
 
 const NAV_ITEMS = [
@@ -12,6 +14,17 @@ const NAV_ITEMS = [
 
 function Sidebar() {
   const isMobile = useIsMobile();
+  const dispatch = useAppDispatch();
+  const isAIDrawerOpen = useAppSelector((s) => s.ui.isAIDrawerOpen);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  function handleAIClick() {
+    if (location.pathname !== ROUTES.LIBRARY) {
+      navigate(ROUTES.LIBRARY);
+    }
+    dispatch(toggleAIDrawer());
+  }
 
   if (isMobile) {
     return (
@@ -31,6 +44,17 @@ function Sidebar() {
             {label}
           </NavLink>
         ))}
+        <button
+          onClick={handleAIClick}
+          aria-label='Open AI recommendations'
+          className={cn(
+            'flex flex-col items-center gap-1 px-6 py-3 font-sans text-[10px] transition-colors',
+            isAIDrawerOpen ? 'text-grimoire-gold' : 'text-grimoire-muted',
+          )}
+        >
+          <Sparkles className='h-6 w-6 shrink-0' />
+          AI Pick
+        </button>
       </nav>
     );
   }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useCreateGameMutation, useGetGameStatsQuery } from '@/api/gamesApi';
 import { GameStatus, Genre, IgdbGame } from '@grimoire/shared';
 import { setGenreFilter, setSearch, setStatusFilter } from '@/store/filtersSlice';
+import { toggleAIDrawer } from '@/store/uiSlice';
 import { toast } from '@/components/ui/use-toast';
 
 export function LibraryPageContainer() {
@@ -13,8 +14,8 @@ export function LibraryPageContainer() {
     stats,
     isStatsLoading
   } = useAppSelector((s) => s.games);
+  const isAIDrawerOpen = useAppSelector((s) => s.ui.isAIDrawerOpen);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
   const [createGame] = useCreateGameMutation();
 
   // Trigger the RTK Query fetch so onQueryStarted populates the slice.
@@ -53,12 +54,12 @@ export function LibraryPageContainer() {
 
   return <LibraryPage
     addDialogOpen={addDialogOpen}
-    aiDrawerOpen={aiDrawerOpen}
+    aiDrawerOpen={isAIDrawerOpen}
     stats={stats}
     filters={filters}
     isStatsLoading={isStatsLoading}
     onAddDialogOpen={setAddDialogOpen}
-    onAIDrawerOpen={setAiDrawerOpen}
+    onAIDrawerOpen={() => dispatch(toggleAIDrawer())}
     onStatusChange={handleStatusChange}
     onGenreChange={handleGenreChange}
     onSearchChange={handleSearchChange}

@@ -5,11 +5,13 @@ export const UI_SLICE = 'ui';
 export interface UiState {
   sidebarOpen: boolean;
   selectedGameId: string | null;
+  isAIDrawerOpen: boolean;
 }
 
 const initialState: UiState = {
   sidebarOpen: true,
   selectedGameId: null,
+  isAIDrawerOpen: false,
 };
 
 const uiSlice = createSlice({
@@ -22,8 +24,11 @@ const uiSlice = createSlice({
     setSelectedGame: (state, action: PayloadAction<string | null>) => {
       state.selectedGameId = action.payload;
     },
+    toggleAIDrawer: (state) => {
+      state.isAIDrawerOpen = !state.isAIDrawerOpen;
+    },
   },
 });
 
-export const { toggleSidebar, setSelectedGame } = uiSlice.actions;
+export const { toggleSidebar, setSelectedGame, toggleAIDrawer } = uiSlice.actions;
 export default uiSlice.reducer;
