@@ -100,6 +100,7 @@ export class GamesService {
         title: dto.title,
         coverUrl: dto.coverUrl ?? null,
         genres: dto.genres,
+        isMappedManually: true,
       },
     });
     return this._toResponse(game);

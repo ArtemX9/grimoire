@@ -31,10 +31,7 @@ export class SteamSyncProcessor extends WorkerHost {
           where: { userId, steamAppId: steamGame.appid },
         });
         if (existing) {
-          await this.prisma.userGame.update({
-            where: { id: existing.id },
-            data: { playtimeHours: steamGame.playtime_forever / 60 },
-          });
+          // If game is already ingested - we skip it.
           continue;
         }
 

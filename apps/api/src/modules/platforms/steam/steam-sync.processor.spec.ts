@@ -160,7 +160,7 @@ describe('SteamSyncProcessor', () => {
   // ---------------------------------------------------------------------------
 
   describe('process (existing games)', () => {
-    it('updates playtimeHours for a game that already exists in the library', async () => {
+    it('skips a game that already exists in the library', async () => {
       const existingGame = makeUserGame();
       steamService.getOwnedGames.mockResolvedValue([makeSteamGame({ playtime_forever: 6000 })]);
       (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(existingGame);
@@ -169,10 +169,7 @@ describe('SteamSyncProcessor', () => {
 
       await processor.process(makeJob({ userId: 'user-1', steamId: 'steam-id' }));
 
-      expect(prisma.userGame.update).toHaveBeenCalledWith({
-        where: { id: 'game-row-1' },
-        data: { playtimeHours: 100 }, // 6000 / 60
-      });
+      expect(prisma.userGame.update).not.toHaveBeenCalled();
       expect(gamesService.create).not.toHaveBeenCalled();
       expect(igdbService.search).not.toHaveBeenCalled();
     });
