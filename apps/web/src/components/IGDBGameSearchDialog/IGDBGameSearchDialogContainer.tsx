@@ -3,8 +3,9 @@ import { useState } from 'react';
 
 import { useSearchIgdbQuery } from '@/api/igdbApi';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useSliceSync } from '@/hooks/useSliceSync';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { searchCleared } from '@/store/igdbSlice';
+import { searchCleared, searchLoaded } from '@/store/igdbSlice';
 
 import IGDBGameSearchDialog from './IGDBGameSearchDialog';
 
@@ -32,7 +33,11 @@ function IGDBGameSearchDialogContainer({
   const [isLoading, setIsLoading] = useState(false);
   const debouncedQuery = useDebounce(searchQuery, 1000);
 
-  useSearchIgdbQuery(debouncedQuery, { skip: debouncedQuery.length < 2 });
+  useSliceSync(
+    (q) => useSearchIgdbQuery(q, { skip: q.length < 2 }),
+    debouncedQuery,
+    searchLoaded,
+  );
 
   const searchResults = useAppSelector((s) => s.igdb.searchResults);
   const isSearching = useAppSelector((s) => s.igdb.isSearchLoading);
