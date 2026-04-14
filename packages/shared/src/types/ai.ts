@@ -15,6 +15,7 @@ export type RecommendationContext = {
     genres: Genre[]
     playtimeHours: number
     moods: Mood[]
+    rating?: number
   }>
   recentSessions: Array<{
     gameTitle: string

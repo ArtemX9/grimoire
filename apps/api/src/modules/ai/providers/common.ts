@@ -7,10 +7,10 @@ User mood: ${ctx.moods.join(', ')};
 Available time: ${ctx.sessionLengthMinutes} minutes;
 
 Their library (status / title / genres / hours played):
-${ctx.games.map((g) => `- [${g.status}] ${g.title} (${g.genres.join(', ')}) — ${g.playtimeHours}h`).join('\n')}
+${ctx.games.map((g) => `- [${g.status}] ${g.title} (${g.genres.join(', ')}) — ${g.playtimeHours}h | Rating: ${g.rating ?? 'Not rated yet'} / 10`).join('\n')}
 
 Recent sessions:
-${ctx.recentSessions.map((s) => `- ${s.gameTitle}: ${s.durationMin}min, mood: ${s.mood.join(', ')}`).join('\n')}
+${ctx.recentSessions.map((s) => `- ${s.gameTitle}: ${s.durationMin}min, mood: ${s.mood.join(', ')}, user notes: \n"${s.notes}"\n`).join('\n')}
 
 Rules:
 - Recommend only one specific game from the provided library.

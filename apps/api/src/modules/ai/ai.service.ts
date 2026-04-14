@@ -80,6 +80,7 @@ export class AiService {
         genres: g.genres as Genre[],
         playtimeHours: g.playtimeHours,
         moods: g.moods as Mood[],
+        rating: g.userRating,
       })),
       recentSessions: recentSessions.map((s) => ({
         gameTitle: s.game.title,
