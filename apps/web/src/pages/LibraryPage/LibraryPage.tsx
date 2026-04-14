@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { GameStatus, Genre, IgdbGame } from '@grimoire/shared';
-import { ChevronDown, ChevronUp, Plus, Sparkles, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 
 import { GameStats } from '@/api/gamesApi';
 import AiPanelContainer from '@/components/AiPanel/AiPanelContainer';
@@ -26,7 +26,7 @@ interface ILibraryPage {
   filters: FiltersState;
   stats: GameStats | null;
   onAddDialogOpen: (shouldOpen: boolean) => void;
-  onAIDrawerOpen: (shouldOpen: boolean) => void;
+  onAIDrawerOpen: () => void;
   onStatusChange: (status: GameStatus | null) => void;
   onGenreChange: (genre: Genre | null) => void;
   onSearchChange: (search: string) => void;
@@ -99,15 +99,7 @@ export function LibraryPage({
         <AiPanelContainer />
       </div>
 
-      <button
-        onClick={onAIDrawerOpen.bind(null, true)}
-        aria-label='Open AI recommendations'
-        className='fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-grimoire-gold text-grimoire-deep shadow-lg transition-colors hover:bg-grimoire-gold-bright lg:hidden'
-      >
-        <Sparkles className='h-5 w-5' />
-      </button>
-
-      <BottomDrawer open={aiDrawerOpen} onOpenChange={onAIDrawerOpen}>
+      <BottomDrawer open={aiDrawerOpen} onOpenChange={(open) => { if (!open) onAIDrawerOpen(); }}>
         <BottomDrawerPortal>
           <BottomDrawerOverlay />
           <BottomDrawerContent>
