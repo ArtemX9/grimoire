@@ -3,7 +3,8 @@ import { useState } from 'react';
 
 import { useSearchIgdbQuery } from '@/api/igdbApi';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useAppSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { searchCleared } from '@/store/igdbSlice';
 
 import IGDBGameSearchDialog from './IGDBGameSearchDialog';
 
@@ -26,6 +27,7 @@ function IGDBGameSearchDialogContainer({
   onGameSelect,
   onOpenChange,
 }: IAddGameDialogContainer) {
+  const dispatch = useAppDispatch();
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const debouncedQuery = useDebounce(searchQuery, 1000);
@@ -35,15 +37,22 @@ function IGDBGameSearchDialogContainer({
   const searchResults = useAppSelector((s) => s.igdb.searchResults);
   const isSearching = useAppSelector((s) => s.igdb.isSearchLoading);
 
+  function handleOpenChange(open: boolean) {
+    if (!open) {
+      setSearchQuery('');
+      setIsLoading(false);
+      dispatch(searchCleared());
+    }
+    onOpenChange(open);
+  }
+
   function handleAddGame(game: IgdbGame, status: GameStatus) {
     setIsLoading(true);
     onGameSelect(
       game,
       status,
       () => {
-        setIsLoading(false);
-        onOpenChange(false);
-        setSearchQuery('');
+        handleOpenChange(false);
       },
       () => {
         setIsLoading(false);
@@ -62,7 +71,7 @@ function IGDBGameSearchDialogContainer({
       searchResults={searchResults}
       isSearching={isSearching}
       isLoading={isLoading}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       onSearchChange={setSearchQuery}
       onAddGame={handleAddGame}
     />

@@ -243,3 +243,7 @@ Temporary Items
 .apdisk
 
 /*/**/generated/
+
+# Playwright
+apps/web/playwright-report/
+apps/web/test-results/
