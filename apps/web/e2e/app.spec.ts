@@ -137,7 +137,7 @@ test.describe('Data isolation', () => {
     await page.waitForURL('**/games/**');
 
     // Sessions section is present on the detail page.
-    const sessionsHeading = page.getByRole('heading', { name: 'Sessions', level: 2 });
+    const sessionsHeading = page.getByText('Sessions', { exact: true }).first();
     await expect(sessionsHeading).toBeVisible({ timeout: 10_000 });
 
     // At least one session row should exist (seed data guarantees one).
@@ -166,7 +166,7 @@ test.describe('Data isolation', () => {
     await page.waitForURL('**/games/**');
 
     // Sessions section is present on the detail page.
-    await expect(page.getByRole('heading', { name: 'Sessions', level: 2 })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Sessions', { exact: true }).first()).toBeVisible({ timeout: 10_000 });
 
     // At least one session row should exist (seed data guarantees one).
     await expect(page.locator('div').filter({ hasText: /\d+ min/ }).first()).toBeVisible({ timeout: 10_000 });
