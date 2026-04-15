@@ -77,13 +77,30 @@ export function UserRow({
 
   return (
     <TableRow>
+      {renderIdentityCell()}
+      {renderRoleCell()}
+      {renderPlanCell()}
+      {renderGamesCountCell()}
+      {renderAiRequestsCell()}
+      {renderAiEnabledCell()}
+      {renderAiLimitCell()}
+      {renderDeleteCell()}
+    </TableRow>
+  );
+
+  function renderIdentityCell() {
+    return (
       <TableCell>
         <div className='flex flex-col gap-0.5'>
           <span className='font-grimoire text-sm text-grimoire-ink'>{user.name ?? '—'}</span>
           <span className='font-sans text-xs text-grimoire-muted'>{user.email}</span>
         </div>
       </TableCell>
+    );
+  }
 
+  function renderRoleCell() {
+    return (
       <TableCell>
         <Select value={user.role} onValueChange={(value) => onRoleChange(user.id, value as Role)} disabled={isSelf}>
           <SelectTrigger className={cn('w-24 font-sans text-xs rounded-full border px-2 py-0.5 h-auto', ROLE_STYLES[user.role])}>
@@ -98,7 +115,11 @@ export function UserRow({
           </SelectContent>
         </Select>
       </TableCell>
+    );
+  }
 
+  function renderPlanCell() {
+    return (
       <TableCell>
         <Select value={user.plan} onValueChange={(value) => onPlanChange(user.id, value)} disabled={user.role === Role.ADMIN}>
           <SelectTrigger
@@ -118,15 +139,27 @@ export function UserRow({
           </SelectContent>
         </Select>
       </TableCell>
+    );
+  }
 
-      <TableCell className='font-sans text-sm'>{user.gamesCount}</TableCell>
+  function renderGamesCountCell() {
+    return <TableCell className='font-sans text-sm'>{user.gamesCount}</TableCell>;
+  }
 
-      <TableCell className='font-sans text-sm'>{user.aiEnabled && globalAiEnabled ? user.aiRequestsUsed : '—'}</TableCell>
+  function renderAiRequestsCell() {
+    return <TableCell className='font-sans text-sm'>{user.aiEnabled && globalAiEnabled ? user.aiRequestsUsed : '—'}</TableCell>;
+  }
 
+  function renderAiEnabledCell() {
+    return (
       <TableCell>
         <Switch checked={user.aiEnabled} onCheckedChange={(checked) => onAiEnabledChange(user.id, checked)} disabled={!globalAiEnabled} />
       </TableCell>
+    );
+  }
 
+  function renderAiLimitCell() {
+    return (
       <TableCell>
         <Input
           type='number'
@@ -139,7 +172,11 @@ export function UserRow({
           className='w-20 font-sans text-xs'
         />
       </TableCell>
+    );
+  }
 
+  function renderDeleteCell() {
+    return (
       <TableCell>
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -162,6 +199,6 @@ export function UserRow({
           </AlertDialogContent>
         </AlertDialog>
       </TableCell>
-    </TableRow>
-  );
+    );
+  }
 }

@@ -33,7 +33,10 @@ function makeGame(overrides: Partial<UserGame> = {}): UserGame {
     playtimeHours: 12,
     moods: [Mood.ATMOSPHERIC],
     addedAt: new Date('2024-01-01'),
+    releaseDate: null,
     updatedAt: new Date('2024-01-02'),
+    isMappedManually: false,
+    platforms: [],
     ...overrides,
   };
 }

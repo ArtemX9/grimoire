@@ -29,7 +29,7 @@ function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
   async function handleSubmit() {
     try {
       await createSession({
-        gameId,
+        id: gameId,
         startedAt: new Date(),
         durationMin: durationMin ? parseInt(durationMin, 10) : undefined,
         mood: selectedMoods,
@@ -55,39 +55,11 @@ function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
         <DialogHeader>
           <DialogTitle>Log session</DialogTitle>
         </DialogHeader>
-
         <div className='flex flex-col gap-4'>
-          <div className='flex flex-col gap-1.5'>
-            <label className='font-sans text-xs text-grimoire-muted'>Duration (minutes)</label>
-            <Input type='number' min='1' value={durationMin} onChange={(e) => setDurationMin(e.target.value)} placeholder='e.g. 90' />
-          </div>
-
-          <div className='flex flex-col gap-1.5'>
-            <label className='font-sans text-xs text-grimoire-muted'>Mood (optional)</label>
-            <div className='flex flex-wrap gap-1.5'>
-              {Object.values(Mood).map((mood) => (
-                <button
-                  key={mood}
-                  onClick={() => handleMoodToggle(mood)}
-                  className={cn(
-                    'rounded-full border px-2.5 py-1 font-sans text-xs transition-colors',
-                    selectedMoods.includes(mood)
-                      ? 'border-grimoire-gold bg-grimoire-gold/10 text-grimoire-gold'
-                      : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg hover:text-grimoire-ink',
-                  )}
-                >
-                  {mood}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className='flex flex-col gap-1.5'>
-            <label className='font-sans text-xs text-grimoire-muted'>Notes (optional)</label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder='How did it go?' rows={3} />
-          </div>
+          {renderDurationField()}
+          {renderMoodField()}
+          {renderNotesField()}
         </div>
-
         <DialogFooter>
           <Button variant='ghost' size='sm' onClick={handleClose}>
             Cancel
@@ -99,6 +71,48 @@ function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
       </DialogContent>
     </Dialog>
   );
+
+  function renderDurationField() {
+    return (
+      <div className='flex flex-col gap-1.5'>
+        <label className='font-sans text-xs text-grimoire-muted'>Duration (minutes)</label>
+        <Input type='number' min='1' value={durationMin} onChange={(e) => setDurationMin(e.target.value)} placeholder='e.g. 90' />
+      </div>
+    );
+  }
+
+  function renderMoodField() {
+    return (
+      <div className='flex flex-col gap-1.5'>
+        <label className='font-sans text-xs text-grimoire-muted'>Mood (optional)</label>
+        <div className='flex flex-wrap gap-1.5'>
+          {Object.values(Mood).map((mood) => (
+            <button
+              key={mood}
+              onClick={() => handleMoodToggle(mood)}
+              className={cn(
+                'rounded-full border px-2.5 py-1 font-sans text-xs transition-colors',
+                selectedMoods.includes(mood)
+                  ? 'border-grimoire-gold bg-grimoire-gold/10 text-grimoire-gold'
+                  : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg hover:text-grimoire-ink',
+              )}
+            >
+              {mood}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function renderNotesField() {
+    return (
+      <div className='flex flex-col gap-1.5'>
+        <label className='font-sans text-xs text-grimoire-muted'>Notes (optional)</label>
+        <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder='How did it go?' rows={3} />
+      </div>
+    );
+  }
 }
 
 export default LogSessionDialog;

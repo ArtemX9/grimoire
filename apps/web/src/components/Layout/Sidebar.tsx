@@ -26,7 +26,11 @@ function Sidebar() {
     dispatch(toggleAIDrawer());
   }
 
-  if (isMobile) {
+  if (isMobile) return renderMobileNav();
+
+  return renderDesktopSidebar();
+
+  function renderMobileNav() {
     return (
       <nav className='fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-grimoire-border bg-grimoire-card px-2 pb-[env(safe-area-inset-bottom)]'>
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
@@ -59,13 +63,26 @@ function Sidebar() {
     );
   }
 
-  return (
-    <aside className='flex h-full w-14 flex-col items-center border-r border-grimoire-border bg-grimoire-card py-4 sm:w-52 sm:items-start sm:px-3'>
+  function renderDesktopSidebar() {
+    return (
+      <aside className='flex h-full w-14 flex-col items-center border-r border-grimoire-border bg-grimoire-card py-4 sm:w-52 sm:items-start sm:px-3'>
+        {renderLogo()}
+        {renderDesktopNav()}
+      </aside>
+    );
+  }
+
+  function renderLogo() {
+    return (
       <div className='mb-8 flex items-center gap-2 px-1'>
         <BookOpen className='h-5 w-5 text-grimoire-gold shrink-0' />
         <span className='hidden font-grimoire text-base text-grimoire-ink sm:block'>Grimoire</span>
       </div>
+    );
+  }
 
+  function renderDesktopNav() {
+    return (
       <nav className='flex flex-col gap-1 w-full'>
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
           <NavLink
@@ -83,8 +100,8 @@ function Sidebar() {
           </NavLink>
         ))}
       </nav>
-    </aside>
-  );
+    );
+  }
 }
 
 export default Sidebar;

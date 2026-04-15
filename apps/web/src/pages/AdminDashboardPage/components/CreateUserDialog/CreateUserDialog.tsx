@@ -39,40 +39,11 @@ export function CreateUserDialog({ open, isLoading, error, onClose, onSubmit }: 
           <DialogTitle>Create user account</DialogTitle>
           <DialogDescription>The user will be prompted to change their password on first login.</DialogDescription>
         </DialogHeader>
-
         <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
-          <div className='flex flex-col gap-1.5'>
-            <label className='font-sans text-xs text-grimoire-muted'>Name (optional)</label>
-            <Input type='text' placeholder='Their name' value={name} onChange={(e) => setName(e.target.value)} autoComplete='off' />
-          </div>
-
-          <div className='flex flex-col gap-1.5'>
-            <label className='font-sans text-xs text-grimoire-muted'>Email</label>
-            <Input
-              type='email'
-              placeholder='user@example.com'
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete='off'
-            />
-          </div>
-
-          <div className='flex flex-col gap-1.5'>
-            <label className='font-sans text-xs text-grimoire-muted'>Temporary password</label>
-            <Input
-              type='password'
-              placeholder='••••••••'
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete='new-password'
-              minLength={8}
-            />
-          </div>
-
+          {renderNameField()}
+          {renderEmailField()}
+          {renderPasswordField()}
           {error && <p className='font-sans text-xs text-grimoire-status-dropped-text'>{error}</p>}
-
           <DialogFooter className='mt-2'>
             <Button type='button' variant='outline' onClick={onClose} disabled={isLoading}>
               Cancel
@@ -85,4 +56,46 @@ export function CreateUserDialog({ open, isLoading, error, onClose, onSubmit }: 
       </DialogContent>
     </Dialog>
   );
+
+  function renderNameField() {
+    return (
+      <div className='flex flex-col gap-1.5'>
+        <label className='font-sans text-xs text-grimoire-muted'>Name (optional)</label>
+        <Input type='text' placeholder='Their name' value={name} onChange={(e) => setName(e.target.value)} autoComplete='off' />
+      </div>
+    );
+  }
+
+  function renderEmailField() {
+    return (
+      <div className='flex flex-col gap-1.5'>
+        <label className='font-sans text-xs text-grimoire-muted'>Email</label>
+        <Input
+          type='email'
+          placeholder='user@example.com'
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete='off'
+        />
+      </div>
+    );
+  }
+
+  function renderPasswordField() {
+    return (
+      <div className='flex flex-col gap-1.5'>
+        <label className='font-sans text-xs text-grimoire-muted'>Temporary password</label>
+        <Input
+          type='password'
+          placeholder='••••••••'
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete='new-password'
+          minLength={8}
+        />
+      </div>
+    );
+  }
 }

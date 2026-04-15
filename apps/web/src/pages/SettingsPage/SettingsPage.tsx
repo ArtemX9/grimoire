@@ -73,69 +73,92 @@ function ProfileSection() {
     <section>
       <h2 className='mb-3 font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>Profile</h2>
       <div className='rounded-lg border border-grimoire-border bg-grimoire-card p-4'>
-        {isLoading ? (
-          <div className='flex flex-col gap-2'>
-            <Skeleton className='h-4 w-32 rounded' />
-            <Skeleton className='h-4 w-48 rounded' />
-          </div>
-        ) : (
-          <div className='flex flex-col gap-3'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <p className='font-sans text-sm text-grimoire-ink'>{user?.name ?? '—'}</p>
-                <p className='font-sans text-xs text-grimoire-muted'>{user?.email}</p>
-              </div>
-              {!editing && (
-                <button
-                  onClick={handleStartEdit}
-                  className='font-sans text-xs text-grimoire-muted transition-colors hover:text-grimoire-ink'
-                >
-                  Edit
-                </button>
-              )}
-            </div>
-
-            {editing && (
-              <div className='flex flex-col gap-2'>
-                <div className='flex flex-col gap-1'>
-                  <label className='font-sans text-xs text-grimoire-muted'>Display name</label>
-                  <Input value={nameValue} onChange={(e) => setNameValue(e.target.value)} placeholder='Your name' autoFocus />
-                </div>
-                <div className='flex justify-end gap-2'>
-                  <Button variant='ghost' size='sm' onClick={() => setEditing(false)}>
-                    Cancel
-                  </Button>
-                  <Button size='sm' onClick={handleSave} disabled={isUpdating}>
-                    Save
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {user?.plan && (
-              <div className='flex items-center gap-2'>
-                <span className='font-sans text-xs text-grimoire-muted'>Plan:</span>
-                <span className='rounded-full border border-grimoire-gold-dim bg-grimoire-gold/10 px-2 py-0.5 font-sans text-xs text-grimoire-gold'>
-                  {user.plan}
-                </span>
-              </div>
-            )}
-
-            <div className='border-t border-grimoire-border pt-3'>
-              <button
-                onClick={handleSignOut}
-                disabled={isSigningOut}
-                className='flex items-center gap-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:text-grimoire-status-dropped-text disabled:opacity-50'
-              >
-                <LogOut className='h-3.5 w-3.5' />
-                {isSigningOut ? 'Signing out…' : 'Sign out'}
-              </button>
-            </div>
-          </div>
-        )}
+        {isLoading ? renderSkeleton() : renderContent()}
       </div>
     </section>
   );
+
+  function renderSkeleton() {
+    return (
+      <div className='flex flex-col gap-2'>
+        <Skeleton className='h-4 w-32 rounded' />
+        <Skeleton className='h-4 w-48 rounded' />
+      </div>
+    );
+  }
+
+  function renderContent() {
+    return (
+      <div className='flex flex-col gap-3'>
+        {renderIdentityRow()}
+        {editing && renderEditForm()}
+        {renderPlanBadge()}
+        {renderSignOut()}
+      </div>
+    );
+  }
+
+  function renderIdentityRow() {
+    return (
+      <div className='flex items-center justify-between'>
+        <div>
+          <p className='font-sans text-sm text-grimoire-ink'>{user?.name ?? '—'}</p>
+          <p className='font-sans text-xs text-grimoire-muted'>{user?.email}</p>
+        </div>
+        {!editing && (
+          <button onClick={handleStartEdit} className='font-sans text-xs text-grimoire-muted transition-colors hover:text-grimoire-ink'>
+            Edit
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  function renderEditForm() {
+    return (
+      <div className='flex flex-col gap-2'>
+        <div className='flex flex-col gap-1'>
+          <label className='font-sans text-xs text-grimoire-muted'>Display name</label>
+          <Input value={nameValue} onChange={(e) => setNameValue(e.target.value)} placeholder='Your name' autoFocus />
+        </div>
+        <div className='flex justify-end gap-2'>
+          <Button variant='ghost' size='sm' onClick={() => setEditing(false)}>
+            Cancel
+          </Button>
+          <Button size='sm' onClick={handleSave} disabled={isUpdating}>
+            Save
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  function renderPlanBadge() {
+    if (!user?.plan) return null;
+    return (
+      <div className='flex items-center gap-2'>
+        <span className='font-sans text-xs text-grimoire-muted'>Plan:</span>
+        <span className='rounded-full border border-grimoire-gold-dim bg-grimoire-gold/10 px-2 py-0.5 font-sans text-xs text-grimoire-gold'>
+          {user.plan}
+        </span>
+      </div>
+    );
+  }
+
+  function renderSignOut() {
+    return (
+      <div className='border-t border-grimoire-border pt-3'>
+        <button
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+          className='flex items-center gap-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:text-grimoire-status-dropped-text disabled:opacity-50'
+        >
+          <LogOut className='h-3.5 w-3.5' />
+          {isSigningOut ? 'Signing out…' : 'Sign out'}
+        </button>
+      </div>
+    );
+  }
 }
 
 function PlatformsSection() {
@@ -189,80 +212,108 @@ function SteamRow() {
 
   return (
     <div className='flex flex-col gap-3 px-4 py-4'>
+      {renderHeader()}
+      {renderLastSynced()}
+      {renderConnectInput()}
+    </div>
+  );
+
+  function renderHeader() {
+    return (
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-2'>
           <span className='font-sans text-sm text-grimoire-ink'>Steam</span>
-          {isLoading ? (
-            <Skeleton className='h-4 w-16 rounded' />
-          ) : connected ? (
-            <span className='flex items-center gap-1 font-sans text-xs text-grimoire-status-playing-text'>
-              <CheckCircle2 className='h-3 w-3' />
-              Connected
-            </span>
-          ) : (
-            <span className='flex items-center gap-1 font-sans text-xs text-grimoire-muted'>
-              <AlertCircle className='h-3 w-3' />
-              Not connected
-            </span>
-          )}
+          {renderConnectionStatus()}
         </div>
-
         <div className='flex items-center gap-2'>
-          {connected && (
-            <button
-              onClick={handleSync}
-              disabled={isSyncing}
-              className={cn(
-                'flex items-center gap-1.5 rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink disabled:opacity-50',
-              )}
-            >
-              <RefreshCw className={cn('h-3.5 w-3.5', isSyncing && 'animate-spin')} />
-              {isSyncing ? 'Syncing…' : 'Sync'}
-            </button>
-          )}
-          {!connected && !showInput && (
-            <button
-              onClick={() => setShowInput(true)}
-              className='rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
-            >
-              Connect
-            </button>
-          )}
+          {renderActions()}
         </div>
       </div>
+    );
+  }
 
-      {status?.lastSyncAt && (
-        <p className='font-sans text-xs text-grimoire-muted'>
-          Last synced:{' '}
-          {new Date(status.lastSyncAt).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </p>
-      )}
+  function renderConnectionStatus() {
+    if (isLoading) return <Skeleton className='h-4 w-16 rounded' />;
+    if (connected) {
+      return (
+        <span className='flex items-center gap-1 font-sans text-xs text-grimoire-status-playing-text'>
+          <CheckCircle2 className='h-3 w-3' />
+          Connected
+        </span>
+      );
+    }
+    return (
+      <span className='flex items-center gap-1 font-sans text-xs text-grimoire-muted'>
+        <AlertCircle className='h-3 w-3' />
+        Not connected
+      </span>
+    );
+  }
 
-      {showInput && (
-        <div className='flex gap-2'>
-          <Input
-            value={steamIdInput}
-            onChange={(e) => setSteamIdInput(e.target.value)}
-            placeholder='Your Steam ID (e.g. 76561198…)'
-            autoFocus
-            onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
-          />
-          <Button size='sm' onClick={handleConnect} disabled={isConnecting || !steamIdInput.trim()}>
-            {isConnecting ? 'Connecting…' : 'Save'}
-          </Button>
-          <Button variant='ghost' size='sm' onClick={() => setShowInput(false)}>
-            Cancel
-          </Button>
-        </div>
-      )}
-    </div>
-  );
+  function renderActions() {
+    if (connected) {
+      return (
+        <button
+          onClick={handleSync}
+          disabled={isSyncing}
+          className={cn(
+            'flex items-center gap-1.5 rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink disabled:opacity-50',
+          )}
+        >
+          <RefreshCw className={cn('h-3.5 w-3.5', isSyncing && 'animate-spin')} />
+          {isSyncing ? 'Syncing…' : 'Sync'}
+        </button>
+      );
+    }
+    if (!showInput) {
+      return (
+        <button
+          onClick={() => setShowInput(true)}
+          className='rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
+        >
+          Connect
+        </button>
+      );
+    }
+    return null;
+  }
+
+  function renderLastSynced() {
+    if (!status?.lastSyncAt) return null;
+    return (
+      <p className='font-sans text-xs text-grimoire-muted'>
+        Last synced:{' '}
+        {new Date(status.lastSyncAt).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
+      </p>
+    );
+  }
+
+  function renderConnectInput() {
+    if (!showInput) return null;
+    return (
+      <div className='flex gap-2'>
+        <Input
+          value={steamIdInput}
+          onChange={(e) => setSteamIdInput(e.target.value)}
+          placeholder='Your Steam ID (e.g. 76561198…)'
+          autoFocus
+          onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
+        />
+        <Button size='sm' onClick={handleConnect} disabled={isConnecting || !steamIdInput.trim()}>
+          {isConnecting ? 'Connecting…' : 'Save'}
+        </Button>
+        <Button variant='ghost' size='sm' onClick={() => setShowInput(false)}>
+          Cancel
+        </Button>
+      </div>
+    );
+  }
 }
 
 interface IInactivePlatformRow {

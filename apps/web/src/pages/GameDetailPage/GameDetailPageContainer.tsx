@@ -1,4 +1,4 @@
-import { GameStatus, IgdbGame, UpdateGameDto } from '@grimoire/shared';
+import { GameStatus, IgdbGame, Mood, UpdateGameDto } from '@grimoire/shared';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
 
@@ -34,6 +34,14 @@ function GameDetailPageContainer() {
       await updateGame({ id: game!.id, data: { status } }).unwrap();
     } catch {
       toast({ title: 'Failed to update status', variant: 'destructive' });
+    }
+  }
+
+  async function handleMoodsChange(moods: Mood[]) {
+    try {
+      await updateGame({ id: game!.id, data: { moods } }).unwrap();
+    } catch {
+      toast({ title: 'Failed to update moods', variant: 'destructive' });
     }
   }
 
@@ -103,6 +111,7 @@ function GameDetailPageContainer() {
       onLogSessionOpen={setLogSessionOpen}
       onRemapDialogOpen={setRemapDialogOpen}
       onStatusChange={handleStatusChange}
+      onMoodsChange={handleMoodsChange}
       onRatingChange={handleRatingChange}
       onSaveNotes={handleSaveNotes}
       onDelete={handleDelete}

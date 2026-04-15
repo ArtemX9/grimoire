@@ -105,6 +105,34 @@ Use this pattern for any query that needs to sync into a Redux slice.
 
 Pages follow a container pattern: `XxxPageContainer.tsx` owns all hooks, RTK Query calls, and Redux state; `XxxPage.tsx` is purely presentational. This keeps pages testable and logic co-located.
 
+### JSX conventions — lean return / render-function pattern
+
+Every component's `return` must be a lean "table of contents" — readable at a glance without scrolling. Any JSX block longer than ~5–8 lines must be extracted into a named `renderXxx()` helper defined in the same component scope. The `return` delegates to these helpers like a book's chapter list.
+
+```tsx
+// Correct — lean return
+return (
+  <div className="layout">
+    {renderHeader()}
+    {renderContent()}
+    {renderDialogs()}
+  </div>
+);
+
+// Wrong — return contains inline implementation
+return (
+  <div className="layout">
+    <header>
+      <h1>{title}</h1>
+      <Button onClick={handleAdd}>Add</Button>
+    </header>
+    <main>... 40 lines ...</main>
+  </div>
+);
+```
+
+A `{/* Section name */}` comment inside JSX is a signal that the block should be a `renderXxx()` function — extract it, remove the comment.
+
 ### Mobile responsiveness
 
 Use `useIsMobile()` hook (`src/hooks/useMobile.ts`, breakpoint 768 px) when the mobile and desktop layouts are structurally different (e.g. Sidebar renders a fixed bottom nav on mobile vs. an `<aside>` on desktop). For same-element tweaks (font size, padding), use Tailwind responsive prefixes (`sm:`, `lg:`) directly.

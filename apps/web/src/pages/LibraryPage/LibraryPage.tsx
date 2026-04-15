@@ -50,55 +50,37 @@ export function LibraryPage({
 
   return (
     <div className='flex h-full'>
+      {renderMainContent()}
+      {renderDesktopAiPanel()}
+      {renderMobileAiDrawer()}
+      {renderAddGameDialog()}
+    </div>
+  );
+
+  function renderMainContent() {
+    return (
       <div className='flex flex-1 flex-col overflow-hidden'>
-        {/* Header — stacks title+stats above the action row on very small screens */}
-        <header className='flex flex-col gap-2 border-b border-grimoire-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4'>
-          <div className='flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-1'>
-            <h1 className='font-grimoire text-xl text-grimoire-ink'>My Library</h1>
-            {renderStats()}
-          </div>
-          <div className='flex shrink-0 items-center gap-2'>
-            {/* Filters toggle — mobile only */}
-            <button
-              onClick={() => setFiltersOpen((prev) => !prev)}
-              className='sm:hidden flex items-center gap-1.5 rounded border border-grimoire-border bg-grimoire-card px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
-            >
-              {filtersOpen ? <ChevronUp className='h-3.5 w-3.5' /> : <ChevronDown className='h-3.5 w-3.5' />}
-              Filters
-            </button>
-            <button
-              onClick={onAddDialogOpen.bind(null, true)}
-              className='flex items-center gap-1.5 rounded border border-grimoire-border bg-grimoire-card px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
-            >
-              <Plus className='h-3.5 w-3.5' />
-              Add game
-            </button>
-          </div>
-        </header>
-
-        {/* Filter bar — always visible on sm+, collapsible on mobile */}
-        <div className={`border-b border-grimoire-border px-4 py-3 sm:block sm:px-5 ${filtersOpen ? 'block' : 'hidden'}`}>
-          <FilterBar
-            activeStatus={filters.status}
-            activeGenre={filters.genre}
-            search={filters.search}
-            onStatusChange={onStatusChange}
-            onGenreChange={onGenreChange}
-            onSearchChange={onSearchChange}
-          />
-        </div>
-
+        {renderHeader()}
+        {renderFilterBar()}
         <ScrollArea className='flex-1'>
           <div className='p-5'>
             <GameGridContainer />
           </div>
         </ScrollArea>
       </div>
+    );
+  }
 
+  function renderDesktopAiPanel() {
+    return (
       <div className='hidden w-64 shrink-0 lg:block'>
         <AiPanelContainer />
       </div>
+    );
+  }
 
+  function renderMobileAiDrawer() {
+    return (
       <BottomDrawer open={aiDrawerOpen} onOpenChange={(open) => { if (!open) onAIDrawerOpen(); }}>
         <BottomDrawerPortal>
           <BottomDrawerOverlay />
@@ -118,7 +100,11 @@ export function LibraryPage({
           </BottomDrawerContent>
         </BottomDrawerPortal>
       </BottomDrawer>
+    );
+  }
 
+  function renderAddGameDialog() {
+    return (
       <IGDBGameSearchDialogContainer
         dialogTitle='Add game'
         progressIndicatorText='Adding...'
@@ -128,8 +114,50 @@ export function LibraryPage({
         onOpenChange={onAddDialogOpen}
         onGameSelect={onGameSelect}
       />
-    </div>
-  );
+    );
+  }
+
+  function renderHeader() {
+    return (
+      <header className='flex flex-col gap-2 border-b border-grimoire-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4'>
+        <div className='flex min-w-0 flex-wrap items-baseline gap-x-4 gap-y-1'>
+          <h1 className='font-grimoire text-xl text-grimoire-ink'>My Library</h1>
+          {renderStats()}
+        </div>
+        <div className='flex shrink-0 items-center gap-2'>
+          <button
+            onClick={() => setFiltersOpen((prev) => !prev)}
+            className='sm:hidden flex items-center gap-1.5 rounded border border-grimoire-border bg-grimoire-card px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
+          >
+            {filtersOpen ? <ChevronUp className='h-3.5 w-3.5' /> : <ChevronDown className='h-3.5 w-3.5' />}
+            Filters
+          </button>
+          <button
+            onClick={onAddDialogOpen.bind(null, true)}
+            className='flex items-center gap-1.5 rounded border border-grimoire-border bg-grimoire-card px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
+          >
+            <Plus className='h-3.5 w-3.5' />
+            Add game
+          </button>
+        </div>
+      </header>
+    );
+  }
+
+  function renderFilterBar() {
+    return (
+      <div className={`border-b border-grimoire-border px-4 py-3 sm:block sm:px-5 ${filtersOpen ? 'block' : 'hidden'}`}>
+        <FilterBar
+          activeStatus={filters.status}
+          activeGenre={filters.genre}
+          search={filters.search}
+          onStatusChange={onStatusChange}
+          onGenreChange={onGenreChange}
+          onSearchChange={onSearchChange}
+        />
+      </div>
+    );
+  }
 
   function renderStats() {
     if (isStatsLoading) {

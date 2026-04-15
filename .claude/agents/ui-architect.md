@@ -535,6 +535,34 @@ useEffect(
 useEffect(() => { /* ... */ }, [location.search]);
 ```
 
+### Lean return / render-function pattern
+
+Every component's `return` must be a lean "table of contents" — readable at a glance without scrolling. Any JSX block longer than ~5–8 lines must be extracted into a named `renderXxx()` helper defined in the same component scope. The `return` delegates to these helpers like a book's chapter list.
+
+```tsx
+// Correct — lean return
+return (
+  <div className="layout">
+    {renderHeader()}
+    {renderContent()}
+    {renderDialogs()}
+  </div>
+);
+
+// Wrong — return contains inline implementation
+return (
+  <div className="layout">
+    <header>
+      <h1>{title}</h1>
+      <Button onClick={handleAdd}>Add</Button>
+    </header>
+    <main>... 40 lines ...</main>
+  </div>
+);
+```
+
+A `{/* Section name */}` comment inside JSX is a signal that the block should be a `renderXxx()` function — extract it, remove the comment.
+
 ### Render Helper Rules
 
 | Rule                 | Detail                                                             |
@@ -958,6 +986,7 @@ Before finalizing any component, verify all of the following:
 - [ ] Content elements (game titles, headings, AI text) use `font-grimoire`
 - [ ] Interface chrome (nav, buttons, badges, metadata) uses `font-sans`
 - [ ] Component body sections are in the correct order (1–11)
+- [ ] `return` is a lean table of contents — no inline JSX block longer than ~5–8 lines; each section delegated to a `renderXxx()` helper
 - [ ] All `useEffect` callbacks use named functions, not arrows
 - [ ] Imports follow the 4-group order with blank lines between groups
 - [ ] Interface uses `I` prefix, props ordered correctly
