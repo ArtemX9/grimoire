@@ -2,7 +2,7 @@ import { z } from 'zod'
 import {Mood} from '../constants';
 
 export const CreateSessionSchema = z.object({
-  gameId: z.string().min(1),
+  id: z.string().min(1),
   startedAt: z.coerce.date(),
   durationMin: z.number().int().positive().optional(),
   mood: z.array(z.enum(Mood)).default([]),

@@ -90,25 +90,23 @@ model AiGlobalSettings {
 }
 
 model UserGame {
-  id               String        @id @default(cuid())
-  userId           String
-  igdbId           Int
-  steamAppId       Int?
-  title            String
-  coverUrl         String?
-  genres           String[]
-  status           GameStatus    @default(BACKLOG)
-  playtimeHours    Float         @default(0)
-  userRating       Int?
-  notes            String?
-  moods            String[]
-  addedAt          DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessions         PlaySession[]
-  isMappedManually Boolean       @default(false)
+  id                String             @id @default(cuid())
+  userId            String
+  igdbGameId        String
+  status            GameStatus         @default(BACKLOG)
+  playtimeHours     Float              @default(0)
+  userRating        Int?
+  notes             String?
+  moods             String[]
+  addedAt           DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  isMappedManually  Boolean            @default(false)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  igdbGame          IGDBGame           @relation(fields: [igdbGameId], references: [id], onDelete: Cascade)
+  sessions          PlaySession[]
+  userGamePlatforms UserGamePlatform[]
 
-  @@unique([userId, igdbId])
+  @@unique([userId, igdbGameId])
   @@index([userId, status])
 }
 
@@ -138,20 +136,67 @@ model PlaySession {
 model UserPlatform {
   id           String    @id @default(cuid())
   userId       String
-  platform     Platform
+  platformId   Int
   externalId   String
   accessToken  String?
   refreshToken String?
   lastSyncAt   DateTime?
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform     Platforms @relation(fields: [platformId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, platform])
+  @@unique([userId, platformId])
 }
 
-enum Platform {
+model Platforms {
+  id            Int            @id @default(autoincrement())
+  platform      PlatformTitle
+  userPlatforms UserPlatform[]
+  syncedGames   SyncedGame[]
+
+  @@unique([platform])
+}
+
+enum PlatformTitle {
   STEAM
-  PSN
-  XBOX
-  EPIC
-  MANUAL
+  PlayStation
+  Xbox
+  PC
+}
+
+model IGDBGame {
+  id          String     @id @default(cuid())
+  igdbId      Int
+  title       String
+  coverUrl    String?
+  genres      String[]
+  summary     String?
+  storyLine   String?
+  releaseDate DateTime?
+  updatedAt   DateTime   @updatedAt
+  userGames   UserGame[]
+
+  @@unique([igdbId])
+}
+
+model SyncedGame {
+  id                String             @id @default(cuid())
+  platformId        Int
+  externalId        String
+  externalTitle     String
+  coverUrl          String?
+  summary           String?
+  platform          Platforms          @relation(fields: [platformId], references: [id])
+  userGamePlatforms UserGamePlatform[]
+
+  @@unique([platformId, externalId])
+}
+
+model UserGamePlatform {
+  id           String     @id @default(cuid())
+  userGameId   String
+  syncedGameId String
+  userGame     UserGame   @relation(fields: [userGameId], references: [id], onDelete: Cascade)
+  syncedGame   SyncedGame @relation(fields: [syncedGameId], references: [id], onDelete: Cascade)
+
+  @@unique([userGameId, syncedGameId])
 }

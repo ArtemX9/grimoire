@@ -27,7 +27,7 @@ export class GamesController {
 
   @Post()
   createGame(@CurrentUser() user: any, @Body(new ZodValidationPipe(CreateGameSchema)) body: any) {
-    return this.gamesService.create(user.id, body);
+    return this.gamesService.addManually(user.id, body);
   }
 
   @Patch(':id')

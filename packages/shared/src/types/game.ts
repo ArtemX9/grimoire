@@ -1,45 +1,48 @@
-import {Genre, Mood} from '../constants';
+import { Genre, Mood } from '../constants';
+import { PlatformType } from './platform';
 
 export enum GameStatus {
-  BACKLOG = 'BACKLOG',
-  PLAYING = 'PLAYING',
-  COMPLETED = 'COMPLETED',
-  DROPPED = 'DROPPED',
-  WISHLIST = 'WISHLIST',
+  BACKLOG = 'BACKLOG', PLAYING = 'PLAYING', COMPLETED = 'COMPLETED', DROPPED = 'DROPPED', WISHLIST = 'WISHLIST',
 }
 
 export type UserGame = {
   id: string
   userID: string
   igdbID: number
-  steamAppID?: number
+  externalTitle?: string
+  platforms: PlatformType[]
   title: string
-  coverURL?: string
   genres: Genre[]
   status: GameStatus
   playtimeHours: number
-  userRating?: number
-  notes?: string
   moods: Mood[]
   addedAt: Date
   updatedAt: Date
+  userRating?: number
+  coverURL?: string
+  notes?: string
 }
 
 export type IgdbGame = {
   id: number
   name: string
-  cover?: string
-  genres?: Genre[]
   summary?: string
   first_release_date?: number
+  cover?: string
+  genres?: Genre[]
   total_rating?: number
 }
 
 export type IgdbGameRaw = {
   id: number
   name: string
-  cover?: { url: string }
-  genres?: { id: number; name: Genre }[]
+  cover?: {
+    url: string
+  }
+  genres?: {
+    id: number;
+    name: Genre
+  }[]
   summary?: string
   first_release_date?: number
   total_rating?: number

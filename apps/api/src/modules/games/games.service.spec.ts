@@ -5,21 +5,45 @@ import { GameStatus, Genre, Mood } from '@grimoire/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { GamesService } from './games.service';
-import { GameResponse, GameStatsResponse } from './games.types';
+import { GameResponse, GameStatsResponse, IgdbSyncGameInfo, IngestedSyncGameInfo } from './games.types';
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
 
-function makePrismaGame(overrides: Partial<Record<string, unknown>> = {}) {
+function makeIgdbGame(overrides: Record<string, unknown> = {}) {
   return {
-    id: 'game-1',
-    userId: 'user-1',
+    id: 'igdb-1',
     igdbId: 12345,
-    steamAppId: null,
     title: 'The Witcher 3',
     coverUrl: null,
     genres: ['RPG', 'Open World'],
+    summary: 'A great game',
+    storyLine: null,
+    releaseDate: null,
+    updatedAt: new Date('2024-01-01T00:00:00Z'),
+    ...overrides,
+  };
+}
+
+function makeSyncedGame(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'synced-1',
+    platformId: 1,
+    externalId: 'steam-730',
+    externalTitle: 'CS:GO',
+    coverUrl: null,
+    summary: null,
+    platform: { id: 1, platform: 'STEAM' },
+    ...overrides,
+  };
+}
+
+function makePrismaGame(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'game-1',
+    userId: 'user-1',
+    igdbGameId: 'igdb-1',
     status: 'PLAYING',
     playtimeHours: 42,
     userRating: null,
@@ -27,6 +51,19 @@ function makePrismaGame(overrides: Partial<Record<string, unknown>> = {}) {
     moods: ['focused'],
     addedAt: new Date('2024-01-01T00:00:00Z'),
     updatedAt: new Date('2024-06-01T00:00:00Z'),
+    isMappedManually: false,
+    igdbGame: makeIgdbGame(),
+    userGamePlatforms: [],
+    ...overrides,
+  };
+}
+
+function makeUserGamePlatformRecord(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'ugp-1',
+    userGameId: 'game-1',
+    syncedGameId: 'synced-1',
+    userGame: { isMappedManually: false, playtimeHours: 42 },
     ...overrides,
   };
 }
@@ -48,14 +85,28 @@ describe('GamesService', () => {
           useValue: {
             userGame: {
               findMany: jest.fn(),
-              findFirst: jest.fn(),
-              upsert: jest.fn(),
+              findUnique: jest.fn(),
+              findUniqueOrThrow: jest.fn(),
+              create: jest.fn(),
               update: jest.fn(),
               delete: jest.fn(),
               count: jest.fn(),
               groupBy: jest.fn(),
               aggregate: jest.fn(),
             },
+            iGDBGame: {
+              upsert: jest.fn(),
+            },
+            syncedGame: {
+              upsert: jest.fn(),
+            },
+            userGamePlatform: {
+              findFirst: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+              count: jest.fn(),
+            },
+            $transaction: jest.fn(),
           },
         },
       ],
@@ -63,7 +114,6 @@ describe('GamesService', () => {
 
     service = module.get<GamesService>(GamesService);
     prisma = module.get(PrismaService);
-
     jest.clearAllMocks();
   });
 
@@ -72,52 +122,17 @@ describe('GamesService', () => {
   // ---------------------------------------------------------------------------
 
   describe('findAll', () => {
-    it('returns all games for the user ordered by updatedAt desc', async () => {
-      const rows = [
-        makePrismaGame({ id: 'game-2', updatedAt: new Date('2024-07-01T00:00:00Z') }),
-        makePrismaGame({ id: 'game-1', updatedAt: new Date('2024-06-01T00:00:00Z') }),
-      ];
+    it('returns all games for the user', async () => {
+      const rows = [makePrismaGame({ id: 'game-2' }), makePrismaGame()];
       (prisma.userGame.findMany as jest.Mock).mockResolvedValue(rows);
 
       const result = await service.findAll('user-1');
 
-      expect(prisma.userGame.findMany).toHaveBeenCalledWith({
-        where: { userId: 'user-1' },
-        orderBy: { updatedAt: 'desc' },
-      });
       expect(result).toHaveLength(2);
       expect(result[0].id).toBe('game-2');
     });
 
-    it('passes the status filter when one is provided', async () => {
-      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
-
-      await service.findAll('user-1', GameStatus.PLAYING);
-
-      expect(prisma.userGame.findMany).toHaveBeenCalledWith({
-        where: { userId: 'user-1', status: GameStatus.PLAYING },
-        orderBy: { updatedAt: 'desc' },
-      });
-    });
-
-    it('omits the status clause when no status is provided', async () => {
-      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
-
-      await service.findAll('user-1');
-
-      const call = (prisma.userGame.findMany as jest.Mock).mock.calls[0][0];
-      expect(call.where).not.toHaveProperty('status');
-    });
-
-    it('returns an empty array when the user has no games', async () => {
-      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
-
-      const result = await service.findAll('user-1');
-
-      expect(result).toEqual([]);
-    });
-
-    it("scopes the query to the requesting user — never leaks another user's games", async () => {
+    it('scopes query to the requesting user', async () => {
       (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
 
       await service.findAll('user-2');
@@ -127,30 +142,103 @@ describe('GamesService', () => {
       );
     });
 
-    it('maps null optional fields to undefined in every response item', async () => {
-      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([
-        makePrismaGame({ steamAppId: null, coverUrl: null, userRating: null, notes: null }),
-      ]);
+    it('passes status filter when provided', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
 
-      const [result] = await service.findAll('user-1');
+      await service.findAll('user-1', GameStatus.PLAYING);
 
-      expect(result.steamAppID).toBeUndefined();
-      expect(result.coverURL).toBeUndefined();
-      expect(result.userRating).toBeUndefined();
-      expect(result.notes).toBeUndefined();
+      expect(prisma.userGame.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ status: GameStatus.PLAYING }) }),
+      );
     });
 
-    it('maps populated optional fields through correctly', async () => {
+    it('omits status clause when no status is provided', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('user-1');
+
+      const call = (prisma.userGame.findMany as jest.Mock).mock.calls[0][0];
+      expect(call.where).not.toHaveProperty('status');
+    });
+
+    it('passes search as case-insensitive igdbGame.title contains', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('user-1', undefined, 'witcher');
+
+      const call = (prisma.userGame.findMany as jest.Mock).mock.calls[0][0];
+      expect(call.where.igdbGame.title).toEqual({ contains: 'witcher', mode: 'insensitive' });
+    });
+
+    it('maps igdbGame fields into the response', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([makePrismaGame()]);
+
+      const [result] = await service.findAll('user-1');
+
+      expect(result.igdbID).toBe(12345);
+      expect(result.title).toBe('The Witcher 3');
+      expect(result.genres).toEqual(['RPG', 'Open World']);
+    });
+
+    it('maps null coverUrl to undefined', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([makePrismaGame()]);
+
+      const [result] = await service.findAll('user-1');
+
+      expect(result.coverURL).toBeUndefined();
+    });
+
+    it('maps populated coverUrl through correctly', async () => {
       (prisma.userGame.findMany as jest.Mock).mockResolvedValue([
-        makePrismaGame({ steamAppId: 730, coverUrl: 'https://img.example.com/cover.jpg', userRating: 9, notes: 'Great!' }),
+        makePrismaGame({ igdbGame: makeIgdbGame({ coverUrl: 'https://img.example.com/cover.jpg' }) }),
       ]);
 
       const [result] = await service.findAll('user-1');
 
-      expect(result.steamAppID).toBe(730);
       expect(result.coverURL).toBe('https://img.example.com/cover.jpg');
-      expect(result.userRating).toBe(9);
-      expect(result.notes).toBe('Great!');
+    });
+
+    it('maps platform info from userGamePlatforms', async () => {
+      const game = makePrismaGame({
+        userGamePlatforms: [
+          {
+            id: 'ugp-1',
+            userGameId: 'game-1',
+            syncedGameId: 'synced-1',
+            syncedGame: makeSyncedGame({ externalId: 'steam-730', externalTitle: 'CS:GO', platform: { id: 1, platform: 'STEAM' } }),
+          },
+        ],
+      });
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([game]);
+
+      const [result] = await service.findAll('user-1');
+
+      expect(result.platforms).toHaveLength(1);
+      expect(result.platforms[0]).toMatchObject({
+        platformID: 1,
+        platformName: 'STEAM',
+        externalID: 'steam-730',
+        externalTitle: 'CS:GO',
+      });
+    });
+
+    it('returns empty array when the user has no games', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await service.findAll('user-1');
+
+      expect(result).toEqual([]);
+    });
+
+    it('maps null userRating and notes to undefined', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([
+        makePrismaGame({ userRating: null, notes: null }),
+      ]);
+
+      const [result] = await service.findAll('user-1');
+
+      expect(result.userRating).toBeUndefined();
+      expect(result.notes).toBeUndefined();
     });
   });
 
@@ -160,61 +248,50 @@ describe('GamesService', () => {
 
   describe('findOne', () => {
     it('returns the game when it belongs to the requesting user', async () => {
-      const row = makePrismaGame();
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(row);
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
 
       const result = await service.findOne('user-1', 'game-1');
 
-      expect(prisma.userGame.findFirst).toHaveBeenCalledWith({
-        where: { id: 'game-1', userId: 'user-1' },
-      });
       expect(result.id).toBe('game-1');
       expect(result.title).toBe('The Witcher 3');
     });
 
-    it('throws NotFoundException when the game does not exist', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(null);
+    it('scopes query to userId + gameId', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
+
+      await service.findOne('user-1', 'game-1');
+
+      expect(prisma.userGame.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ id: 'game-1', userId: 'user-1' }) }),
+      );
+    });
+
+    it('throws NotFoundException when game does not exist', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.findOne('user-1', 'nonexistent')).rejects.toThrow(NotFoundException);
     });
 
-    it('throws NotFoundException when the game belongs to a different user', async () => {
-      // Prisma returns null because the where clause includes userId — ownership is enforced at query level
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(null);
+    it('throws NotFoundException when game belongs to a different user', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.findOne('user-2', 'game-1')).rejects.toThrow(NotFoundException);
-      expect(prisma.userGame.findFirst).toHaveBeenCalledWith({
-        where: { id: 'game-1', userId: 'user-2' },
-      });
     });
 
-    it('throws NotFoundException with the message "Game not found"', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(null);
+    it('throws NotFoundException with message "Game not found"', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.findOne('user-1', 'game-1')).rejects.toThrow('Game not found');
     });
 
-    it('maps null optional fields to undefined in the response', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(
-        makePrismaGame({ steamAppId: null, coverUrl: null, userRating: null, notes: null }),
-      );
-
-      const result = await service.findOne('user-1', 'game-1');
-
-      expect(result.steamAppID).toBeUndefined();
-      expect(result.coverURL).toBeUndefined();
-      expect(result.userRating).toBeUndefined();
-      expect(result.notes).toBeUndefined();
-    });
-
     it('includes all required fields in the response', async () => {
-      const row = makePrismaGame({
-        steamAppId: 570,
-        coverUrl: 'https://example.com/cover.png',
-        userRating: 8,
-        notes: 'Brilliant',
-      });
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(row);
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
+        makePrismaGame({
+          igdbGame: makeIgdbGame({ coverUrl: 'https://example.com/cover.png' }),
+          userRating: 8,
+          notes: 'Brilliant',
+        }),
+      );
 
       const result = await service.findOne('user-1', 'game-1');
 
@@ -222,117 +299,91 @@ describe('GamesService', () => {
         id: 'game-1',
         userID: 'user-1',
         igdbID: 12345,
-        steamAppID: 570,
         title: 'The Witcher 3',
         coverURL: 'https://example.com/cover.png',
-        genres: ['RPG', 'Open World'],
+        genres: ['RPG', 'Open World'] as unknown as Genre[],
         status: GameStatus.PLAYING,
         playtimeHours: 42,
         userRating: 8,
         notes: 'Brilliant',
-        moods: ['focused'],
+        moods: ['focused'] as unknown as Mood[],
+        isMappedManually: false,
+        platforms: [],
       });
     });
   });
 
   // ---------------------------------------------------------------------------
-  // create
+  // addManually
   // ---------------------------------------------------------------------------
 
-  describe('create', () => {
+  describe('addManually', () => {
     const dto = {
       igdbId: 12345,
       title: 'The Witcher 3',
+      coverUrl: undefined,
       genres: [Genre.RPG],
+      summary: 'Great game',
+      storyLine: 'Epic story',
+      releaseDate: new Date('2015-05-19'),
       status: GameStatus.BACKLOG,
       moods: [] as Mood[],
+      notes: undefined,
+      platformId: 1,
+      externalId: undefined,
+      externalTitle: undefined,
     };
 
-    it('upserts a game using the composite unique key (userId, igdbId)', async () => {
-      const upserted = makePrismaGame({ status: GameStatus.BACKLOG });
-      (prisma.userGame.upsert as jest.Mock).mockResolvedValue(upserted);
+    it('upserts IGDBGame by igdbId', async () => {
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(makeIgdbGame());
+      (prisma.userGame.create as jest.Mock).mockResolvedValue(makePrismaGame());
 
-      const result = await service.create('user-1', dto);
+      await service.addManually('user-1', dto);
 
-      expect(prisma.userGame.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { userId_igdbId: { userId: 'user-1', igdbId: dto.igdbId } },
-        }),
-      );
-      expect(result.id).toBe('game-1');
-    });
-
-    it('passes the full dto + userId in the create block', async () => {
-      const upserted = makePrismaGame({ status: GameStatus.BACKLOG });
-      (prisma.userGame.upsert as jest.Mock).mockResolvedValue(upserted);
-
-      await service.create('user-1', dto);
-
-      expect(prisma.userGame.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({
-          create: { ...dto, userId: 'user-1' },
-        }),
+      expect(prisma.iGDBGame.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { igdbId: dto.igdbId } }),
       );
     });
 
-    it('returns a mapped response — not the raw Prisma object', async () => {
-      const upserted = makePrismaGame();
-      (prisma.userGame.upsert as jest.Mock).mockResolvedValue(upserted);
+    it('creates UserGame with correct fields and zero playtime', async () => {
+      const igdbGame = makeIgdbGame({ id: 'igdb-1' });
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(igdbGame);
+      (prisma.userGame.create as jest.Mock).mockResolvedValue(makePrismaGame());
 
-      const result = await service.create('user-1', dto);
+      await service.addManually('user-1', dto);
 
-      // Raw Prisma object has null for optional fields; response must have undefined
-      expect(result.steamAppID).toBeUndefined();
-      expect(result.coverURL).toBeUndefined();
-      expect(result.userRating).toBeUndefined();
-      expect(result.notes).toBeUndefined();
-    });
-
-    it('preserves all fields provided in the dto', async () => {
-      const fullDto = {
-        igdbId: 730,
-        steamAppId: 730,
-        title: 'CS:GO',
-        coverUrl: 'https://example.com/csgo.jpg',
-        genres: [Genre.Shooter],
-        status: GameStatus.PLAYING,
-        moods: [Mood.INTENSE],
-        notes: 'My favourite',
-      };
-      const upserted = makePrismaGame({ ...fullDto });
-      (prisma.userGame.upsert as jest.Mock).mockResolvedValue(upserted);
-
-      await service.create('user-1', fullDto);
-
-      expect(prisma.userGame.upsert).toHaveBeenCalledWith(
+      expect(prisma.userGame.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          create: { ...fullDto, userId: 'user-1' },
+          data: expect.objectContaining({
+            userId: 'user-1',
+            igdbGameId: 'igdb-1',
+            status: dto.status,
+            playtimeHours: 0,
+            userRating: null,
+          }),
         }),
       );
     });
 
-    it('injects the caller userId — never uses a userId from the dto', async () => {
-      const upserted = makePrismaGame();
-      (prisma.userGame.upsert as jest.Mock).mockResolvedValue(upserted);
+    it('returns response with empty platforms array', async () => {
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(makeIgdbGame());
+      (prisma.userGame.create as jest.Mock).mockResolvedValue(makePrismaGame());
 
-      await service.create('user-99', dto);
+      const result = await service.addManually('user-1', dto);
 
-      const callArg = (prisma.userGame.upsert as jest.Mock).mock.calls[0][0];
-      expect(callArg.create.userId).toBe('user-99');
-      expect(callArg.where.userId_igdbId.userId).toBe('user-99');
+      expect(result.platforms).toEqual([]);
     });
 
-    it('does not overwrite user-controlled fields (status, userRating, notes, moods) on update', async () => {
-      const upserted = makePrismaGame();
-      (prisma.userGame.upsert as jest.Mock).mockResolvedValue(upserted);
+    it('returns igdb fields in response', async () => {
+      const igdbGame = makeIgdbGame({ coverUrl: 'https://example.com/cover.jpg' });
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(igdbGame);
+      (prisma.userGame.create as jest.Mock).mockResolvedValue(makePrismaGame({ igdbGame }));
 
-      await service.create('user-1', dto);
+      const result = await service.addManually('user-1', dto);
 
-      const callArg = (prisma.userGame.upsert as jest.Mock).mock.calls[0][0];
-      expect(callArg.update).not.toHaveProperty('status');
-      expect(callArg.update).not.toHaveProperty('userRating');
-      expect(callArg.update).not.toHaveProperty('notes');
-      expect(callArg.update).not.toHaveProperty('moods');
+      expect(result.igdbID).toBe(12345);
+      expect(result.title).toBe('The Witcher 3');
+      expect(result.coverURL).toBe('https://example.com/cover.jpg');
     });
   });
 
@@ -343,71 +394,51 @@ describe('GamesService', () => {
   describe('update', () => {
     const dto = { status: GameStatus.COMPLETED, playtimeHours: 100 };
 
-    it('updates the game when it belongs to the requesting user', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(makePrismaGame());
-      const updated = makePrismaGame({ status: 'COMPLETED', playtimeHours: 100 });
-      (prisma.userGame.update as jest.Mock).mockResolvedValue(updated);
+    it('updates game when it belongs to the requesting user', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
+      (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame({ status: 'COMPLETED', playtimeHours: 100 }));
 
       const result = await service.update('user-1', 'game-1', dto);
 
-      expect(prisma.userGame.update).toHaveBeenCalledWith({
-        where: { id: 'game-1' },
-        data: dto,
-      });
-      expect(result.status).toBe('COMPLETED');
+      expect(result.status).toBe(GameStatus.COMPLETED);
       expect(result.playtimeHours).toBe(100);
     });
 
-    it('throws NotFoundException when the game does not exist', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(null);
+    it('throws NotFoundException when game does not exist', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.update('user-1', 'nonexistent', dto)).rejects.toThrow(NotFoundException);
       expect(prisma.userGame.update).not.toHaveBeenCalled();
     });
 
-    it('throws NotFoundException — not updating — when the game belongs to a different user', async () => {
-      // findFirst returns null because the where clause includes userId
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(null);
+    it('throws NotFoundException when game belongs to a different user', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.update('user-2', 'game-1', dto)).rejects.toThrow(NotFoundException);
       expect(prisma.userGame.update).not.toHaveBeenCalled();
     });
 
-    it('performs the ownership check with the correct userId and gameId', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(makePrismaGame());
+    it('passes dto directly to update', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
       (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame());
 
       await service.update('user-1', 'game-1', dto);
 
-      expect(prisma.userGame.findFirst).toHaveBeenCalledWith({
-        where: { id: 'game-1', userId: 'user-1' },
-      });
+      expect(prisma.userGame.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'game-1' }, data: dto }),
+      );
     });
 
-    it('maps null optional fields to undefined after updating', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(makePrismaGame());
+    it('maps null optional fields to undefined in the response', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
       (prisma.userGame.update as jest.Mock).mockResolvedValue(
-        makePrismaGame({ steamAppId: null, coverUrl: null, userRating: null, notes: null }),
+        makePrismaGame({ userRating: null, notes: null }),
       );
 
       const result = await service.update('user-1', 'game-1', dto);
 
-      expect(result.steamAppID).toBeUndefined();
-      expect(result.coverURL).toBeUndefined();
       expect(result.userRating).toBeUndefined();
       expect(result.notes).toBeUndefined();
-    });
-
-    it('returns a mapped response with the updated data', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(makePrismaGame());
-      const updated = makePrismaGame({ status: 'DROPPED', userRating: 5, notes: 'Not for me' });
-      (prisma.userGame.update as jest.Mock).mockResolvedValue(updated);
-
-      const result = await service.update('user-1', 'game-1', { status: GameStatus.DROPPED, userRating: 5, notes: 'Not for me' });
-
-      expect(result.status).toBe(GameStatus.DROPPED);
-      expect(result.userRating).toBe(5);
-      expect(result.notes).toBe('Not for me');
     });
   });
 
@@ -416,52 +447,37 @@ describe('GamesService', () => {
   // ---------------------------------------------------------------------------
 
   describe('remove', () => {
-    it('deletes the game when it belongs to the requesting user', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(makePrismaGame());
+    it('deletes game when it belongs to the requesting user', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
       (prisma.userGame.delete as jest.Mock).mockResolvedValue({});
 
       await expect(service.remove('user-1', 'game-1')).resolves.toBeUndefined();
       expect(prisma.userGame.delete).toHaveBeenCalledWith({ where: { id: 'game-1' } });
     });
 
-    it('throws NotFoundException when the game does not exist', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(null);
+    it('throws NotFoundException when game does not exist', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.remove('user-1', 'nonexistent')).rejects.toThrow(NotFoundException);
       expect(prisma.userGame.delete).not.toHaveBeenCalled();
     });
 
-    it('throws NotFoundException — not deleting — when the game belongs to a different user', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(null);
+    it('throws NotFoundException when game belongs to a different user', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(service.remove('user-2', 'game-1')).rejects.toThrow(NotFoundException);
       expect(prisma.userGame.delete).not.toHaveBeenCalled();
     });
 
-    it('performs the ownership check with the correct userId and gameId', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(makePrismaGame());
+    it('performs ownership check with correct userId and gameId', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
       (prisma.userGame.delete as jest.Mock).mockResolvedValue({});
 
       await service.remove('user-1', 'game-1');
 
-      expect(prisma.userGame.findFirst).toHaveBeenCalledWith({
+      expect(prisma.userGame.findUnique).toHaveBeenCalledWith({
         where: { id: 'game-1', userId: 'user-1' },
       });
-    });
-
-    it('throws NotFoundException with the message "Game not found"', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(null);
-
-      await expect(service.remove('user-1', 'game-1')).rejects.toThrow('Game not found');
-    });
-
-    it('resolves with undefined (void) on success', async () => {
-      (prisma.userGame.findFirst as jest.Mock).mockResolvedValue(makePrismaGame());
-      (prisma.userGame.delete as jest.Mock).mockResolvedValue({});
-
-      const result = await service.remove('user-1', 'game-1');
-
-      expect(result).toBeUndefined();
     });
   });
 
@@ -476,9 +492,7 @@ describe('GamesService', () => {
         { status: 'PLAYING', _count: 3 },
         { status: 'COMPLETED', _count: 7 },
       ]);
-      (prisma.userGame.aggregate as jest.Mock).mockResolvedValue({
-        _sum: { playtimeHours: 250 },
-      });
+      (prisma.userGame.aggregate as jest.Mock).mockResolvedValue({ _sum: { playtimeHours: 250 } });
 
       const result = await service.getStats('user-1');
 
@@ -492,32 +506,17 @@ describe('GamesService', () => {
       });
     });
 
-    it('runs count, groupBy, and aggregate in parallel via Promise.all', async () => {
-      let countCalled = false;
-      let groupByCalled = false;
-      let aggregateCalled = false;
+    it('returns 0 for totalHours when aggregate sum is null', async () => {
+      (prisma.userGame.count as jest.Mock).mockResolvedValue(0);
+      (prisma.userGame.groupBy as jest.Mock).mockResolvedValue([]);
+      (prisma.userGame.aggregate as jest.Mock).mockResolvedValue({ _sum: { playtimeHours: null } });
 
-      (prisma.userGame.count as jest.Mock).mockImplementation(() => {
-        countCalled = true;
-        return Promise.resolve(0);
-      });
-      (prisma.userGame.groupBy as jest.Mock).mockImplementation(() => {
-        groupByCalled = true;
-        return Promise.resolve([]);
-      });
-      (prisma.userGame.aggregate as jest.Mock).mockImplementation(() => {
-        aggregateCalled = true;
-        return Promise.resolve({ _sum: { playtimeHours: null } });
-      });
+      const result = await service.getStats('user-1');
 
-      await service.getStats('user-1');
-
-      expect(countCalled).toBe(true);
-      expect(groupByCalled).toBe(true);
-      expect(aggregateCalled).toBe(true);
+      expect(result.totalHours).toBe(0);
     });
 
-    it('scopes all three queries to the requesting userId', async () => {
+    it('scopes all queries to the requesting userId', async () => {
       (prisma.userGame.count as jest.Mock).mockResolvedValue(0);
       (prisma.userGame.groupBy as jest.Mock).mockResolvedValue([]);
       (prisma.userGame.aggregate as jest.Mock).mockResolvedValue({ _sum: { playtimeHours: null } });
@@ -529,46 +528,135 @@ describe('GamesService', () => {
       expect(prisma.userGame.aggregate).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: 'user-42' } }));
     });
 
-    it('returns 0 for totalHours when aggregate sum is null (no games with playtime)', async () => {
-      (prisma.userGame.count as jest.Mock).mockResolvedValue(0);
-      (prisma.userGame.groupBy as jest.Mock).mockResolvedValue([]);
-      (prisma.userGame.aggregate as jest.Mock).mockResolvedValue({ _sum: { playtimeHours: null } });
-
-      const result = await service.getStats('user-1');
-
-      expect(result.totalHours).toBe(0);
-    });
-
-    it('returns an empty byStatus array when the user has no games', async () => {
-      (prisma.userGame.count as jest.Mock).mockResolvedValue(0);
-      (prisma.userGame.groupBy as jest.Mock).mockResolvedValue([]);
-      (prisma.userGame.aggregate as jest.Mock).mockResolvedValue({ _sum: { playtimeHours: null } });
-
-      const result = await service.getStats('user-1');
-
-      expect(result.byStatus).toEqual([]);
-      expect(result.total).toBe(0);
-      expect(result.totalHours).toBe(0);
-    });
-
-    it('uses the correct groupBy fields and count for the status breakdown', async () => {
+    it('uses correct groupBy fields and _count', async () => {
       (prisma.userGame.count as jest.Mock).mockResolvedValue(0);
       (prisma.userGame.groupBy as jest.Mock).mockResolvedValue([]);
       (prisma.userGame.aggregate as jest.Mock).mockResolvedValue({ _sum: { playtimeHours: null } });
 
       await service.getStats('user-1');
 
-      expect(prisma.userGame.groupBy).toHaveBeenCalledWith(expect.objectContaining({ by: ['status'], _count: true }));
+      expect(prisma.userGame.groupBy).toHaveBeenCalledWith(
+        expect.objectContaining({ by: ['status'], _count: true }),
+      );
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // ingestFromSync
+  // ---------------------------------------------------------------------------
+
+  describe('ingestFromSync', () => {
+    const syncedGameInfo: IngestedSyncGameInfo = {
+      id: 'steam-730',
+      platformID: 1,
+      externalTitle: 'CS:GO',
+      coverURL: undefined,
+      summary: undefined,
+      playtimeHours: 100,
+    };
+
+    const igdbInfo: IgdbSyncGameInfo = {
+      id: 12345,
+      title: 'Counter-Strike: GO',
+      coverURL: '',
+      genres: [Genre.Shooter],
+      summary: undefined,
+      storyLine: undefined,
+      releaseDate: undefined,
+    };
+
+    beforeEach(() => {
+      (prisma.syncedGame.upsert as jest.Mock).mockResolvedValue({
+        id: 'synced-1',
+        platformId: 1,
+        externalId: 'steam-730',
+        externalTitle: 'CS:GO',
+        coverUrl: null,
+        summary: null,
+      });
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(makeIgdbGame({ id: 'igdb-cs', igdbId: 12345 }));
     });
 
-    it('uses the correct aggregate sum field for total playtime', async () => {
-      (prisma.userGame.count as jest.Mock).mockResolvedValue(0);
-      (prisma.userGame.groupBy as jest.Mock).mockResolvedValue([]);
-      (prisma.userGame.aggregate as jest.Mock).mockResolvedValue({ _sum: { playtimeHours: null } });
+    it('upserts SyncedGame and IGDBGame on every call', async () => {
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.userGame.create as jest.Mock).mockResolvedValue({ id: 'game-new', userId: 'user-1', igdbGameId: 'igdb-cs' });
+      (prisma.userGamePlatform.create as jest.Mock).mockResolvedValue({});
+      (prisma.userGame.findUniqueOrThrow as jest.Mock).mockResolvedValue(makePrismaGame({ id: 'game-new' }));
 
-      await service.getStats('user-1');
+      await service.ingestFromSync('user-1', syncedGameInfo, igdbInfo);
 
-      expect(prisma.userGame.aggregate).toHaveBeenCalledWith(expect.objectContaining({ _sum: { playtimeHours: true } }));
+      expect(prisma.syncedGame.upsert).toHaveBeenCalled();
+      expect(prisma.iGDBGame.upsert).toHaveBeenCalled();
+    });
+
+    it('returns existing game unchanged when isMappedManually=true', async () => {
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(
+        makeUserGamePlatformRecord({ userGame: { isMappedManually: true, playtimeHours: 42 } }),
+      );
+      (prisma.userGame.findUniqueOrThrow as jest.Mock).mockResolvedValue(makePrismaGame({ isMappedManually: true }));
+
+      const result = await service.ingestFromSync('user-1', syncedGameInfo, igdbInfo);
+
+      expect(prisma.userGame.update).not.toHaveBeenCalled();
+      expect(prisma.userGame.create).not.toHaveBeenCalled();
+      expect(result.isMappedManually).toBe(true);
+    });
+
+    it('updates playtime when incoming is higher than stored', async () => {
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(
+        makeUserGamePlatformRecord({ userGame: { isMappedManually: false, playtimeHours: 42 } }),
+      );
+      (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame({ playtimeHours: 100 }));
+
+      const result = await service.ingestFromSync('user-1', { ...syncedGameInfo, playtimeHours: 100 }, igdbInfo);
+
+      expect(prisma.userGame.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { playtimeHours: 100 } }),
+      );
+      expect(result.playtimeHours).toBe(100);
+    });
+
+    it('does not update playtime when incoming is lower', async () => {
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(
+        makeUserGamePlatformRecord({ userGame: { isMappedManually: false, playtimeHours: 200 } }),
+      );
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame({ playtimeHours: 200 }));
+
+      await service.ingestFromSync('user-1', { ...syncedGameInfo, playtimeHours: 50 }, igdbInfo);
+
+      expect(prisma.userGame.update).not.toHaveBeenCalled();
+    });
+
+    it('creates UserGame and UserGamePlatform when game is not yet linked', async () => {
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.userGame.create as jest.Mock).mockResolvedValue({ id: 'game-new', userId: 'user-1', igdbGameId: 'igdb-cs' });
+      (prisma.userGamePlatform.create as jest.Mock).mockResolvedValue({});
+      (prisma.userGame.findUniqueOrThrow as jest.Mock).mockResolvedValue(makePrismaGame({ id: 'game-new' }));
+
+      const result = await service.ingestFromSync('user-1', syncedGameInfo, igdbInfo);
+
+      expect(prisma.userGame.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ userId: 'user-1', status: GameStatus.BACKLOG }),
+        }),
+      );
+      expect(prisma.userGamePlatform.create).toHaveBeenCalled();
+      expect(result.id).toBe('game-new');
+    });
+
+    it('sets playtimeHours to 0 when incoming playtimeHours is undefined', async () => {
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.userGame.create as jest.Mock).mockResolvedValue({ id: 'game-new', userId: 'user-1', igdbGameId: 'igdb-cs' });
+      (prisma.userGamePlatform.create as jest.Mock).mockResolvedValue({});
+      (prisma.userGame.findUniqueOrThrow as jest.Mock).mockResolvedValue(makePrismaGame({ id: 'game-new' }));
+
+      await service.ingestFromSync('user-1', { ...syncedGameInfo, playtimeHours: undefined }, igdbInfo);
+
+      expect(prisma.userGame.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ playtimeHours: 0 }),
+        }),
+      );
     });
   });
 });

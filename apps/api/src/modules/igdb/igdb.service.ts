@@ -40,7 +40,7 @@ export class IgdbService implements OnModuleInit {
     const res = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
       headers,
-      body: `search "${query}"; fields id,name,cover.url,genres.name,summary,first_release_date,total_rating; limit ${limit};`,
+      body: `search "${query}"; fields id,name,cover.url,genres.name,summary,storyline,first_release_date,total_rating; limit ${limit};`,
     });
     const games: IgdbGameRaw[] = await res.json();
     return games.map((game) => ({
@@ -55,7 +55,7 @@ export class IgdbService implements OnModuleInit {
     const res = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
       headers,
-      body: `where id = ${id}; fields id,name,cover.url,genres.name,summary,first_release_date,total_rating;`,
+      body: `where id = ${id}; fields id,name,cover.url,genres.name,summary,storyline,first_release_date,total_rating;`,
     });
     const data: IgdbGameRaw[] = await res.json();
     const game = { ...data?.[0] } as IgdbGame;
