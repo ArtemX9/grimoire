@@ -1,6 +1,6 @@
 import { GameStatus, IgdbGame, Mood, UpdateGameDto } from '@grimoire/shared';
-import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { useDeleteGameMutation, useGetGameQuery, useRemapGameMutation, useUpdateGameMutation } from '@/api/gamesApi';
 import { useGetGameSessionsQuery } from '@/api/sessionsApi';
@@ -73,12 +73,7 @@ function GameDetailPageContainer() {
     }
   }
 
-  async function handleRemapGame(
-    igdbGame: IgdbGame,
-    _status: GameStatus,
-    onSuccessCallback: () => void,
-    onErrorCallback: () => void,
-  ) {
+  async function handleRemapGame(igdbGame: IgdbGame, _status: GameStatus, onSuccessCallback: () => void, onErrorCallback: () => void) {
     try {
       await remapGame({
         id: game!.id,
@@ -87,6 +82,9 @@ function GameDetailPageContainer() {
           title: igdbGame.name,
           coverUrl: igdbGame.cover,
           genres: igdbGame.genres ?? [],
+          summary: igdbGame.summary,
+          storyLine: igdbGame.storyline,
+          releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,
         },
       }).unwrap();
       toast({ title: `Re-mapped to "${igdbGame.name}"` });

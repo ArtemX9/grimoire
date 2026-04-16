@@ -46,7 +46,7 @@ export class IgdbService implements OnModuleInit {
     return games.map((game) => ({
       ...game,
       genres: game.genres?.map((genre) => genre.name),
-      cover: 'https://' + game.cover?.url.replace('thumb', 'cover_big_2x'),
+      cover: 'https:' + game.cover?.url.replace('thumb', 'cover_big_2x'),
     }));
   }
 
@@ -61,7 +61,7 @@ export class IgdbService implements OnModuleInit {
     const game = { ...data?.[0] } as IgdbGame;
     if (!!data[0]) {
       game.genres = data[0].genres?.map((genre) => genre?.name) ?? [];
-      game.cover = 'https://' + data[0].cover?.url.replace('thumb', 'cover_big_2x');
+      game.cover = 'https:' + data[0].cover?.url.replace('thumb', 'cover_big_2x');
       return game;
     }
     return undefined;

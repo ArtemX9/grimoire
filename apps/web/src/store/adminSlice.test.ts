@@ -17,6 +17,7 @@ import reducer, {
   usersLoaded,
   usersLoadingStarted,
 } from '@/store/adminSlice';
+import { generateAdminUserRow } from '@/test';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -25,20 +26,7 @@ import reducer, {
 const initialState = reducer(undefined, { type: '@@INIT' });
 
 function makeUser(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
-  return {
-    id: 'user-1',
-    email: 'alice@grimoire.app',
-    name: 'Alice',
-    role: Role.USER,
-    plan: 'free',
-    mustChangePassword: false,
-    aiEnabled: true,
-    aiRequestsUsed: 0,
-    aiRequestsLimit: 10,
-    gamesCount: 5,
-    createdAt: '2024-01-01T00:00:00.000Z',
-    ...overrides,
-  };
+  return generateAdminUserRow({ id: 'user-1', email: 'alice@grimoire.app', name: 'Alice', aiEnabled: true, aiRequestsLimit: 10, gamesCount: 5, ...overrides });
 }
 
 function makeStats(overrides: Partial<AdminStats> = {}): AdminStats {

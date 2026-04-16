@@ -1,4 +1,4 @@
-import { Genre, IgdbGame } from '@grimoire/shared';
+import { IgdbGame } from '@grimoire/shared';
 import { configureStore } from '@reduxjs/toolkit';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -7,6 +7,7 @@ import { Provider } from 'react-redux';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import igdbReducer, { searchLoaded } from '@/store/igdbSlice';
+import { generateIgdbGame } from '@/test';
 
 import IGDBGameSearchDialogContainer from './IGDBGameSearchDialogContainer';
 
@@ -31,7 +32,7 @@ function makeStore() {
 }
 
 function makeGame(overrides: Partial<IgdbGame> = {}): IgdbGame {
-  return { id: 1, name: 'Elden Ring', genres: [Genre.RPG], ...overrides };
+  return generateIgdbGame({ id: 1, name: 'Elden Ring', ...overrides });
 }
 
 function renderContainer(

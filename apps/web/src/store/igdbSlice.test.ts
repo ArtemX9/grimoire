@@ -1,4 +1,4 @@
-import { Genre, IgdbGame } from '@grimoire/shared';
+import { IgdbGame } from '@grimoire/shared';
 import { describe, expect, it } from 'vitest';
 
 import reducer, {
@@ -10,6 +10,7 @@ import reducer, {
   searchLoaded,
   searchLoadingStarted,
 } from '@/store/igdbSlice';
+import { generateIgdbGame } from '@/test';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -18,16 +19,7 @@ import reducer, {
 const initialState = reducer(undefined, { type: '@@INIT' });
 
 function makeIgdbGame(overrides: Partial<IgdbGame> = {}): IgdbGame {
-  return {
-    id: 1,
-    name: 'Elden Ring',
-    cover: '//images.igdb.com/igdb/image/upload/t_thumb/co4jni.jpg',
-    genres: [Genre.RPG],
-    summary: 'A dark fantasy action RPG.',
-    first_release_date: 1645747200,
-    total_rating: 96.4,
-    ...overrides,
-  };
+  return generateIgdbGame({ id: 1, name: 'Elden Ring', ...overrides });
 }
 
 // ---------------------------------------------------------------------------

@@ -154,6 +154,59 @@ Tag types: `'Game' | 'Session' | 'User' | 'AdminUser' | 'Stats'`
 
 ---
 
+## Test factories
+
+Factory functions for building typed test fixtures. Both packages use `@faker-js/faker` and the same naming pattern. Import from the barrel in each package.
+
+### API factories — `apps/api/src/test/`
+
+Import: `import { generateUser, generateGameResponse } from '../../test'`
+
+| File | Exports |
+| ---- | ------- |
+| `user.factory.ts` | `generateUser` |
+| `game.factory.ts` | `generateGameResponse`, `generateCreateGameDto`, `generateRemapGameDto` |
+| `session.factory.ts` | `generateSession`, `generateSessionWithGame`, `generateCreateSessionDto` |
+| `platform.factory.ts` | `generatePlatform`, `generateUserPlatformRow` |
+| `index.ts` | re-exports all of the above |
+
+### Web factories — `apps/web/src/test/`
+
+Import: `import { generateUserGame, generateAdminUserRow } from '@/test'`
+
+| File | Exports |
+| ---- | ------- |
+| `user.factory.ts` | `generateUser` (shared `User`), `generateSession` (authApi `Session`), `generateAdminUserRow` (adminApi `AdminUserRow`) |
+| `game.factory.ts` | `generateUserGame` (shared `UserGame`), `generateIgdbGame` (shared `IgdbGame`) |
+| `session.factory.ts` | `generatePlaySession` (shared `PlaySession`) |
+| `platform.factory.ts` | `generateUserPlatform` (shared `UserPlatform`) |
+| `index.ts` | re-exports all of the above |
+
+### Naming conventions
+
+- Factory functions: `generate<Entity>()` — e.g. `generateUser()`, `generateGameResponse()`
+- Param interfaces: `IGenerate<Entity>` — e.g. `IGenerateUser`, `IGenerateGameResponse`
+- All ID/URL fields follow the project convention: ALL_CAPS suffixes (`igdbID`, `coverURL`, `steamAppID`)
+
+### When to use faker vs. hardcoded values
+
+Use `faker` for fields the test doesn't assert on — id, email, title, dates. Use hardcoded values for fields under test:
+
+```ts
+// Test that only cares about status — let faker fill the rest
+const game = generateUserGame({ status: GameStatus.COMPLETED });
+
+// Test that asserts a specific user id is forwarded to the service
+const user = generateUser({ id: 'user-42' });
+expect(service.findAll).toHaveBeenCalledWith('user-42', ...);
+```
+
+### Rule
+
+New spec files MUST use these factories. Inline fixture objects (`{ id: 'game-1', title: 'The Witcher 3', ... }` scattered across tests) are not allowed. If a factory is missing a field, add it to the factory — do not inline the object in the test.
+
+---
+
 ## Data model notes
 
 - Every table has `userId` — multi-tenancy is enforced at the data layer, not just the API layer.

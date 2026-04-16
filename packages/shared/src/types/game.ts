@@ -38,6 +38,7 @@ export type IgdbGame = {
   first_release_date?: number
   cover?: string
   genres?: Genre[]
+  storyline?: string;
   total_rating?: number
 }
 
@@ -52,6 +53,7 @@ export type IgdbGameRaw = {
     name: Genre
   }[]
   summary?: string
+  storyline?: string;
   first_release_date?: number
   total_rating?: number
 }

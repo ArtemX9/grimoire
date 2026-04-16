@@ -12,6 +12,7 @@ import { MustChangePasswordRoute } from '@/components/ProtectedRoute/MustChangeP
 import { ProtectedRoute } from '@/components/ProtectedRoute/ProtectedRoute';
 import { ROUTES } from '@/constants/routes';
 import authReducer, { AuthState } from '@/store/authSlice';
+import { generateSession } from '@/test';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -28,16 +29,7 @@ type SessionUser = {
 };
 
 function makeSessionUser(overrides: Partial<SessionUser> = {}): SessionUser {
-  return {
-    id: '1',
-    email: 'user@example.com',
-    name: 'User',
-    role: Role.USER,
-    mustChangePassword: false,
-    aiEnabled: true,
-    aiRequestsLimit: null,
-    ...overrides,
-  };
+  return generateSession({ id: '1', email: 'user@example.com', name: 'User', aiEnabled: true, aiRequestsLimit: null, ...overrides }).user;
 }
 
 function makeStore(auth: AuthState) {

@@ -29,7 +29,7 @@ function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
   async function handleSubmit() {
     try {
       await createSession({
-        id: gameId,
+        gameID: gameId,
         startedAt: new Date(),
         durationMin: durationMin ? parseInt(durationMin, 10) : undefined,
         mood: selectedMoods,

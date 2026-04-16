@@ -1,4 +1,4 @@
-import { GameStatus, Genre, Mood, Platform, PlatformType } from '@grimoire/shared';
+import { GameStatus, Genre, Mood, Platform } from '@grimoire/shared';
 
 import { Prisma } from '../../generated/prisma/client';
 

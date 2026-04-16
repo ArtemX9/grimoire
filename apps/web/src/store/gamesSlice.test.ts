@@ -1,4 +1,4 @@
-import { GameStatus, Genre, Mood, UserGame } from '@grimoire/shared';
+import { GameStatus, UserGame } from '@grimoire/shared';
 import { describe, expect, it } from 'vitest';
 
 import type { GameStats } from '@/api/gamesApi';
@@ -15,6 +15,7 @@ import reducer, {
   statsLoaded,
   statsLoadingStarted,
 } from '@/store/gamesSlice';
+import { generateUserGame } from '@/test';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -23,22 +24,7 @@ import reducer, {
 const initialState = reducer(undefined, { type: '@@INIT' });
 
 function makeGame(overrides: Partial<UserGame> = {}): UserGame {
-  return {
-    id: 'game-1',
-    userID: 'user-1',
-    igdbID: 1001,
-    title: 'Hollow Knight',
-    genres: [Genre.Action],
-    status: GameStatus.PLAYING,
-    playtimeHours: 12,
-    moods: [Mood.ATMOSPHERIC],
-    addedAt: new Date('2024-01-01'),
-    releaseDate: null,
-    updatedAt: new Date('2024-01-02'),
-    isMappedManually: false,
-    platforms: [],
-    ...overrides,
-  };
+  return generateUserGame({ id: 'game-1', userID: 'user-1', ...overrides });
 }
 
 function makeStats(overrides: Partial<GameStats> = {}): GameStats {

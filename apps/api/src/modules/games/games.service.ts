@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { CreateGameDto, GameStatus, Genre, Mood, Platform, RemapGameDto, UpdateGameDto } from '@grimoire/shared';
 
@@ -262,29 +262,38 @@ export class GamesService {
   }
 
   async update(userId: string, id: string, dto: UpdateGameDto): Promise<GameResponse> {
-    await this._findOwned(userId, id);
-    const game = await this.prisma.userGame.update({
-      where: { id },
-      data: dto,
-      include: {
-        igdbGame: true,
-        userGamePlatforms: {
-          include: {
-            syncedGame: {
-              include: {
-                platform: {
-                  select: {
-                    id: true,
-                    platform: true,
+    try {
+      const game = await this.prisma.userGame.update({
+        where: { id, userId },
+        data: {
+          userRating: dto.userRating,
+          moods: dto.moods,
+          notes: dto.notes,
+          status: dto.status,
+        },
+        include: {
+          igdbGame: true,
+          userGamePlatforms: {
+            include: {
+              syncedGame: {
+                include: {
+                  platform: {
+                    select: {
+                      id: true,
+                      platform: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-    });
-    return this._toResponse(game);
+      });
+
+      return this._toResponse(game);
+    } catch (e) {
+      throw new BadRequestException(e);
+    }
   }
 
   async remove(userId: string, id: string): Promise<void> {
@@ -437,6 +446,19 @@ export class GamesService {
 
       // already linked, nothing to do — return existing
       return this.findOne(userID, userGamePlatform.userGameId);
+    }
+
+    // Another platform entry (e.g. a different Steam app) may have already created a userGame
+    // for the same IGDB game. If so, just link the new syncedGame to it.
+    const existingUserGame = await this.prisma.userGame.findUnique({
+      where: { userId_igdbGameId: { userId: userID, igdbGameId: igdbGameRow.id } },
+    });
+
+    if (existingUserGame) {
+      await this.prisma.userGamePlatform.create({
+        data: { userGameId: existingUserGame.id, syncedGameId: syncedGameRow.id },
+      });
+      return this.findOne(userID, existingUserGame.id);
     }
 
     // Game does not exist yet for the user - we need to create it and map to SyncedGames

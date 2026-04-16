@@ -1,4 +1,4 @@
-import { Plan, Role } from '@grimoire/shared';
+import { Role } from '@grimoire/shared';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -6,6 +6,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type { AdminUserRow } from '@/api/adminApi';
 import { UserRow } from '@/pages/AdminDashboardPage/components/UserRow/UserRow';
+import { generateAdminUserRow } from '@/test';
 
 // ---------------------------------------------------------------------------
 // JSDOM polyfills required by Radix UI
@@ -36,20 +37,7 @@ beforeAll(() => {
 // ---------------------------------------------------------------------------
 
 function makeUser(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
-  return {
-    id: 'user-1',
-    email: 'alice@grimoire.app',
-    name: 'Alice',
-    role: Role.USER,
-    plan: Plan.FREE,
-    mustChangePassword: false,
-    aiEnabled: true,
-    aiRequestsUsed: 0,
-    aiRequestsLimit: 10,
-    gamesCount: 5,
-    createdAt: '2024-01-01T00:00:00.000Z',
-    ...overrides,
-  };
+  return generateAdminUserRow({ id: 'user-1', email: 'alice@grimoire.app', name: 'Alice', aiEnabled: true, aiRequestsLimit: 10, gamesCount: 5, ...overrides });
 }
 
 interface RowProps {

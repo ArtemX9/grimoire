@@ -3,7 +3,7 @@ import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestj
 import { CreateSessionDto } from '@grimoire/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
-import { SessionResponse, SessionWithGameResponse } from './sessions.types';
+import { PlaySessionRelations, SessionResponse, SessionWithGameResponse } from './sessions.types';
 
 type PrismaSession = {
   id: string;
@@ -33,10 +33,10 @@ export class SessionsService {
     };
   }
 
-  private _toResponseWithGame(session: PrismaSessionWithGame): SessionWithGameResponse {
+  private _toResponseWithGame(session: PlaySessionRelations): SessionWithGameResponse {
     return {
       ...this._toResponse(session),
-      game: session.game,
+      game: session.game.igdbGame,
     };
   }
 
@@ -54,7 +54,13 @@ export class SessionsService {
         where: { userId },
         orderBy: { startedAt: 'desc' },
         take: limit,
-        include: { game: { select: { title: true } } },
+        include: {
+          game: {
+            include: {
+              igdbGame: { select: { title: true } },
+            },
+          },
+        },
       });
       return sessions.map((s) => this._toResponseWithGame(s));
     } catch (e) {
@@ -77,7 +83,7 @@ export class SessionsService {
       _sum: { durationMin: true },
       where: {
         userId,
-        gameId: dto.gameId,
+        gameId: dto.gameID,
         startedAt: { gte: startOfDay, lt: startOfNextDay },
       },
     });
@@ -87,16 +93,27 @@ export class SessionsService {
     }
     if (dto.durationMin) {
       const [session] = await this.prisma.$transaction([
-        this.prisma.playSession.create({ data: { ...dto, userId } }),
+        this.prisma.playSession.create({
+          data: {
+            userId,
+            gameId: dto.gameID,
+            startedAt: dto.startedAt,
+            mood: dto.mood,
+            durationMin: dto.durationMin,
+            notes: dto.notes,
+          },
+        }),
         this.prisma.userGame.update({
-          where: { id: dto.gameId },
+          where: { id: dto.gameID },
           data: { playtimeHours: { increment: dto.durationMin / 60 } },
         }),
       ]);
       return this._toResponse(session);
     }
 
-    const session = await this.prisma.playSession.create({ data: { ...dto, userId } });
+    const session = await this.prisma.playSession.create({
+      data: { userId, gameId: dto.gameID, startedAt: dto.startedAt, mood: dto.mood, durationMin: dto.durationMin, notes: dto.notes },
+    });
     return this._toResponse(session);
   }
 }

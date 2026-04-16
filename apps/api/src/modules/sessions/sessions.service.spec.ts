@@ -25,7 +25,9 @@ function makeSession(overrides: Partial<Record<string, unknown>> = {}) {
 function makeSessionWithGame(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     ...makeSession(overrides),
-    game: { title: 'The Witcher 3' },
+    game: {
+      igdbGame: { title: 'The Witcher 3' },
+    },
   };
 }
 
@@ -162,7 +164,7 @@ describe('SessionsService', () => {
 
       expect(prisma.playSession.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          include: { game: { select: { title: true } } },
+          include: { game: { include: { igdbGame: { select: { title: true } } } } },
         }),
       );
     });
@@ -182,7 +184,7 @@ describe('SessionsService', () => {
 
   describe('create (without durationMin)', () => {
     const dto = {
-      gameId: 'game-1',
+      gameID: 'game-1',
       startedAt: new Date('2024-06-01T10:00:00Z'),
       mood: [] as Mood[],
     };
@@ -194,7 +196,14 @@ describe('SessionsService', () => {
       const result = await service.create('user-1', dto);
 
       expect(prisma.playSession.create).toHaveBeenCalledWith({
-        data: { ...dto, userId: 'user-1' },
+        data: {
+          userId: 'user-1',
+          gameId: dto.gameID,
+          startedAt: dto.startedAt,
+          mood: dto.mood,
+          durationMin: undefined,
+          notes: undefined,
+        },
       });
       expect(prisma.$transaction).not.toHaveBeenCalled();
       expect(result.id).toBe('sess-1');
@@ -215,7 +224,7 @@ describe('SessionsService', () => {
 
   describe('create (with durationMin)', () => {
     const dto = {
-      gameId: 'game-1',
+      gameID: 'game-1',
       startedAt: new Date('2024-06-01T10:00:00Z'),
       durationMin: 120,
       mood: [Mood.EXCITED],

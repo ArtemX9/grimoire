@@ -1,39 +1,12 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { GameStatus, Genre, Mood, Plan, Role } from '@grimoire/shared';
+import { GameStatus, Genre } from '@grimoire/shared';
 
+import { generateGameResponse, generateUser } from '../../test';
 import { GamesController } from './games.controller';
 import { GamesService } from './games.service';
-import { GameResponse, GameStatsResponse } from './games.types';
-
-// ---------------------------------------------------------------------------
-// Fixtures
-// ---------------------------------------------------------------------------
-
-function makeGameResponse(overrides: Partial<GameResponse> = {}): GameResponse {
-  return {
-    id: 'game-1',
-    userID: 'user-1',
-    igdbID: 12345,
-    title: 'The Witcher 3',
-    genres: [Genre.RPG],
-    status: GameStatus.PLAYING,
-    playtimeHours: 42,
-    moods: [Mood.FOCUSED],
-    addedAt: new Date('2024-01-01T00:00:00Z'),
-    updatedAt: new Date('2024-06-01T00:00:00Z'),
-    ...overrides,
-  };
-}
-
-function makeUser(id = 'user-1') {
-  return { id, email: `${id}@example.com`, name: 'Test User', role: Role.USER, plan: Plan.FREE };
-}
-
-// ---------------------------------------------------------------------------
-// Suite
-// ---------------------------------------------------------------------------
+import { GameStatsResponse } from './games.types';
 
 describe('GamesController', () => {
   let controller: GamesController;
@@ -43,7 +16,7 @@ describe('GamesController', () => {
     const mockGamesService = {
       findAll: jest.fn(),
       findOne: jest.fn(),
-      create: jest.fn(),
+      addManually: jest.fn(),
       update: jest.fn(),
       remap: jest.fn(),
       remove: jest.fn(),
@@ -67,8 +40,8 @@ describe('GamesController', () => {
 
   describe('findAll', () => {
     it('delegates to gamesService.findAll with the user id', async () => {
-      const user = makeUser();
-      const games = [makeGameResponse()];
+      const user = generateUser({ id: 'user-1' });
+      const games = [generateGameResponse({ userID: 'user-1' })];
       gamesService.findAll.mockResolvedValue(games);
 
       const result = await controller.findAll(user);
@@ -78,7 +51,7 @@ describe('GamesController', () => {
     });
 
     it('forwards the optional status query param to the service', async () => {
-      const user = makeUser();
+      const user = generateUser({ id: 'user-1' });
       gamesService.findAll.mockResolvedValue([]);
 
       await controller.findAll(user, GameStatus.COMPLETED);
@@ -87,8 +60,8 @@ describe('GamesController', () => {
     });
 
     it('returns the service result directly', async () => {
-      const user = makeUser();
-      const games = [makeGameResponse({ id: 'game-1' }), makeGameResponse({ id: 'game-2' })];
+      const user = generateUser({ id: 'user-1' });
+      const games = [generateGameResponse({ id: 'game-1' }), generateGameResponse({ id: 'game-2' })];
       gamesService.findAll.mockResolvedValue(games);
 
       const result = await controller.findAll(user);
@@ -98,7 +71,7 @@ describe('GamesController', () => {
     });
 
     it('uses the id from the current user — not any other source', async () => {
-      const user = makeUser('user-99');
+      const user = generateUser({ id: 'user-99' });
       gamesService.findAll.mockResolvedValue([]);
 
       await controller.findAll(user);
@@ -113,7 +86,7 @@ describe('GamesController', () => {
 
   describe('getStats', () => {
     it('delegates to gamesService.getStats with the user id', async () => {
-      const user = makeUser();
+      const user = generateUser({ id: 'user-1' });
       const stats: GameStatsResponse = { total: 10, byStatus: [], totalHours: 100 };
       gamesService.getStats.mockResolvedValue(stats);
 
@@ -124,7 +97,7 @@ describe('GamesController', () => {
     });
 
     it('returns the stats from the service directly', async () => {
-      const user = makeUser();
+      const user = generateUser({ id: 'user-1' });
       const stats: GameStatsResponse = {
         total: 5,
         byStatus: [{ status: GameStatus.PLAYING, _count: 3 }],
@@ -138,7 +111,7 @@ describe('GamesController', () => {
     });
 
     it('uses the id from the current user — not any other source', async () => {
-      const user = makeUser('user-77');
+      const user = generateUser({ id: 'user-77' });
       gamesService.getStats.mockResolvedValue({ total: 0, byStatus: [], totalHours: 0 });
 
       await controller.getGameStats(user);
@@ -153,8 +126,8 @@ describe('GamesController', () => {
 
   describe('findOne', () => {
     it('delegates to gamesService.findOne with the user id and game id', async () => {
-      const user = makeUser();
-      const game = makeGameResponse();
+      const user = generateUser({ id: 'user-1' });
+      const game = generateGameResponse({ id: 'game-1' });
       gamesService.findOne.mockResolvedValue(game);
 
       const result = await controller.findGame(user, 'game-1');
@@ -164,7 +137,7 @@ describe('GamesController', () => {
     });
 
     it('propagates NotFoundException from the service when the game is not found', async () => {
-      const user = makeUser();
+      const user = generateUser({ id: 'user-1' });
       gamesService.findOne.mockRejectedValue(new NotFoundException('Game not found'));
 
       await expect(controller.findGame(user, 'nonexistent')).rejects.toThrow(NotFoundException);
@@ -172,7 +145,7 @@ describe('GamesController', () => {
 
     it('propagates NotFoundException when the game belongs to a different user', async () => {
       // The service enforces ownership — it throws NotFoundException for cross-user access
-      const user = makeUser('user-2');
+      const user = generateUser({ id: 'user-2' });
       gamesService.findOne.mockRejectedValue(new NotFoundException('Game not found'));
 
       await expect(controller.findGame(user, 'game-1')).rejects.toThrow(NotFoundException);
@@ -180,8 +153,8 @@ describe('GamesController', () => {
     });
 
     it('uses the id from the current user — not any other source', async () => {
-      const user = makeUser('user-55');
-      gamesService.findOne.mockResolvedValue(makeGameResponse());
+      const user = generateUser({ id: 'user-55' });
+      gamesService.findOne.mockResolvedValue(generateGameResponse());
 
       await controller.findGame(user, 'game-1');
 
@@ -196,27 +169,31 @@ describe('GamesController', () => {
   describe('create', () => {
     const body = {
       igdbId: 12345,
+      platformId: 1,
       title: 'The Witcher 3',
+      summary: 'A story-driven RPG.',
+      storyLine: 'Geralt hunts a monster.',
+      releaseDate: new Date('2015-05-19T00:00:00Z'),
       genres: [Genre.RPG],
       status: GameStatus.BACKLOG,
       moods: [] as string[],
     };
 
-    it('delegates to gamesService.create with the user id and validated body', async () => {
-      const user = makeUser();
-      const created = makeGameResponse({ status: GameStatus.BACKLOG });
-      gamesService.create.mockResolvedValue(created);
+    it('delegates to gamesService.addManually with the user id and validated body', async () => {
+      const user = generateUser({ id: 'user-1' });
+      const created = generateGameResponse({ status: GameStatus.BACKLOG });
+      gamesService.addManually.mockResolvedValue(created);
 
       const result = await controller.createGame(user, body);
 
-      expect(gamesService.create).toHaveBeenCalledWith('user-1', body);
+      expect(gamesService.addManually).toHaveBeenCalledWith('user-1', body);
       expect(result).toBe(created);
     });
 
     it('returns the created game from the service directly', async () => {
-      const user = makeUser();
-      const created = makeGameResponse({ id: 'game-new' });
-      gamesService.create.mockResolvedValue(created);
+      const user = generateUser({ id: 'user-1' });
+      const created = generateGameResponse({ id: 'game-new' });
+      gamesService.addManually.mockResolvedValue(created);
 
       const result = await controller.createGame(user, body);
 
@@ -224,12 +201,12 @@ describe('GamesController', () => {
     });
 
     it('uses the id from the current user — not any other source', async () => {
-      const user = makeUser('user-88');
-      gamesService.create.mockResolvedValue(makeGameResponse());
+      const user = generateUser({ id: 'user-88' });
+      gamesService.addManually.mockResolvedValue(generateGameResponse());
 
       await controller.createGame(user, body);
 
-      expect(gamesService.create).toHaveBeenCalledWith('user-88', body);
+      expect(gamesService.addManually).toHaveBeenCalledWith('user-88', body);
     });
   });
 
@@ -241,8 +218,8 @@ describe('GamesController', () => {
     const body = { status: GameStatus.COMPLETED, playtimeHours: 100 };
 
     it('delegates to gamesService.update with user id, game id, and body', async () => {
-      const user = makeUser();
-      const updated = makeGameResponse({ status: GameStatus.COMPLETED, playtimeHours: 100 });
+      const user = generateUser({ id: 'user-1' });
+      const updated = generateGameResponse({ status: GameStatus.COMPLETED, playtimeHours: 100 });
       gamesService.update.mockResolvedValue(updated);
 
       const result = await controller.updateGameUserData(user, 'game-1', body);
@@ -252,14 +229,14 @@ describe('GamesController', () => {
     });
 
     it('propagates NotFoundException from the service when the game is not found', async () => {
-      const user = makeUser();
+      const user = generateUser({ id: 'user-1' });
       gamesService.update.mockRejectedValue(new NotFoundException('Game not found'));
 
       await expect(controller.updateGameUserData(user, 'nonexistent', body)).rejects.toThrow(NotFoundException);
     });
 
     it("propagates NotFoundException when trying to update another user's game", async () => {
-      const user = makeUser('user-2');
+      const user = generateUser({ id: 'user-2' });
       gamesService.update.mockRejectedValue(new NotFoundException('Game not found'));
 
       await expect(controller.updateGameUserData(user, 'game-1', body)).rejects.toThrow(NotFoundException);
@@ -267,8 +244,8 @@ describe('GamesController', () => {
     });
 
     it('uses the id from the current user — not any other source', async () => {
-      const user = makeUser('user-66');
-      gamesService.update.mockResolvedValue(makeGameResponse());
+      const user = generateUser({ id: 'user-66' });
+      gamesService.update.mockResolvedValue(generateGameResponse());
 
       await controller.updateGameUserData(user, 'game-1', body);
 
@@ -281,11 +258,11 @@ describe('GamesController', () => {
   // ---------------------------------------------------------------------------
 
   describe('remap', () => {
-    const body = { igdbId: 99999, title: 'New Title', genres: [Genre.RPG] };
+    const body = { id: 'game-1', igdbId: 99999, title: 'New Title', genres: [Genre.RPG] };
 
     it('delegates to gamesService.remap with user id, game id, and body', async () => {
-      const user = makeUser();
-      const remapped = makeGameResponse({ igdbID: 99999, title: 'New Title' });
+      const user = generateUser({ id: 'user-1' });
+      const remapped = generateGameResponse({ igdbID: 99999, title: 'New Title' });
       gamesService.remap.mockResolvedValue(remapped);
 
       const result = await controller.remapGame(user, 'game-1', body);
@@ -295,14 +272,14 @@ describe('GamesController', () => {
     });
 
     it('propagates NotFoundException from the service when the game is not found', async () => {
-      const user = makeUser();
+      const user = generateUser({ id: 'user-1' });
       gamesService.remap.mockRejectedValue(new NotFoundException('Game not found'));
 
       await expect(controller.remapGame(user, 'nonexistent', body)).rejects.toThrow(NotFoundException);
     });
 
     it("propagates NotFoundException when trying to remap another user's game", async () => {
-      const user = makeUser('user-2');
+      const user = generateUser({ id: 'user-2' });
       gamesService.remap.mockRejectedValue(new NotFoundException('Game not found'));
 
       await expect(controller.remapGame(user, 'game-1', body)).rejects.toThrow(NotFoundException);
@@ -310,8 +287,8 @@ describe('GamesController', () => {
     });
 
     it('uses the id from the current user — not any other source', async () => {
-      const user = makeUser('user-44');
-      gamesService.remap.mockResolvedValue(makeGameResponse());
+      const user = generateUser({ id: 'user-44' });
+      gamesService.remap.mockResolvedValue(generateGameResponse());
 
       await controller.remapGame(user, 'game-1', body);
 
@@ -325,7 +302,7 @@ describe('GamesController', () => {
 
   describe('remove', () => {
     it('delegates to gamesService.remove with the user id and game id', async () => {
-      const user = makeUser();
+      const user = generateUser({ id: 'user-1' });
       gamesService.remove.mockResolvedValue(undefined);
 
       await controller.remove(user, 'game-1');
@@ -334,14 +311,14 @@ describe('GamesController', () => {
     });
 
     it('propagates NotFoundException from the service when the game is not found', async () => {
-      const user = makeUser();
+      const user = generateUser({ id: 'user-1' });
       gamesService.remove.mockRejectedValue(new NotFoundException('Game not found'));
 
       await expect(controller.remove(user, 'nonexistent')).rejects.toThrow(NotFoundException);
     });
 
     it("propagates NotFoundException when trying to delete another user's game", async () => {
-      const user = makeUser('user-2');
+      const user = generateUser({ id: 'user-2' });
       gamesService.remove.mockRejectedValue(new NotFoundException('Game not found'));
 
       await expect(controller.remove(user, 'game-1')).rejects.toThrow(NotFoundException);
@@ -349,7 +326,7 @@ describe('GamesController', () => {
     });
 
     it('uses the id from the current user — not any other source', async () => {
-      const user = makeUser('user-33');
+      const user = generateUser({ id: 'user-33' });
       gamesService.remove.mockResolvedValue(undefined);
 
       await controller.remove(user, 'game-1');
@@ -358,7 +335,7 @@ describe('GamesController', () => {
     });
 
     it('resolves without a value on success', async () => {
-      const user = makeUser();
+      const user = generateUser({ id: 'user-1' });
       gamesService.remove.mockResolvedValue(undefined);
 
       const result = await controller.remove(user, 'game-1');
