@@ -10,10 +10,6 @@ export type SessionResponse = {
   notes?: string;
 };
 
-export interface SessionWithGameResponse extends SessionResponse {
-  game: { title: string };
-}
-
 export type PlaySessionRelations = Prisma.PlaySessionGetPayload<{
   include: {
     game: {

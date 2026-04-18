@@ -1,8 +1,9 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { GameStatus, Genre, Mood } from '@grimoire/shared';
 
+import { UnmappedReason } from '../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GamesService } from './games.service';
 import { GameResponse, GameStatsResponse, IgdbSyncGameInfo, IngestedSyncGameInfo } from './games.types';
@@ -96,8 +97,13 @@ describe('GamesService', () => {
             },
             iGDBGame: {
               upsert: jest.fn(),
+              findUniqueOrThrow: jest.fn(),
             },
             syncedGame: {
+              upsert: jest.fn(),
+            },
+            unmappedSyncedGame: {
+              findUnique: jest.fn(),
               upsert: jest.fn(),
             },
             userGamePlatform: {
@@ -395,7 +401,6 @@ describe('GamesService', () => {
     const dto = { status: GameStatus.COMPLETED, playtimeHours: 100 };
 
     it('updates game when it belongs to the requesting user', async () => {
-      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
       (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame({ status: 'COMPLETED', playtimeHours: 100 }));
 
       const result = await service.update('user-1', 'game-1', dto);
@@ -404,33 +409,41 @@ describe('GamesService', () => {
       expect(result.playtimeHours).toBe(100);
     });
 
-    it('throws NotFoundException when game does not exist', async () => {
-      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(null);
+    it('throws BadRequestException when game does not exist or belongs to a different user', async () => {
+      (prisma.userGame.update as jest.Mock).mockRejectedValue(new Error('Record not found'));
 
-      await expect(service.update('user-1', 'nonexistent', dto)).rejects.toThrow(NotFoundException);
-      expect(prisma.userGame.update).not.toHaveBeenCalled();
+      await expect(service.update('user-1', 'nonexistent', dto)).rejects.toThrow(BadRequestException);
     });
 
-    it('throws NotFoundException when game belongs to a different user', async () => {
-      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(null);
-
-      await expect(service.update('user-2', 'game-1', dto)).rejects.toThrow(NotFoundException);
-      expect(prisma.userGame.update).not.toHaveBeenCalled();
-    });
-
-    it('passes dto directly to update', async () => {
-      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
+    it('scopes the update to both id and userId', async () => {
       (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame());
 
       await service.update('user-1', 'game-1', dto);
 
       expect(prisma.userGame.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 'game-1' }, data: dto }),
+        expect.objectContaining({ where: { id: 'game-1', userId: 'user-1' } }),
+      );
+    });
+
+    it('passes the correct data fields to update', async () => {
+      const fullDto = { status: GameStatus.COMPLETED, userRating: 9, moods: [Mood.FOCUSED], notes: 'great', playtimeHours: 100 };
+      (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame());
+
+      await service.update('user-1', 'game-1', fullDto);
+
+      expect(prisma.userGame.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            userRating: 9,
+            moods: [Mood.FOCUSED],
+            notes: 'great',
+            status: GameStatus.COMPLETED,
+          }),
+        }),
       );
     });
 
     it('maps null optional fields to undefined in the response', async () => {
-      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
       (prisma.userGame.update as jest.Mock).mockResolvedValue(
         makePrismaGame({ userRating: null, notes: null }),
       );
@@ -557,7 +570,7 @@ describe('GamesService', () => {
 
     const igdbInfo: IgdbSyncGameInfo = {
       id: 12345,
-      title: 'Counter-Strike: GO',
+      title: 'CS:GO',
       coverURL: '',
       genres: [Genre.Shooter],
       summary: undefined,
@@ -599,7 +612,7 @@ describe('GamesService', () => {
 
       expect(prisma.userGame.update).not.toHaveBeenCalled();
       expect(prisma.userGame.create).not.toHaveBeenCalled();
-      expect(result.isMappedManually).toBe(true);
+      expect(result!.isMappedManually).toBe(true);
     });
 
     it('updates playtime when incoming is higher than stored', async () => {
@@ -613,7 +626,7 @@ describe('GamesService', () => {
       expect(prisma.userGame.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: { playtimeHours: 100 } }),
       );
-      expect(result.playtimeHours).toBe(100);
+      expect(result!.playtimeHours).toBe(100);
     });
 
     it('does not update playtime when incoming is lower', async () => {
@@ -641,7 +654,7 @@ describe('GamesService', () => {
         }),
       );
       expect(prisma.userGamePlatform.create).toHaveBeenCalled();
-      expect(result.id).toBe('game-new');
+      expect(result!.id).toBe('game-new');
     });
 
     it('sets playtimeHours to 0 when incoming playtimeHours is undefined', async () => {
@@ -657,6 +670,143 @@ describe('GamesService', () => {
           data: expect.objectContaining({ playtimeHours: 0 }),
         }),
       );
+    });
+
+    it('upserts NO_MATCH and returns null when no IGDB info and game is new', async () => {
+      (prisma.unmappedSyncedGame.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.ingestFromSync('user-1', syncedGameInfo, undefined);
+
+      expect(prisma.unmappedSyncedGame.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId_syncedGameId: { userId: 'user-1', syncedGameId: 'synced-1' } },
+          create: expect.objectContaining({ reason: UnmappedReason.NO_MATCH, isMapped: false }),
+          update: { reason: UnmappedReason.NO_MATCH },
+        }),
+      );
+      expect(result).toBeNull();
+    });
+
+    it('upserts NO_MATCH and returns null when no IGDB info and existing row is not mapped', async () => {
+      (prisma.unmappedSyncedGame.findUnique as jest.Mock).mockResolvedValue({ isMapped: false, igdbGameId: null });
+
+      const result = await service.ingestFromSync('user-1', syncedGameInfo, undefined);
+
+      expect(prisma.unmappedSyncedGame.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId_syncedGameId: { userId: 'user-1', syncedGameId: 'synced-1' } },
+          update: { reason: UnmappedReason.NO_MATCH },
+        }),
+      );
+      expect(result).toBeNull();
+    });
+
+    it('uses findUniqueOrThrow to load IGDB row when game was previously manually mapped', async () => {
+      const igdbRow = makeIgdbGame({ id: 'igdb-cs', igdbId: 12345, title: 'CS:GO' });
+      (prisma.unmappedSyncedGame.findUnique as jest.Mock).mockResolvedValue({ isMapped: true, igdbGameId: 12345 });
+      (prisma.iGDBGame.findUniqueOrThrow as jest.Mock).mockResolvedValue(igdbRow);
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.userGame.create as jest.Mock).mockResolvedValue({ id: 'game-new', userId: 'user-1', igdbGameId: 'igdb-cs' });
+      (prisma.userGamePlatform.create as jest.Mock).mockResolvedValue({});
+      (prisma.userGame.findUniqueOrThrow as jest.Mock).mockResolvedValue(makePrismaGame({ id: 'game-new', igdbGame: igdbRow }));
+
+      await service.ingestFromSync('user-1', syncedGameInfo, undefined);
+
+      expect(prisma.iGDBGame.upsert).not.toHaveBeenCalled();
+      expect(prisma.iGDBGame.findUniqueOrThrow).toHaveBeenCalledWith({ where: { igdbId: 12345 } });
+      expect(prisma.userGame.create).toHaveBeenCalled();
+    });
+
+    it('upserts LOW_CONFIDENCE and returns null when title similarity is below threshold', async () => {
+      const lowConfidenceIgdbInfo: IgdbSyncGameInfo = {
+        ...igdbInfo,
+        title: 'Totally Unrelated RPG Game',
+      };
+
+      const result = await service.ingestFromSync('user-1', syncedGameInfo, lowConfidenceIgdbInfo);
+
+      expect(prisma.unmappedSyncedGame.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId_syncedGameId: { userId: 'user-1', syncedGameId: 'synced-1' } },
+          update: { reason: UnmappedReason.LOW_CONFIDENCE },
+        }),
+      );
+      expect(result).toBeNull();
+    });
+
+    it('upserts DUPLICATE_MATCH and returns null when existing game has non-matching platform title', async () => {
+      const igdbRow = makeIgdbGame({ id: 'igdb-cs', igdbId: 12345, title: 'CS:GO' });
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(igdbRow);
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
+        makePrismaGame({
+          id: 'game-existing',
+          igdbGame: igdbRow,
+          userGamePlatforms: [
+            {
+              id: 'ugp-2',
+              userGameId: 'game-existing',
+              syncedGameId: 'synced-2',
+              syncedGame: makeSyncedGame({ externalTitle: 'Totally Unrelated Game' }),
+            },
+          ],
+        }),
+      );
+
+      const result = await service.ingestFromSync('user-1', syncedGameInfo, igdbInfo);
+
+      expect(prisma.unmappedSyncedGame.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId_syncedGameId: { userId: 'user-1', syncedGameId: 'synced-1' } },
+          update: { reason: UnmappedReason.DUPLICATE_MATCH },
+        }),
+      );
+      expect(result).toBeNull();
+    });
+
+    it('creates new platform link and returns game when existing game has matching platform title', async () => {
+      const igdbRow = makeIgdbGame({ id: 'igdb-cs', igdbId: 12345, title: 'CS:GO' });
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(igdbRow);
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.userGame.findUnique as jest.Mock)
+        .mockResolvedValueOnce(
+          makePrismaGame({
+            id: 'game-existing',
+            igdbGame: igdbRow,
+            userGamePlatforms: [
+              {
+                id: 'ugp-2',
+                userGameId: 'game-existing',
+                syncedGameId: 'synced-2',
+                syncedGame: makeSyncedGame({ externalTitle: 'CS:GO' }),
+              },
+            ],
+          }),
+        )
+        .mockResolvedValueOnce(makePrismaGame({ id: 'game-existing', igdbGame: igdbRow }));
+      (prisma.userGamePlatform.create as jest.Mock).mockResolvedValue({});
+
+      const result = await service.ingestFromSync('user-1', syncedGameInfo, igdbInfo);
+
+      expect(prisma.userGamePlatform.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { userGameId: 'game-existing', syncedGameId: 'synced-1' },
+        }),
+      );
+      expect(result).not.toBeNull();
+    });
+
+    it('returns existing game without update when playtime is equal', async () => {
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(
+        makeUserGamePlatformRecord({ userGame: { isMappedManually: false, playtimeHours: 100 } }),
+      );
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame({ playtimeHours: 100 }));
+
+      await service.ingestFromSync('user-1', { ...syncedGameInfo, playtimeHours: 100 }, igdbInfo);
+
+      expect(prisma.userGame.update).not.toHaveBeenCalled();
+      expect(prisma.userGame.findUnique).toHaveBeenCalled();
     });
   });
 });

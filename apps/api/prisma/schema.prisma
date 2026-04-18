@@ -8,26 +8,27 @@ datasource db {
 }
 
 model User {
-  id                 String         @id @default(cuid())
-  email              String         @unique
+  id                 String               @id @default(cuid())
+  email              String               @unique
   name               String?
-  plan               Plan           @default(FREE)
-  role               Role           @default(USER)
+  plan               Plan                 @default(FREE)
+  role               Role                 @default(USER)
   passwordHash       String?
-  mustChangePassword Boolean        @default(false)
-  aiEnabled          Boolean        @default(true)
-  aiRequestsUsed     Int            @default(0)
+  mustChangePassword Boolean              @default(false)
+  aiEnabled          Boolean              @default(true)
+  aiRequestsUsed     Int                  @default(0)
   aiRequestsLimit    Int?
   stripeId           String?
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
-  emailVerified      Boolean        @default(false)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  emailVerified      Boolean              @default(false)
   image              String?
   games              UserGame[]
   sessions           PlaySession[]
   platforms          UserPlatform[]
   accounts           Account[]
   authSessions       Session[]
+  unmappedSyncedGame UnmappedSyncedGame[]
 }
 
 // Better Auth required models
@@ -164,31 +165,55 @@ enum PlatformTitle {
 }
 
 model IGDBGame {
-  id          String     @id @default(cuid())
-  igdbId      Int
-  title       String
-  coverUrl    String?
-  genres      String[]
-  summary     String?
-  storyLine   String?
-  releaseDate DateTime?
-  updatedAt   DateTime   @updatedAt
-  userGames   UserGame[]
+  id                 String               @id @default(cuid())
+  igdbId             Int
+  title              String
+  coverUrl           String?
+  genres             String[]
+  summary            String?
+  storyLine          String?
+  releaseDate        DateTime?
+  updatedAt          DateTime             @updatedAt
+  userGames          UserGame[]
+  unmappedSyncedGame UnmappedSyncedGame[]
 
   @@unique([igdbId])
 }
 
 model SyncedGame {
-  id                String             @id @default(cuid())
-  platformId        Int
-  externalId        String
-  externalTitle     String
-  coverUrl          String?
-  summary           String?
-  platform          Platforms          @relation(fields: [platformId], references: [id])
-  userGamePlatforms UserGamePlatform[]
+  id                 String               @id @default(cuid())
+  platformId         Int
+  externalId         String
+  externalTitle      String
+  coverUrl           String?
+  summary            String?
+  platform           Platforms            @relation(fields: [platformId], references: [id])
+  userGamePlatforms  UserGamePlatform[]
+  unmappedSyncedGame UnmappedSyncedGame[]
 
   @@unique([platformId, externalId])
+}
+
+enum UnmappedReason {
+  DUPLICATE_MATCH
+  LOW_CONFIDENCE
+  NO_MATCH
+}
+
+model UnmappedSyncedGame {
+  id           String         @id @default(cuid())
+  syncedGameId String
+  userId       String
+  reason       UnmappedReason
+  isMapped     Boolean        @default(false)
+  igdbGameId   Int?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  syncedGame   SyncedGame     @relation(fields: [syncedGameId], references: [id], onDelete: Cascade)
+  igdbGame     IGDBGame?      @relation(fields: [igdbGameId], references: [igdbId], onDelete: SetNull, onUpdate: SetNull)
+
+  @@unique([userId, syncedGameId])
 }
 
 model UserGamePlatform {

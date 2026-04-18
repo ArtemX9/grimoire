@@ -10,3 +10,7 @@ export interface PlaySession {
   mood: Mood[]
   notes?: string
 }
+
+export interface PlaySessionWithGame extends PlaySession {
+  game: { title: string };
+}

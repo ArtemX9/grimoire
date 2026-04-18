@@ -1,8 +1,13 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
+import { PrismaClient } from '@prisma/client/extension';
+
 import { CreateGameDto, GameStatus, Genre, Mood, Platform, RemapGameDto, UpdateGameDto } from '@grimoire/shared';
 
+import { UserGamePlatform } from '../../generated/prisma/client';
+import { UnmappedReason } from '../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
+import { isConfidentMatch } from '../igdb/match-confidence';
 import { GameResponse, GameStatsResponse, IgdbSyncGameInfo, IngestedSyncGameInfo, UserGameWithRelations } from './games.types';
 
 @Injectable()
@@ -321,9 +326,15 @@ export class GamesService {
     };
   }
 
-  async ingestFromSync(userID: string, syncedGameInfo: IngestedSyncGameInfo, syncedGameIGDBInfo: IgdbSyncGameInfo): Promise<GameResponse> {
+  async ingestFromSync(
+    userID: string,
+    syncedGameInfo: IngestedSyncGameInfo,
+    syncedGameIGDBInfo?: IgdbSyncGameInfo,
+    transaction?: PrismaClient,
+  ): Promise<GameResponse | null> {
+    const prismaInstance = transaction ? transaction : this.prisma;
     // Update SyncedGame table with fresh info
-    const syncedGameRow = await this.prisma.syncedGame.upsert({
+    const syncedGameRow = await prismaInstance.syncedGame.upsert({
       where: {
         platformId_externalId: {
           platformId: syncedGameInfo.platformID,
@@ -343,32 +354,84 @@ export class GamesService {
         summary: syncedGameInfo.summary,
       },
     });
+    let previouslyMappedIGDBGameID;
+
+    // If game does not have any IGDB info we check for
+    if (!syncedGameIGDBInfo) {
+      const unmappedSyncedGameRow = await prismaInstance.unmappedSyncedGame.findUnique({
+        where: { userId_syncedGameId: { userId: userID, syncedGameId: syncedGameRow.id } },
+      });
+      // If previously it was ingested for the user we check if it was mapped to reuse that mapping
+      if (unmappedSyncedGameRow?.isMapped && unmappedSyncedGameRow.igdbGameId) {
+        previouslyMappedIGDBGameID = unmappedSyncedGameRow.igdbGameId;
+      }
+      // A new synced game without IGDB game mapping we put in the UmappedSyncedGame table
+      else {
+        await prismaInstance.unmappedSyncedGame.upsert({
+          where: { userId_syncedGameId: { userId: userID, syncedGameId: syncedGameRow.id } },
+          create: {
+            userId: userID,
+            syncedGameId: syncedGameRow.id,
+            reason: UnmappedReason.NO_MATCH,
+            isMapped: false,
+          },
+          update: { reason: UnmappedReason.NO_MATCH },
+        });
+        return null;
+      }
+    }
 
     // Update IGDBGame table with fresh info
-    const igdbGameRow = await this.prisma.iGDBGame.upsert({
-      where: {
-        igdbId: syncedGameIGDBInfo.id,
-      },
-      create: {
-        igdbId: syncedGameIGDBInfo.id,
-        title: syncedGameIGDBInfo.title,
-        coverUrl: syncedGameIGDBInfo.coverURL,
-        genres: syncedGameIGDBInfo.genres,
-        summary: syncedGameIGDBInfo.summary,
-        storyLine: syncedGameIGDBInfo.storyLine,
-        releaseDate: syncedGameIGDBInfo.releaseDate,
-      },
-      update: {
-        title: syncedGameIGDBInfo.title,
-        coverUrl: syncedGameIGDBInfo.coverURL,
-        genres: syncedGameIGDBInfo.genres,
-        summary: syncedGameIGDBInfo.summary,
-        storyLine: syncedGameIGDBInfo.storyLine,
-        releaseDate: syncedGameIGDBInfo.releaseDate,
-      },
-    });
+    let igdbGameRow;
+    // We have IGDBGame info - so we update or create the row in a table
+    if (!previouslyMappedIGDBGameID && syncedGameIGDBInfo) {
+      // Case 2: low confidence match
+      if (!isConfidentMatch(syncedGameInfo.externalTitle || '', syncedGameIGDBInfo.title)) {
+        await prismaInstance.unmappedSyncedGame.upsert({
+          where: { userId_syncedGameId: { userId: userID, syncedGameId: syncedGameRow.id } },
+          create: {
+            userId: userID,
+            syncedGameId: syncedGameRow.id,
+            reason: UnmappedReason.LOW_CONFIDENCE,
+          },
+          update: { reason: UnmappedReason.LOW_CONFIDENCE },
+        });
+        return null;
+      }
 
-    const userGamePlatform = await this.prisma.userGamePlatform.findFirst({
+      igdbGameRow = await prismaInstance.iGDBGame.upsert({
+        where: {
+          igdbId: syncedGameIGDBInfo.id,
+        },
+        create: {
+          igdbId: syncedGameIGDBInfo.id,
+          title: syncedGameIGDBInfo.title,
+          coverUrl: syncedGameIGDBInfo.coverURL,
+          genres: syncedGameIGDBInfo.genres,
+          summary: syncedGameIGDBInfo.summary,
+          storyLine: syncedGameIGDBInfo.storyLine,
+          releaseDate: syncedGameIGDBInfo.releaseDate,
+        },
+        update: {
+          title: syncedGameIGDBInfo.title,
+          coverUrl: syncedGameIGDBInfo.coverURL,
+          genres: syncedGameIGDBInfo.genres,
+          summary: syncedGameIGDBInfo.summary,
+          storyLine: syncedGameIGDBInfo.storyLine,
+          releaseDate: syncedGameIGDBInfo.releaseDate,
+        },
+      });
+    }
+    // We have IGDBGame info from user manual mapping
+    else {
+      igdbGameRow = await prismaInstance.iGDBGame.findUniqueOrThrow({
+        where: {
+          igdbId: previouslyMappedIGDBGameID,
+        },
+      });
+    }
+
+    const userGamePlatform = await prismaInstance.userGamePlatform.findFirst({
       where: {
         syncedGameId: syncedGameRow.id,
         userGame: { userId: userID },
@@ -387,7 +450,7 @@ export class GamesService {
     if (userGamePlatform) {
       // We do not touch manual mappings
       if (userGamePlatform.userGame.isMappedManually) {
-        const userGame = await this.prisma.userGame.findUniqueOrThrow({
+        const userGame = await prismaInstance.userGame.findUniqueOrThrow({
           where: {
             id: userGamePlatform.userGameId,
           },
@@ -415,7 +478,7 @@ export class GamesService {
 
       // Game exists, and it was created during previous ingestions, then we need to check if playtime hours have changed
       if (syncedGameInfo.playtimeHours && userGamePlatform.userGame.playtimeHours < syncedGameInfo.playtimeHours) {
-        const userGame = await this.prisma.userGame.update({
+        const userGame = await prismaInstance.userGame.update({
           where: {
             id: userGamePlatform.userGameId,
           },
@@ -450,19 +513,34 @@ export class GamesService {
 
     // Another platform entry (e.g. a different Steam app) may have already created a userGame
     // for the same IGDB game. If so, just link the new syncedGame to it.
-    const existingUserGame = await this.prisma.userGame.findUnique({
+    const existingUserGame = await prismaInstance.userGame.findUnique({
       where: { userId_igdbGameId: { userId: userID, igdbGameId: igdbGameRow.id } },
+      include: { userGamePlatforms: { include: { syncedGame: true } } },
     });
 
     if (existingUserGame) {
-      await this.prisma.userGamePlatform.create({
-        data: { userGameId: existingUserGame.id, syncedGameId: syncedGameRow.id },
-      });
-      return this.findOne(userID, existingUserGame.id);
+      const titlesMatch = existingUserGame.userGamePlatforms.every((ugp: any) =>
+        isConfidentMatch(ugp.syncedGame.externalTitle, igdbGameRow.title),
+      );
+
+      if (!titlesMatch) {
+        // Case 4: DUPLICATE_MATCH — different game colliding on same IGDB ID
+        await prismaInstance.unmappedSyncedGame.upsert({
+          where: { userId_syncedGameId: { userId: userID, syncedGameId: syncedGameRow.id } },
+          create: { userId: userID, syncedGameId: syncedGameRow.id, reason: UnmappedReason.DUPLICATE_MATCH },
+          update: { reason: UnmappedReason.DUPLICATE_MATCH },
+        });
+        return null;
+      } else {
+        await prismaInstance.userGamePlatform.create({
+          data: { userGameId: existingUserGame.id, syncedGameId: syncedGameRow.id },
+        });
+        return this.findOne(userID, existingUserGame.id);
+      }
     }
 
     // Game does not exist yet for the user - we need to create it and map to SyncedGames
-    const userGameRow = await this.prisma.userGame.create({
+    const userGameRow = await prismaInstance.userGame.create({
       data: {
         userId: userID,
         status: GameStatus.BACKLOG,
@@ -471,14 +549,14 @@ export class GamesService {
       },
     });
 
-    await this.prisma.userGamePlatform.create({
+    await prismaInstance.userGamePlatform.create({
       data: {
         userGameId: userGameRow.id,
         syncedGameId: syncedGameRow.id,
       },
     });
 
-    const userGame = await this.prisma.userGame.findUniqueOrThrow({
+    const userGame = await prismaInstance.userGame.findUniqueOrThrow({
       where: {
         id: userGameRow.id,
         userId: userID,

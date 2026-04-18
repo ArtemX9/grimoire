@@ -1,8 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { CreateSessionDto, Mood } from '@grimoire/shared';
-
-import { SessionResponse, SessionWithGameResponse } from '../modules/sessions/sessions.types';
+import { CreateSessionDto, Mood, PlaySession, PlaySessionWithGame } from '@grimoire/shared';
 
 export interface IGenerateSession {
   id?: string;
@@ -14,11 +12,11 @@ export interface IGenerateSession {
   notes?: string;
 }
 
-export function generateSession(params: IGenerateSession = {}): SessionResponse {
+export function generateSession(params: IGenerateSession = {}): PlaySession {
   return {
     id: params.id ?? faker.string.uuid(),
-    userId: params.userId ?? faker.string.uuid(),
-    gameId: params.gameId ?? faker.string.uuid(),
+    userID: params.userId ?? faker.string.uuid(),
+    gameID: params.gameId ?? faker.string.uuid(),
     startedAt: params.startedAt ?? faker.date.recent(),
     durationMin: params.durationMin,
     mood: params.mood ?? [],
@@ -30,7 +28,7 @@ export interface IGenerateSessionWithGame extends IGenerateSession {
   gameTitle?: string;
 }
 
-export function generateSessionWithGame(params: IGenerateSessionWithGame = {}): SessionWithGameResponse {
+export function generateSessionWithGame(params: IGenerateSessionWithGame = {}): PlaySessionWithGame {
   return {
     ...generateSession(params),
     game: { title: params.gameTitle ?? faker.commerce.productName() },

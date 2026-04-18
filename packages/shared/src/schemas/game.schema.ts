@@ -18,11 +18,22 @@ export const CreateGameSchema = z.object({
   notes: z.string().max(2000).optional()
 });
 
-export const UpdateGameSchema = CreateGameSchema.partial().extend({
+export const UpdateGameSchema = z.object({
+  igdbId: z.number().int().positive().optional(),
+  externalId: z.string().optional(),
+  externalTitle: z.string().min(1).max(255).optional(),
+  platformId: z.number().int().positive().optional(),
+  title: z.string().min(1).max(255).optional(),
+  summary: z.string().min(1).optional(),
+  storyLine: z.string().min(1).optional(),
+  releaseDate: z.coerce.date().optional(),
+  coverUrl: z.string().url().optional(),
+  genres: z.array(z.enum(Genre)).optional(),
+  status: z.enum(GameStatus).optional(),
+  moods: z.array(z.enum(Mood)).optional(),
+  notes: z.string().max(2000).optional(),
   playtimeHours: z.number().min(0).optional(),
   userRating: z.number().int().min(1).max(10).optional(),
-  status: z.enum(GameStatus).optional(),
-  moods: z.array(z.enum(Mood)).optional()
 });
 
 export const RemapGameSchema = CreateGameSchema.partial().extend({

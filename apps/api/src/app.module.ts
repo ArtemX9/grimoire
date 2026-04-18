@@ -14,6 +14,7 @@ import { GamesModule } from './modules/games/games.module';
 import { IgdbModule } from './modules/igdb/igdb.module';
 import { PlatformsModule } from './modules/platforms/platforms.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
+import { UnmappedGamesModule } from './modules/unmapped-games/unmapped-games.module';
 import { UsersModule } from './modules/users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -31,6 +32,7 @@ import { PrismaModule } from './prisma/prisma.module';
     AdminModule,
     UsersModule,
     GamesModule,
+    UnmappedGamesModule,
     SessionsModule,
     IgdbModule,
     PlatformsModule,

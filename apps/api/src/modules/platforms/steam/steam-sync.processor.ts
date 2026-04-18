@@ -30,7 +30,7 @@ export class SteamSyncProcessor extends WorkerHost {
       for (const steamGame of steamGames) {
         const igdbResults = await this.igdbService.search(steamGame.name, 1);
         const igdbGame = igdbResults[0];
-        if (!igdbGame) continue;
+        // if (!igdbGame) continue;
 
         try {
           await this.gamesService.ingestFromSync(
@@ -42,15 +42,17 @@ export class SteamSyncProcessor extends WorkerHost {
               coverURL: steamGame.img_icon_url,
               playtimeHours: steamGame.playtime_forever / 60,
             },
-            {
-              id: igdbGame.id,
-              title: igdbGame.name,
-              coverURL: igdbGame.cover || steamGame.img_icon_url,
-              genres: igdbGame.genres as Genre[],
-              summary: igdbGame.summary,
-              storyLine: igdbGame.storyline,
-              releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,
-            },
+            igdbGame
+              ? {
+                  id: igdbGame.id,
+                  title: igdbGame.name,
+                  coverURL: igdbGame.cover || steamGame.img_icon_url,
+                  genres: igdbGame.genres as Genre[],
+                  summary: igdbGame.summary,
+                  storyLine: igdbGame.storyline,
+                  releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,
+                }
+              : undefined,
           );
         } catch (e) {
           console.error(e);

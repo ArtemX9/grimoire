@@ -1,9 +1,9 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 
-import { CreateSessionDto } from '@grimoire/shared';
+import { CreateSessionDto, Mood, PlaySession, PlaySessionWithGame } from '@grimoire/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
-import { PlaySessionRelations, SessionResponse, SessionWithGameResponse } from './sessions.types';
+import { PlaySessionRelations } from './sessions.types';
 
 type PrismaSession = {
   id: string;
@@ -15,32 +15,31 @@ type PrismaSession = {
   notes: string | null;
 };
 const FULL_DAY_HOURS = 24 * 60;
-type PrismaSessionWithGame = PrismaSession & { game: { title: string } };
 
 @Injectable()
 export class SessionsService {
   constructor(private prisma: PrismaService) {}
 
-  private _toResponse(session: PrismaSession): SessionResponse {
+  private _toResponse(session: PrismaSession): PlaySession {
     return {
       id: session.id,
-      userId: session.userId,
-      gameId: session.gameId,
+      userID: session.userId,
+      gameID: session.gameId,
       startedAt: session.startedAt,
       durationMin: session.durationMin ?? undefined,
-      mood: session.mood,
+      mood: session.mood as Mood[],
       notes: session.notes ?? undefined,
     };
   }
 
-  private _toResponseWithGame(session: PlaySessionRelations): SessionWithGameResponse {
+  private _toResponseWithGame(session: PlaySessionRelations): PlaySessionWithGame {
     return {
       ...this._toResponse(session),
       game: session.game.igdbGame,
     };
   }
 
-  async findByGame(userId: string, gameId: string): Promise<SessionResponse[]> {
+  async findByGame(userId: string, gameId: string): Promise<PlaySession[]> {
     const sessions = await this.prisma.playSession.findMany({
       where: { userId, gameId },
       orderBy: { startedAt: 'desc' },
@@ -48,7 +47,7 @@ export class SessionsService {
     return sessions.map((s) => this._toResponse(s));
   }
 
-  async findRecent(userId: string, limit = 10): Promise<SessionWithGameResponse[]> {
+  async findRecent(userId: string, limit = 10): Promise<PlaySessionWithGame[]> {
     try {
       const sessions = await this.prisma.playSession.findMany({
         where: { userId },
@@ -68,7 +67,7 @@ export class SessionsService {
     }
   }
 
-  async create(userId: string, dto: CreateSessionDto): Promise<SessionResponse> {
+  async create(userId: string, dto: CreateSessionDto): Promise<PlaySession> {
     const startOfDay = new Date(dto.startedAt);
     startOfDay.setHours(0, 0, 0, 0);
     const startOfNextDay = new Date(startOfDay);
