@@ -52,12 +52,10 @@ async function upsertUser(
 
 async function main() {
   // Seed platform lookup table
-  for (const platform of Object.values(PlatformTitle)) {
-    const existing = await prisma.platforms.findFirst({ where: { platform } });
-    if (!existing) {
-      await prisma.platforms.create({ data: { platform } });
-    }
-  }
+  await prisma.platforms.createMany({
+    data: Object.values(PlatformTitle).map((platform) => ({ platform })),
+    skipDuplicates: true,
+  });
 
   const [regularHash, regular2Hash, adminHash] = await Promise.all([
     bcryptjs.hash(REGULAR_USER.password, 12),
