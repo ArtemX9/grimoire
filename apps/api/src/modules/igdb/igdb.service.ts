@@ -40,13 +40,13 @@ export class IgdbService implements OnModuleInit {
     const res = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
       headers,
-      body: `search "${query}"; fields id,name,cover.url,genres.name,summary,first_release_date,total_rating; limit ${limit};`,
+      body: `search "${query}"; fields id,name,cover.url,genres.name,summary,storyline,first_release_date,total_rating; limit ${limit};`,
     });
     const games: IgdbGameRaw[] = await res.json();
     return games.map((game) => ({
       ...game,
       genres: game.genres?.map((genre) => genre.name),
-      cover: 'https://' + game.cover?.url.replace('thumb', 'cover_big_2x'),
+      cover: 'https:' + game.cover?.url.replace('thumb', 'cover_big_2x'),
     }));
   }
 
@@ -55,13 +55,13 @@ export class IgdbService implements OnModuleInit {
     const res = await fetch('https://api.igdb.com/v4/games', {
       method: 'POST',
       headers,
-      body: `where id = ${id}; fields id,name,cover.url,genres.name,summary,first_release_date,total_rating;`,
+      body: `where id = ${id}; fields id,name,cover.url,genres.name,summary,storyline,first_release_date,total_rating;`,
     });
     const data: IgdbGameRaw[] = await res.json();
     const game = { ...data?.[0] } as IgdbGame;
     if (!!data[0]) {
       game.genres = data[0].genres?.map((genre) => genre?.name) ?? [];
-      game.cover = 'https://' + data[0].cover?.url.replace('thumb', 'cover_big_2x');
+      game.cover = 'https:' + data[0].cover?.url.replace('thumb', 'cover_big_2x');
       return game;
     }
     return undefined;

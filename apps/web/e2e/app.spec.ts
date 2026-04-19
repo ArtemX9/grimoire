@@ -175,3 +175,89 @@ test.describe('Data isolation', () => {
     await expect(page.getByText(USER1_GAME)).not.toBeVisible({ timeout: 3_000 });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Unresolved games
+// ---------------------------------------------------------------------------
+
+test.describe('Unresolved games', () => {
+  test.afterEach(async ({ page }) => {
+    await logout(page);
+  });
+
+  // -------------------------------------------------------------------------
+  // 1. Navigation — heading and subtitle are visible
+  // -------------------------------------------------------------------------
+  test('shows the Unresolved Games page with heading and subtitle', async ({ page }) => {
+    await login(page, USER_EMAIL, USER_PASSWORD);
+    await page.waitForURL('**/library');
+
+    await page.goto('/unmapped-games');
+
+    await expect(page.getByRole('heading', { name: /Unresolved Games/i })).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(
+      page.getByText("These games couldn't be mapped automatically during sync"),
+    ).toBeVisible();
+  });
+
+  // -------------------------------------------------------------------------
+  // 2. Both seeded games appear in the list
+  // -------------------------------------------------------------------------
+  test('lists seeded unresolved games with Map manually buttons', async ({ page }) => {
+    await login(page, USER_EMAIL, USER_PASSWORD);
+    await page.waitForURL('**/library');
+
+    await page.goto('/unmapped-games');
+
+    await expect(page.getByText('Stardew Valley')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Hades II')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Map manually/i }).first()).toBeVisible();
+  });
+
+  // -------------------------------------------------------------------------
+  // 3. Library banner links to the unresolved games page
+  // -------------------------------------------------------------------------
+  test('library shows unresolved games banner with a Review link', async ({ page }) => {
+    await login(page, USER_EMAIL, USER_PASSWORD);
+    await page.waitForURL('**/library');
+
+    await expect(page.getByText(/couldn't be synced automatically/i)).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByRole('link', { name: /Review/i })).toBeVisible();
+
+    await page.getByRole('link', { name: /Review/i }).click();
+    await page.waitForURL('**/unmapped-games');
+    await expect(page.getByRole('heading', { name: /Unresolved Games/i })).toBeVisible();
+  });
+
+  // -------------------------------------------------------------------------
+  // 4. Map manually button opens the IGDB search dialog
+  // -------------------------------------------------------------------------
+  test('clicking Map manually opens the IGDB search dialog pre-filled with the game title', async ({
+    page,
+  }) => {
+    await login(page, USER_EMAIL, USER_PASSWORD);
+    await page.waitForURL('**/library');
+
+    await page.goto('/unmapped-games');
+
+    await expect(page.getByRole('button', { name: /Map manually/i }).first()).toBeVisible({
+      timeout: 10_000,
+    });
+    await page.getByRole('button', { name: /Map manually/i }).first().click();
+
+    await expect(
+      page.getByRole('dialog').or(page.locator('[role="dialog"]')).first(),
+    ).toBeVisible({ timeout: 10_000 });
+
+    const searchInput = page.getByPlaceholder(/Search IGDB/i).first();
+    await expect(searchInput).toBeVisible();
+
+    const inputValue = await searchInput.inputValue();
+    const isPreFilled = inputValue === 'Stardew Valley' || inputValue === 'Hades II';
+    expect(isPreFilled).toBe(true);
+  });
+});

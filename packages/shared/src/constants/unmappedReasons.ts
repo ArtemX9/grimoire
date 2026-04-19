@@ -1,0 +1,5 @@
+export enum UnmappedReasons {
+  DUPLICATE_MATCH = "DUPLICATE_MATCH",
+  LOW_CONFIDENCE= "LOW_CONFIDENCE",
+  NO_MATCH = "NO_MATCH",
+}

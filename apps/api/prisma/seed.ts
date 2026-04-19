@@ -1,10 +1,11 @@
 import 'dotenv/config';
 
-import {PrismaPg} from '@prisma/adapter-pg';
-import {PrismaClient} from '../src/generated/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../src/generated/prisma/client';
 import * as bcryptjs from 'bcryptjs';
 import * as pg from 'pg';
-import {GameStatus, Genre, Mood, Plan, Role} from '@grimoire/shared';
+import { GameStatus, Genre, Mood, Plan, Role } from '@grimoire/shared';
+import { PlatformTitle } from '../src/generated/prisma/client';
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -50,6 +51,12 @@ async function upsertUser(
 }
 
 async function main() {
+  // Seed platform lookup table
+  await prisma.platforms.createMany({
+    data: Object.values(PlatformTitle).map((platform) => ({ platform })),
+    skipDuplicates: true,
+  });
+
   const [regularHash, regular2Hash, adminHash] = await Promise.all([
     bcryptjs.hash(REGULAR_USER.password, 12),
     bcryptjs.hash(REGULAR_USER_2.password, 12),
@@ -83,16 +90,36 @@ async function main() {
     false,
   );
 
-  // Seed one game for user 1 so library → detail navigation has a target
-  const hollowKnight = await prisma.userGame.upsert({
-    where: { userId_igdbId: { userId: regularUser.id, igdbId: 1177 } },
+  // Seed IGDB game records
+  const hollowKnightIgdb = await prisma.iGDBGame.upsert({
+    where: { igdbId: 1177 },
     update: {},
     create: {
-      userId: regularUser.id,
       igdbId: 1177,
       title: 'Hollow Knight',
       coverUrl: '//images.igdb.com/igdb/image/upload/t_cover_big/co1rgi.jpg',
       genres: [Genre.Platformer, Genre.Adventure],
+    },
+  });
+
+  const celesteIgdb = await prisma.iGDBGame.upsert({
+    where: { igdbId: 26765 },
+    update: {},
+    create: {
+      igdbId: 26765,
+      title: 'Celeste',
+      coverUrl: '//images.igdb.com/igdb/image/upload/t_cover_big/co1tmu.jpg',
+      genres: [Genre.Platformer, Genre.Adventure],
+    },
+  });
+
+  // Seed one game for user 1 so library → detail navigation has a target
+  const hollowKnight = await prisma.userGame.upsert({
+    where: { userId_igdbGameId: { userId: regularUser.id, igdbGameId: hollowKnightIgdb.id } },
+    update: {},
+    create: {
+      userId: regularUser.id,
+      igdbGameId: hollowKnightIgdb.id,
       status: GameStatus.BACKLOG,
       moods: [],
     },
@@ -100,14 +127,11 @@ async function main() {
 
   // Seed a distinct game for user 2 so data-isolation tests can assert cross-user visibility
   const celeste = await prisma.userGame.upsert({
-    where: { userId_igdbId: { userId: regularUser2.id, igdbId: 26765 } },
+    where: { userId_igdbGameId: { userId: regularUser2.id, igdbGameId: celesteIgdb.id } },
     update: {},
     create: {
       userId: regularUser2.id,
-      igdbId: 26765,
-      title: 'Celeste',
-      coverUrl: '//images.igdb.com/igdb/image/upload/t_cover_big/co1tmu.jpg',
-      genres: [Genre.Platformer, Genre.Adventure],
+      igdbGameId: celesteIgdb.id,
       status: GameStatus.COMPLETED,
       moods: [],
     },
@@ -145,10 +169,68 @@ async function main() {
     });
   }
 
+  // Seed UnmappedSyncedGame records for E2E tests (test@grimoire.test)
+  const steamPlatform = await prisma.platforms.findFirstOrThrow({ where: { platform: PlatformTitle.STEAM } });
+
+  const syncedGame1 = await prisma.syncedGame.upsert({
+    where: { platformId_externalId: { platformId: steamPlatform.id, externalId: '413150' } },
+    update: {},
+    create: {
+      platformId: steamPlatform.id,
+      externalId: '413150',
+      externalTitle: 'Stardew Valley',
+      coverUrl: null,
+    },
+  });
+
+  const syncedGame2 = await prisma.syncedGame.upsert({
+    where: { platformId_externalId: { platformId: steamPlatform.id, externalId: '1145360' } },
+    update: {},
+    create: {
+      platformId: steamPlatform.id,
+      externalId: '1145360',
+      externalTitle: 'Hades II',
+      coverUrl: null,
+    },
+  });
+
+  // UnmappedSyncedGame 1: NO_MATCH
+  const existingUnmapped1 = await prisma.unmappedSyncedGame.findFirst({
+    where: { userId: regularUser.id, syncedGameId: syncedGame1.id },
+  });
+  if (!existingUnmapped1) {
+    await prisma.unmappedSyncedGame.create({
+      data: {
+        userId: regularUser.id,
+        syncedGameId: syncedGame1.id,
+        reason: 'NO_MATCH',
+        playtimeHours: 5,
+        isMapped: false,
+      },
+    });
+  }
+
+  // UnmappedSyncedGame 2: LOW_CONFIDENCE
+  const existingUnmapped2 = await prisma.unmappedSyncedGame.findFirst({
+    where: { userId: regularUser.id, syncedGameId: syncedGame2.id },
+  });
+  if (!existingUnmapped2) {
+    await prisma.unmappedSyncedGame.create({
+      data: {
+        userId: regularUser.id,
+        syncedGameId: syncedGame2.id,
+        reason: 'LOW_CONFIDENCE',
+        playtimeHours: 10.5,
+        isMapped: false,
+      },
+    });
+  }
+
   console.log('Seed complete:');
   console.log(`  Regular user:   ${REGULAR_USER.email} / ${REGULAR_USER.password}`);
   console.log(`  Regular user 2: ${REGULAR_USER_2.email} / ${REGULAR_USER_2.password}`);
   console.log(`  Admin user:     ${ADMIN_USER.email} / ${ADMIN_USER.password}`);
+  console.log('  Unresolved games seeded for test@grimoire.test (Stardew Valley: NO_MATCH, Hades II: LOW_CONFIDENCE)');
 }
 
 main()

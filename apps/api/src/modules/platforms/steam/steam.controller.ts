@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { IsValidSteamID } from './decorators/steamID.decorator';
 import { SteamService } from './steam.service';
-import {IsValidSteamID} from './decorators/steamID.decorator';
 
 @Controller('platforms/steam')
 export class SteamController {

@@ -1,6 +1,6 @@
-import { GameStatus, IgdbGame, UpdateGameDto } from '@grimoire/shared';
-import { useNavigate, useParams } from 'react-router-dom';
+import { GameStatus, IgdbGame, Mood, UpdateGameDto } from '@grimoire/shared';
 import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { useDeleteGameMutation, useGetGameQuery, useRemapGameMutation, useUpdateGameMutation } from '@/api/gamesApi';
 import { useGetGameSessionsQuery } from '@/api/sessionsApi';
@@ -37,6 +37,14 @@ function GameDetailPageContainer() {
     }
   }
 
+  async function handleMoodsChange(moods: Mood[]) {
+    try {
+      await updateGame({ id: game!.id, data: { moods } }).unwrap();
+    } catch {
+      toast({ title: 'Failed to update moods', variant: 'destructive' });
+    }
+  }
+
   async function handleRatingChange(rating: number) {
     const next = game!.userRating === rating ? undefined : rating;
     try {
@@ -65,12 +73,7 @@ function GameDetailPageContainer() {
     }
   }
 
-  async function handleRemapGame(
-    igdbGame: IgdbGame,
-    _status: GameStatus,
-    onSuccessCallback: () => void,
-    onErrorCallback: () => void,
-  ) {
+  async function handleRemapGame(igdbGame: IgdbGame, _status: GameStatus, onSuccessCallback: () => void, onErrorCallback: () => void) {
     try {
       await remapGame({
         id: game!.id,
@@ -79,6 +82,9 @@ function GameDetailPageContainer() {
           title: igdbGame.name,
           coverUrl: igdbGame.cover,
           genres: igdbGame.genres ?? [],
+          summary: igdbGame.summary,
+          storyLine: igdbGame.storyline,
+          releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,
         },
       }).unwrap();
       toast({ title: `Re-mapped to "${igdbGame.name}"` });
@@ -103,6 +109,7 @@ function GameDetailPageContainer() {
       onLogSessionOpen={setLogSessionOpen}
       onRemapDialogOpen={setRemapDialogOpen}
       onStatusChange={handleStatusChange}
+      onMoodsChange={handleMoodsChange}
       onRatingChange={handleRatingChange}
       onSaveNotes={handleSaveNotes}
       onDelete={handleDelete}

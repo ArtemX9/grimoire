@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Session } from '@/api/authApi';
 import reducer, { sessionCleared, sessionLoaded } from '@/store/authSlice';
+import { generateSession } from '@/test';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -11,18 +12,7 @@ import reducer, { sessionCleared, sessionLoaded } from '@/store/authSlice';
 const initialState = reducer(undefined, { type: '@@INIT' });
 
 function makeSession(overrides: Partial<Session['user']> = {}): Session {
-  return {
-    user: {
-      id: 'user-1',
-      email: 'tester@grimoire.app',
-      name: 'Tester',
-      role: Role.USER,
-      mustChangePassword: false,
-      aiEnabled: true,
-      aiRequestsLimit: 10,
-      ...overrides,
-    },
-  };
+  return generateSession({ id: 'user-1', email: 'tester@grimoire.app', name: 'Tester', aiEnabled: true, aiRequestsLimit: 10, ...overrides });
 }
 
 // ---------------------------------------------------------------------------

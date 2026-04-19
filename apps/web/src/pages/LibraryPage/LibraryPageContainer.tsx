@@ -26,7 +26,11 @@ export function LibraryPageContainer() {
     try {
       await createGame({
         igdbId: game.id,
+        platformId: 1,
         title: game.name,
+        summary: game.summary ?? game.name,
+        storyLine: game.summary ?? game.name,
+        releaseDate: game.first_release_date ? new Date(game.first_release_date * 1000) : new Date(0),
         coverUrl: game.cover,
         genres: game.genres?.map((g) => g) ?? [],
         status,

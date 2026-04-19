@@ -15,11 +15,12 @@ function makePlatformRow(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: 'plat-1',
     userId: 'user-1',
-    platform: Platform.STEAM,
+    platformId: 1,
     externalId: '76561198000000001',
     accessToken: null,
     refreshToken: null,
     lastSyncAt: null,
+    platform: { id: 1, platform: Platform.STEAM },
     ...overrides,
   };
 }
@@ -163,11 +164,13 @@ describe('SteamService', () => {
 
       const result = await service.connectPlatform('user-1', '76561198000000001');
 
-      expect(prisma.userPlatform.upsert).toHaveBeenCalledWith({
-        where: { userId_platform: { userId: 'user-1', platform: Platform.STEAM } },
-        update: { externalId: '76561198000000001' },
-        create: { userId: 'user-1', platform: Platform.STEAM, externalId: '76561198000000001' },
-      });
+      expect(prisma.userPlatform.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId_platformId: { userId: 'user-1', platformId: 1 } },
+          update: { externalId: '76561198000000001' },
+          create: expect.objectContaining({ userId: 'user-1', platformId: 1, externalId: '76561198000000001' }),
+        }),
+      );
       expect(result.id).toBe('plat-1');
       expect(result.externalId).toBe('76561198000000001');
     });
@@ -228,13 +231,13 @@ describe('SteamService', () => {
       expect(result.reason).toBeDefined();
     });
 
-    it('looks up the platform using the correct userId_platform compound key', async () => {
+    it('looks up the platform using the correct userId_platformId compound key', async () => {
       (prisma.userPlatform.findUnique as jest.Mock).mockResolvedValue(null);
 
       await service.enqueueSteamSync('user-99');
 
       expect(prisma.userPlatform.findUnique).toHaveBeenCalledWith({
-        where: { userId_platform: { userId: 'user-99', platform: Platform.STEAM } },
+        where: { userId_platformId: { userId: 'user-99', platformId: 1 } },
       });
     });
 
@@ -300,7 +303,7 @@ describe('SteamService', () => {
       await service.getSyncStatus('user-42');
 
       expect(prisma.userPlatform.findUnique).toHaveBeenCalledWith({
-        where: { userId_platform: { userId: 'user-42', platform: Platform.STEAM } },
+        where: { userId_platformId: { userId: 'user-42', platformId: 1 } },
       });
     });
   });

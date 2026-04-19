@@ -1,4 +1,4 @@
-import { CreateGameDto, GameStatus, UpdateGameDto, UserGame } from '@grimoire/shared';
+import { CreateGameDto, GameStatus, RemapGameDto, UpdateGameDto, UserGame } from '@grimoire/shared';
 
 import {
   selectedGameFailed,
@@ -28,6 +28,11 @@ export type GamesQuery = {
 export type UpdateGameArgs = {
   id: string;
   data: UpdateGameDto;
+};
+
+export type RemapGameArgs = {
+  id: string;
+  data: RemapGameDto;
 };
 
 const BASE_URL_PATH = 'games';
@@ -88,7 +93,7 @@ export const gamesApi = api.injectEndpoints({
       },
     }),
 
-    remapGame: builder.mutation<UserGame, UpdateGameArgs>({
+    remapGame: builder.mutation<UserGame, RemapGameArgs>({
       query: ({ id, data }) => ({ url: `${BASE_URL_PATH}/${id}/remap`, method: 'PATCH', body: data }),
       invalidatesTags: (_r, _e, { id }) => [{ type: 'Game', id }, 'Stats'],
       onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {

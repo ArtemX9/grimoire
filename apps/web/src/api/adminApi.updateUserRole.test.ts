@@ -28,26 +28,14 @@ import { describe, expect, it, vi } from 'vitest';
 import type { AdminUserRow, UpdateUserRoleArgs } from '@/api/adminApi';
 import { api } from '@/api/api';
 import adminReducer, { ADMIN_SLICE, userPatched, usersLoaded } from '@/store/adminSlice';
+import { generateAdminUserRow } from '@/test';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function makeUserRow(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
-  return {
-    id: 'user-1',
-    email: 'alice@grimoire.app',
-    name: 'Alice',
-    role: Role.USER,
-    plan: 'free',
-    mustChangePassword: false,
-    aiEnabled: true,
-    aiRequestsUsed: 0,
-    aiRequestsLimit: 10,
-    gamesCount: 5,
-    createdAt: '2024-01-01T00:00:00.000Z',
-    ...overrides,
-  };
+  return generateAdminUserRow({ id: 'user-1', email: 'alice@grimoire.app', name: 'Alice', aiEnabled: true, aiRequestsLimit: 10, gamesCount: 5, ...overrides });
 }
 
 function makeStore() {

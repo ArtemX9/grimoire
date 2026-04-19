@@ -105,6 +105,34 @@ Use this pattern for any query that needs to sync into a Redux slice.
 
 Pages follow a container pattern: `XxxPageContainer.tsx` owns all hooks, RTK Query calls, and Redux state; `XxxPage.tsx` is purely presentational. This keeps pages testable and logic co-located.
 
+### JSX conventions — lean return / render-function pattern
+
+Every component's `return` must be a lean "table of contents" — readable at a glance without scrolling. Any JSX block longer than ~5–8 lines must be extracted into a named `renderXxx()` helper defined in the same component scope. The `return` delegates to these helpers like a book's chapter list.
+
+```tsx
+// Correct — lean return
+return (
+  <div className="layout">
+    {renderHeader()}
+    {renderContent()}
+    {renderDialogs()}
+  </div>
+);
+
+// Wrong — return contains inline implementation
+return (
+  <div className="layout">
+    <header>
+      <h1>{title}</h1>
+      <Button onClick={handleAdd}>Add</Button>
+    </header>
+    <main>... 40 lines ...</main>
+  </div>
+);
+```
+
+A `{/* Section name */}` comment inside JSX is a signal that the block should be a `renderXxx()` function — extract it, remove the comment.
+
 ### Mobile responsiveness
 
 Use `useIsMobile()` hook (`src/hooks/useMobile.ts`, breakpoint 768 px) when the mobile and desktop layouts are structurally different (e.g. Sidebar renders a fixed bottom nav on mobile vs. an `<aside>` on desktop). For same-element tweaks (font size, padding), use Tailwind responsive prefixes (`sm:`, `lg:`) directly.
@@ -123,6 +151,59 @@ Build shared first when working locally: `pnpm --filter shared build` (or `dev` 
 File layout: shared imports → base API import (`./api`, not `@/`) → type definitions → `BASE_URL_PATH` const → `api.injectEndpoints(...)` → hook exports. API files are `.ts` never `.tsx`.
 
 Tag types: `'Game' | 'Session' | 'User' | 'AdminUser' | 'Stats'`
+
+---
+
+## Test factories
+
+Factory functions for building typed test fixtures. Both packages use `@faker-js/faker` and the same naming pattern. Import from the barrel in each package.
+
+### API factories — `apps/api/src/test/`
+
+Import: `import { generateUser, generateGameResponse } from '../../test'`
+
+| File | Exports |
+| ---- | ------- |
+| `user.factory.ts` | `generateUser` |
+| `game.factory.ts` | `generateGameResponse`, `generateCreateGameDto`, `generateRemapGameDto` |
+| `session.factory.ts` | `generateSession`, `generateSessionWithGame`, `generateCreateSessionDto` |
+| `platform.factory.ts` | `generatePlatform`, `generateUserPlatformRow` |
+| `index.ts` | re-exports all of the above |
+
+### Web factories — `apps/web/src/test/`
+
+Import: `import { generateUserGame, generateAdminUserRow } from '@/test'`
+
+| File | Exports |
+| ---- | ------- |
+| `user.factory.ts` | `generateUser` (shared `User`), `generateSession` (authApi `Session`), `generateAdminUserRow` (adminApi `AdminUserRow`) |
+| `game.factory.ts` | `generateUserGame` (shared `UserGame`), `generateIgdbGame` (shared `IgdbGame`) |
+| `session.factory.ts` | `generatePlaySession` (shared `PlaySession`) |
+| `platform.factory.ts` | `generateUserPlatform` (shared `UserPlatform`) |
+| `index.ts` | re-exports all of the above |
+
+### Naming conventions
+
+- Factory functions: `generate<Entity>()` — e.g. `generateUser()`, `generateGameResponse()`
+- Param interfaces: `IGenerate<Entity>` — e.g. `IGenerateUser`, `IGenerateGameResponse`
+- All ID/URL fields follow the project convention: ALL_CAPS suffixes (`igdbID`, `coverURL`, `steamAppID`)
+
+### When to use faker vs. hardcoded values
+
+Use `faker` for fields the test doesn't assert on — id, email, title, dates. Use hardcoded values for fields under test:
+
+```ts
+// Test that only cares about status — let faker fill the rest
+const game = generateUserGame({ status: GameStatus.COMPLETED });
+
+// Test that asserts a specific user id is forwarded to the service
+const user = generateUser({ id: 'user-42' });
+expect(service.findAll).toHaveBeenCalledWith('user-42', ...);
+```
+
+### Rule
+
+New spec files MUST use these factories. Inline fixture objects (`{ id: 'game-1', title: 'The Witcher 3', ... }` scattered across tests) are not allowed. If a factory is missing a field, add it to the factory — do not inline the object in the test.
 
 ---
 

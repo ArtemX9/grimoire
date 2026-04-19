@@ -7,7 +7,8 @@ import { Queue } from 'bullmq';
 import { Platform, SteamGame } from '@grimoire/shared';
 
 import { PrismaService } from '../../../prisma/prisma.service';
-import { EnqueueResult, PlatformResponse, SyncStatusResponse } from './steam.types';
+import { PLATFORM_ID_STEAM } from './constants';
+import { EnqueueResult, PlatformResponse, SyncStatusResponse, UserPlatformRelations } from './steam.types';
 
 type PrismaPlatform = {
   id: string;
@@ -27,11 +28,11 @@ export class SteamService {
     private prisma: PrismaService,
   ) {}
 
-  private _toResponse(platform: PrismaPlatform): PlatformResponse {
+  private _toResponse(platform: UserPlatformRelations): PlatformResponse {
     return {
       id: platform.id,
       userId: platform.userId,
-      platform: platform.platform,
+      platform: platform.platform.platform,
       externalId: platform.externalId,
       lastSyncAt: platform.lastSyncAt ?? undefined,
     };
@@ -48,16 +49,19 @@ export class SteamService {
 
   async connectPlatform(userId: string, steamId: string): Promise<PlatformResponse> {
     const platform = await this.prisma.userPlatform.upsert({
-      where: { userId_platform: { userId, platform: Platform.STEAM } },
+      where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
       update: { externalId: steamId },
-      create: { userId, platform: Platform.STEAM, externalId: steamId },
+      create: { userId, platformId: 1, externalId: steamId },
+      include: {
+        platform: true,
+      },
     });
     return this._toResponse(platform);
   }
 
   async enqueueSteamSync(userId: string): Promise<EnqueueResult> {
     const platform = await this.prisma.userPlatform.findUnique({
-      where: { userId_platform: { userId, platform: Platform.STEAM } },
+      where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
     });
     if (!platform) return { queued: false, reason: 'Steam not connected' };
     await this.steamQueue.add(
@@ -70,7 +74,7 @@ export class SteamService {
 
   async getSyncStatus(userId: string): Promise<SyncStatusResponse> {
     const platform = await this.prisma.userPlatform.findUnique({
-      where: { userId_platform: { userId, platform: Platform.STEAM } },
+      where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
     });
     return { connected: !!platform, lastSyncAt: platform?.lastSyncAt ?? undefined };
   }
