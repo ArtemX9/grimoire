@@ -6,6 +6,7 @@ import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 import { GameStats } from '@/api/gamesApi';
 import AiPanelContainer from '@/components/AiPanel/AiPanelContainer';
 import IGDBGameSearchDialogContainer from '@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer';
+import UnresolvedGamesBannerContainer from '@/components/UnresolvedGamesBanner/UnresolvedGamesBannerContainer';
 import {
   BottomDrawer,
   BottomDrawerClose,
@@ -61,6 +62,7 @@ export function LibraryPage({
     return (
       <div className='flex flex-1 flex-col overflow-hidden'>
         {renderHeader()}
+        <UnresolvedGamesBannerContainer />
         {renderFilterBar()}
         <ScrollArea className='flex-1'>
           <div className='p-5'>

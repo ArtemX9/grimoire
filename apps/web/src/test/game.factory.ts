@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { GameStatus, Genre, IgdbGame, Mood, UserGame } from '@grimoire/shared';
+import { GameStatus, Genre, IgdbGame, Mood, Platform, PlatformType, UnmappedGame, UnmappedReasons, UserGame } from '@grimoire/shared';
 
 import type { GamePlatform } from '@grimoire/shared';
 
@@ -70,5 +70,33 @@ export function generateIgdbGame(params: IGenerateIgdbGame = {}): IgdbGame {
     cover: params.cover,
     genres: params.genres,
     total_rating: params.total_rating,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// UnmappedGame (shared type — games that failed to auto-map during sync)
+// ---------------------------------------------------------------------------
+
+export interface IGenerateUnmappedGame {
+  id?: string;
+  syncedGameID?: string;
+  isMapped?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  reason?: UnmappedReasons;
+  platform?: PlatformType;
+  syncedGameTitle?: string;
+}
+
+export function generateUnmappedGame(params: IGenerateUnmappedGame = {}): UnmappedGame {
+  return {
+    id: params.id ?? faker.string.uuid(),
+    syncedGameID: params.syncedGameID ?? faker.string.uuid(),
+    isMapped: params.isMapped ?? false,
+    createdAt: params.createdAt ?? faker.date.past(),
+    updatedAt: params.updatedAt ?? faker.date.recent(),
+    reason: params.reason ?? UnmappedReasons.NO_MATCH,
+    platform: params.platform ?? { id: 1, platform: Platform.STEAM },
+    syncedGameTitle: params.syncedGameTitle ?? faker.commerce.productName(),
   };
 }

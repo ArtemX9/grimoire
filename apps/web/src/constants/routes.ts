@@ -6,6 +6,7 @@ export const ROUTES = {
   GAME_DETAILS: '/games/:id',
   LIBRARY: '/library',
   LOGIN: '/login',
+  UNMAPPED_GAMES: '/unmapped-games',
   USER_SETTINGS: '/settings',
 };
 

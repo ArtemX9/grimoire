@@ -1,6 +1,7 @@
-import { BookOpen, Library, Settings, Sparkles } from 'lucide-react';
+import { AlertTriangle, BookOpen, Library, Settings, Sparkles } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 
+import { useGetUnmappedGamesQuery } from '@/api/unmappedGamesApi';
 import { ROUTES } from '@/constants/routes';
 import { useIsMobile } from '@/hooks/useMobile';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -9,6 +10,7 @@ import { cn } from '@/utils/cn';
 
 const NAV_ITEMS = [
   { to: ROUTES.LIBRARY, label: 'Library', icon: Library },
+  { to: ROUTES.UNMAPPED_GAMES, label: 'Unresolved', icon: AlertTriangle },
   { to: ROUTES.USER_SETTINGS, label: 'Settings', icon: Settings },
 ] as const;
 
@@ -18,6 +20,10 @@ function Sidebar() {
   const isAIDrawerOpen = useAppSelector((s) => s.ui.isAIDrawerOpen);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { data: unmappedGames } = useGetUnmappedGamesQuery({});
+  const unresolvedCount = unmappedGames?.length ?? 0;
+  const unresolvedBadgeLabel = unresolvedCount > 99 ? '99+' : String(unresolvedCount);
 
   function handleAIClick() {
     if (location.pathname !== ROUTES.LIBRARY) {
@@ -30,6 +36,16 @@ function Sidebar() {
 
   return renderDesktopSidebar();
 
+  function renderUnresolvedBadge() {
+    if (unresolvedCount === 0) return null;
+
+    return (
+      <span className='absolute right-2 top-1/2 -translate-y-1/2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-0.5 font-sans text-[9px] font-medium leading-none text-white'>
+        {unresolvedBadgeLabel}
+      </span>
+    );
+  }
+
   function renderMobileNav() {
     return (
       <nav className='fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-grimoire-border bg-grimoire-card px-2 pb-[env(safe-area-inset-bottom)]'>
@@ -39,13 +55,18 @@ function Sidebar() {
             to={to}
             className={({ isActive }) =>
               cn(
-                'flex flex-col items-center gap-1 px-6 py-3 font-sans text-[10px] transition-colors',
-                isActive ? 'text-grimoire-gold' : 'text-grimoire-muted',
+                'relative flex flex-col items-center gap-1 px-6 py-3 font-sans text-[10px] transition-colors',
+                isActive
+                  ? 'text-grimoire-gold'
+                  : to === ROUTES.UNMAPPED_GAMES && unresolvedCount > 0
+                    ? 'text-grimoire-status-wishlist-text'
+                    : 'text-grimoire-muted',
               )
             }
           >
             <Icon className='h-6 w-6 shrink-0' />
             {label}
+            {to === ROUTES.UNMAPPED_GAMES && renderUnresolvedBadge()}
           </NavLink>
         ))}
         <button
@@ -90,13 +111,18 @@ function Sidebar() {
             to={to}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 rounded px-2 py-2 font-sans text-sm transition-colors',
-                isActive ? 'bg-grimoire-hover text-grimoire-gold' : 'text-grimoire-muted hover:bg-grimoire-hover hover:text-grimoire-ink',
+                'relative flex items-center gap-3 rounded px-2 py-2 font-sans text-sm transition-colors',
+                isActive
+                  ? 'bg-grimoire-hover text-grimoire-gold'
+                  : to === ROUTES.UNMAPPED_GAMES && unresolvedCount > 0
+                    ? 'text-grimoire-status-wishlist-text hover:bg-grimoire-hover hover:text-grimoire-status-wishlist-text'
+                    : 'text-grimoire-muted hover:bg-grimoire-hover hover:text-grimoire-ink',
               )
             }
           >
             <Icon className='h-4 w-4 shrink-0' />
             <span className='hidden sm:block'>{label}</span>
+            {to === ROUTES.UNMAPPED_GAMES && renderUnresolvedBadge()}
           </NavLink>
         ))}
       </nav>

@@ -14,6 +14,7 @@ import GameDetailPageContainer from '@/pages/GameDetailPage/GameDetailPageContai
 import { LibraryPageContainer } from '@/pages/LibraryPage/LibraryPageContainer';
 import { LoginPage } from '@/pages/LoginPage/LoginPage';
 import { SettingsPage } from '@/pages/SettingsPage/SettingsPage';
+import UnmappedGamesPageContainer from '@/pages/UnmappedGamesPage/UnmappedGamesPageContainer';
 
 export default function App() {
   useGetSessionQuery();
@@ -37,6 +38,7 @@ export default function App() {
             <Route path={ROUTES.DEFAULT} element={<Navigate to={ROUTES.LIBRARY} replace />} />
             <Route path={ROUTES.LIBRARY} element={<LibraryPageContainer />} />
             <Route path={ROUTES.GAME_DETAILS} element={<GameDetailPageContainer />} />
+            <Route path={ROUTES.UNMAPPED_GAMES} element={<UnmappedGamesPageContainer />} />
             <Route path={ROUTES.USER_SETTINGS} element={<SettingsPage />} />
           </Route>
         </Route>
