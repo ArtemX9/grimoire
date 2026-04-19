@@ -3,12 +3,12 @@ import { BadRequestException } from '@nestjs/common';
 
 import { Job } from 'bullmq';
 
-import { GameStatus, Genre, Platform } from '@grimoire/shared';
+import { Genre } from '@grimoire/shared';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { GamesService } from '../../games/games.service';
 import { IgdbService } from '../../igdb/igdb.service';
-import { PLATFORM_ID_STEAM } from './constants';
+import { GET_STEAM_IMAGE_LINK, PLATFORM_ID_STEAM } from './constants';
 import { SteamService } from './steam.service';
 
 @Processor('steam-sync')
@@ -30,7 +30,6 @@ export class SteamSyncProcessor extends WorkerHost {
       for (const steamGame of steamGames) {
         const igdbResults = await this.igdbService.search(steamGame.name, 1);
         const igdbGame = igdbResults[0];
-        // if (!igdbGame) continue;
 
         try {
           await this.gamesService.ingestFromSync(
@@ -39,7 +38,7 @@ export class SteamSyncProcessor extends WorkerHost {
               id: `${steamGame.appid}`,
               platformID: PLATFORM_ID_STEAM,
               externalTitle: steamGame.name,
-              coverURL: steamGame.img_icon_url,
+              coverURL: GET_STEAM_IMAGE_LINK(steamGame.appid, steamGame.img_icon_url),
               playtimeHours: steamGame.playtime_forever / 60,
             },
             igdbGame

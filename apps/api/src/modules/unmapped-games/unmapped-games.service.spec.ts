@@ -49,6 +49,7 @@ function makeUnresolvedRow(overrides: Partial<Record<string, unknown>> = {}) {
     reason: 'NO_MATCH',
     isMapped: false,
     igdbGameId: null,
+    playtimeHours: 0,
     createdAt: new Date('2024-01-01T00:00:00Z'),
     updatedAt: new Date('2024-06-01T00:00:00Z'),
     syncedGame: makeSyncedGameRow(),
@@ -184,6 +185,27 @@ describe('UnmappedGamesService', () => {
       expect(result.isMapped).toBe(false);
       expect(result.syncedGameTitle).toBe('CS:GO');
       expect(result.platform).toEqual({ id: 1, platform: 'STEAM' });
+      expect(result.playtimeHours).toBe(row.playtimeHours);
+      expect(result.coverURL).toBeUndefined();
+    });
+
+    it('maps coverUrl from syncedGame to coverURL in the response', async () => {
+      const row = generateUnmappedSyncedGame({
+        syncedGame: {
+          id: 'synced-id',
+          platformId: 1,
+          externalId: '292030',
+          externalTitle: 'CS:GO',
+          coverUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.jpg',
+          summary: null,
+          platform: { id: 1, platform: 'STEAM' },
+        },
+      });
+      (prisma.unmappedSyncedGame.findMany as jest.Mock).mockResolvedValue([row]);
+
+      const [result] = await service.getUnmappedGamesForUser('user-1');
+
+      expect(result.coverURL).toBe('https://images.igdb.com/igdb/image/upload/t_cover_big/co1wyy.jpg');
     });
 
     it('returns an empty array when the user has no unmapped games', async () => {
@@ -265,6 +287,7 @@ describe('UnmappedGamesService', () => {
 
     it('builds syncedGameInfo from the synced game row found in the transaction', async () => {
       const unresolvedRow = makeUnresolvedRow({
+        playtimeHours: 12.5,
         syncedGame: makeSyncedGameRow({
           id: 'synced-1',
           externalId: 'ext-42',
@@ -291,7 +314,7 @@ describe('UnmappedGamesService', () => {
           platformID: 1,
           externalTitle: 'My Game',
           coverURL: 'https://example.com/img.jpg',
-          playtimeHours: 0,
+          playtimeHours: 12.5,
         }),
         expect.any(Object),
         tx,

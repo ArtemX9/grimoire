@@ -1,3 +1,4 @@
+import { Platform } from '@grimoire/shared';
 import { AlertCircle, CheckCircle2, LogOut, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/use-toast';
+import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
 import { ROUTES } from '@/constants/routes';
 import { useAppDispatch } from '@/store/hooks';
 import { cn } from '@/utils/cn';
@@ -167,8 +169,8 @@ function PlatformsSection() {
       <h2 className='mb-3 font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>Platform connections</h2>
       <div className='flex flex-col divide-y divide-grimoire-border rounded-lg border border-grimoire-border bg-grimoire-card'>
         <SteamRow />
-        <InactivePlatformRow label='PlayStation Network' />
-        <InactivePlatformRow label='Xbox' />
+        <InactivePlatformRow label='PlayStation Network' platform={Platform.PlayStation} />
+        <InactivePlatformRow label='Xbox' platform={Platform.Xbox} />
         <InactivePlatformRow label='Epic Games' />
       </div>
     </section>
@@ -222,6 +224,7 @@ function SteamRow() {
     return (
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-2'>
+          <PlatformIcon platform={Platform.STEAM} className='h-4 w-4' />
           <span className='font-sans text-sm text-grimoire-ink'>Steam</span>
           {renderConnectionStatus()}
         </div>
@@ -318,12 +321,16 @@ function SteamRow() {
 
 interface IInactivePlatformRow {
   label: string;
+  platform?: Platform;
 }
 
-function InactivePlatformRow({ label }: IInactivePlatformRow) {
+function InactivePlatformRow({ label, platform }: IInactivePlatformRow) {
   return (
     <div className='flex items-center justify-between px-4 py-4'>
-      <span className='font-sans text-sm text-grimoire-ink'>{label}</span>
+      <div className='flex items-center gap-2'>
+        {platform && <PlatformIcon platform={platform} className='h-4 w-4' />}
+        <span className='font-sans text-sm text-grimoire-ink'>{label}</span>
+      </div>
       <span className='font-sans text-xs text-grimoire-faint'>Coming soon</span>
     </div>
   );

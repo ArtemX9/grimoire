@@ -50,7 +50,7 @@ export class UnmappedGamesService {
           platformID: unresolved.syncedGame.platformId,
           externalTitle: unresolved.syncedGame.externalTitle,
           coverURL: unresolved.syncedGame.coverUrl ?? undefined,
-          playtimeHours: 0,
+          playtimeHours: unresolved.playtimeHours,
         },
         {
           id: dto.igdbInfo.id,
@@ -86,8 +86,10 @@ export class UnmappedGamesService {
     return {
       id: unmappedGame.id,
       syncedGameID: unmappedGame.syncedGameId,
+      playtimeHours: unmappedGame.playtimeHours,
       isMapped: unmappedGame.isMapped,
       createdAt: unmappedGame.createdAt,
+      coverURL: unmappedGame.syncedGame.coverUrl ?? undefined,
       updatedAt: unmappedGame.updatedAt,
       reason: unmappedGame.reason as UnmappedReasons,
       platform: unmappedGame.syncedGame.platform as PlatformType,

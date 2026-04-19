@@ -40,7 +40,7 @@ function Sidebar() {
     if (unresolvedCount === 0) return null;
 
     return (
-      <span className='absolute right-2 top-1/2 -translate-y-1/2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-0.5 font-sans text-[9px] font-medium leading-none text-white'>
+      <span className='absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-0.5 font-sans text-[9px] font-medium leading-none text-white'>
         {unresolvedBadgeLabel}
       </span>
     );
@@ -64,9 +64,11 @@ function Sidebar() {
               )
             }
           >
-            <Icon className='h-6 w-6 shrink-0' />
+            <span className='relative'>
+              <Icon className='h-6 w-6 shrink-0' />
+              {to === ROUTES.UNMAPPED_GAMES && renderUnresolvedBadge()}
+            </span>
             {label}
-            {to === ROUTES.UNMAPPED_GAMES && renderUnresolvedBadge()}
           </NavLink>
         ))}
         <button
@@ -120,9 +122,11 @@ function Sidebar() {
               )
             }
           >
-            <Icon className='h-4 w-4 shrink-0' />
+            <span className='relative'>
+              <Icon className='h-4 w-4 shrink-0' />
+              {to === ROUTES.UNMAPPED_GAMES && renderUnresolvedBadge()}
+            </span>
             <span className='hidden sm:block'>{label}</span>
-            {to === ROUTES.UNMAPPED_GAMES && renderUnresolvedBadge()}
           </NavLink>
         ))}
       </nav>

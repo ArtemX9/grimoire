@@ -1,4 +1,4 @@
-import { UnmappedReasons } from '@grimoire/shared';
+import { Platform, UnmappedReasons } from '@grimoire/shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -89,5 +89,36 @@ describe('UnmappedGamesPage', () => {
     const { container } = renderPage({ isLoading: true });
 
     expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
+  });
+
+  it('displays the formatted playtime for each game card', () => {
+    const game = generateUnmappedGame({ playtimeHours: 2 });
+
+    renderPage({ games: [game] });
+
+    expect(screen.getByText('2 hours played')).toBeInTheDocument();
+  });
+
+  it('renders UnmappedSteamGameRow for Steam games', () => {
+    const game = generateUnmappedGame({
+      syncedGameTitle: 'Hades',
+      platform: { id: 1, platform: Platform.STEAM },
+    });
+
+    renderPage({ games: [game] });
+
+    expect(screen.getByText('Hades')).toBeInTheDocument();
+  });
+
+  it('shows cover image when coverURL is provided', () => {
+    const game = generateUnmappedGame({
+      platform: { id: 1, platform: Platform.STEAM },
+      coverURL: 'https://example.com/cover.jpg',
+    });
+
+    renderPage({ games: [game] });
+
+    const img = screen.getByRole('img');
+    expect(img).toHaveAttribute('src', expect.stringContaining('cover.jpg'));
   });
 });

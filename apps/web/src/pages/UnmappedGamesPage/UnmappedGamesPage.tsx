@@ -1,10 +1,11 @@
-import { IgdbGame, UnmappedGame } from '@grimoire/shared';
+import { IgdbGame, Platform, UnmappedGame } from '@grimoire/shared';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import IGDBGameSearchDialogContainer from '@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer';
 import UnmappedGameCard from './components/UnmappedGameCard/UnmappedGameCard';
+import UnmappedSteamGameRow from './components/UnmappedSteamGameRow/UnmappedSteamGameRow';
 
 interface IUnmappedGamesPage {
   games: UnmappedGame[];
@@ -74,11 +75,18 @@ function UnmappedGamesPage({
   function renderGameList() {
     return (
       <div className='flex flex-col gap-3'>
-        {games.map((game) => (
-          <UnmappedGameCard key={game.id} game={game} onMapClick={onMapClick} />
-        ))}
+        {games.map((game) => renderGameRow(game))}
       </div>
     );
+  }
+
+  function renderGameRow(game: UnmappedGame) {
+    switch (game.platform.platform) {
+      case Platform.STEAM:
+        return <UnmappedSteamGameRow key={game.id} game={game} onMapClick={onMapClick} />;
+      default:
+        return <UnmappedGameCard key={game.id} game={game} onMapClick={onMapClick} />;
+    }
   }
 
   function renderMapDialog() {

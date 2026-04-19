@@ -86,6 +86,8 @@ export interface IGenerateUnmappedGame {
   reason?: UnmappedReasons;
   platform?: PlatformType;
   syncedGameTitle?: string;
+  playtimeHours?: number;
+  coverURL?: string;
 }
 
 export function generateUnmappedGame(params: IGenerateUnmappedGame = {}): UnmappedGame {
@@ -98,5 +100,7 @@ export function generateUnmappedGame(params: IGenerateUnmappedGame = {}): Unmapp
     reason: params.reason ?? UnmappedReasons.NO_MATCH,
     platform: params.platform ?? { id: 1, platform: Platform.STEAM },
     syncedGameTitle: params.syncedGameTitle ?? faker.commerce.productName(),
+    playtimeHours: params.playtimeHours ?? faker.number.float({ min: 0, max: 500, fractionDigits: 1 }),
+    coverURL: params.coverURL,
   };
 }

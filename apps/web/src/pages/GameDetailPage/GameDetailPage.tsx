@@ -2,6 +2,7 @@ import { GameStatus, IgdbGame, Mood, UserGame } from '@grimoire/shared';
 import { ArrowLeft, Clock, Gamepad2, RefreshCcw, Star, Trash2 } from 'lucide-react';
 
 import IGDBGameSearchDialogContainer from '@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer';
+import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -127,6 +128,8 @@ export function GameDetailPage({
             {renderPlaytime()}
           </div>
 
+          {renderPlatforms()}
+
           {renderGenreBadges()}
         </div>
 
@@ -145,6 +148,21 @@ export function GameDetailPage({
         <Clock className='h-3.5 w-3.5' />
         {Math.round(game!.playtimeHours)}h played
       </span>
+    );
+  }
+
+  function renderPlatforms() {
+    if (game!.platforms.length === 0) return null;
+    return (
+      <div className='flex flex-wrap items-center gap-2'>
+        <span className='font-sans text-xs text-grimoire-muted'>Owned on</span>
+        {game!.platforms.map((p) => (
+          <span key={p.platformID} className='flex items-center gap-1 rounded border border-grimoire-border px-2 py-0.5 font-sans text-xs text-grimoire-muted'>
+            <PlatformIcon platform={p.platformName} />
+            {p.platformName}
+          </span>
+        ))}
+      </div>
     );
   }
 

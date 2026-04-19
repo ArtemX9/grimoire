@@ -100,7 +100,7 @@ describe('SteamSyncProcessor', () => {
           id: '292030',
           platformID: PLATFORM_ID_STEAM,
           externalTitle: 'The Witcher 3: Wild Hunt',
-          coverURL: 'icon.jpg',
+          coverURL: 'https://media.steampowered.com/steamcommunity/public/images/apps/292030/icon.jpg.jpg',
           playtimeHours: 50, // 3000 / 60
         },
         expect.objectContaining({

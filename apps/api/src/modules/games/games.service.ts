@@ -4,7 +4,6 @@ import { PrismaClient } from '@prisma/client/extension';
 
 import { CreateGameDto, GameStatus, Genre, Mood, Platform, RemapGameDto, UpdateGameDto } from '@grimoire/shared';
 
-import { UserGamePlatform } from '../../generated/prisma/client';
 import { UnmappedReason } from '../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
 import { isConfidentMatch } from '../igdb/match-confidence';
@@ -13,32 +12,6 @@ import { GameResponse, GameStatsResponse, IgdbSyncGameInfo, IngestedSyncGameInfo
 @Injectable()
 export class GamesService {
   constructor(private prisma: PrismaService) {}
-
-  private _toResponse(game: UserGameWithRelations): GameResponse {
-    return {
-      id: game.id,
-      userID: game.userId,
-      igdbID: game.igdbGame.igdbId,
-      title: game.igdbGame.title,
-      coverURL: game.igdbGame.coverUrl ?? undefined,
-      genres: game.igdbGame.genres as Genre[],
-      status: game.status as GameStatus,
-      playtimeHours: game.playtimeHours,
-      releaseDate: game.igdbGame.releaseDate,
-      userRating: game.userRating ?? undefined,
-      notes: game.notes ?? undefined,
-      moods: game.moods as Mood[],
-      addedAt: game.addedAt,
-      updatedAt: game.updatedAt,
-      isMappedManually: game.isMappedManually,
-      platforms: game.userGamePlatforms.map((ugp: UserGameWithRelations['userGamePlatforms'][number]) => ({
-        platformID: ugp.syncedGame.platform.id,
-        platformName: ugp.syncedGame.platform.platform as Platform,
-        externalID: ugp.syncedGame.externalId,
-        externalTitle: ugp.syncedGame.externalTitle,
-      })),
-    };
-  }
 
   async findAll(userId: string, status?: GameStatus, search?: string, genre?: Genre): Promise<GameResponse[]> {
     try {
@@ -373,6 +346,7 @@ export class GamesService {
             userId: userID,
             syncedGameId: syncedGameRow.id,
             reason: UnmappedReason.NO_MATCH,
+            playtimeHours: syncedGameInfo.playtimeHours,
             isMapped: false,
           },
           update: { reason: UnmappedReason.NO_MATCH },
@@ -392,9 +366,10 @@ export class GamesService {
           create: {
             userId: userID,
             syncedGameId: syncedGameRow.id,
+            playtimeHours: syncedGameInfo.playtimeHours,
             reason: UnmappedReason.LOW_CONFIDENCE,
           },
-          update: { reason: UnmappedReason.LOW_CONFIDENCE },
+          update: { reason: UnmappedReason.LOW_CONFIDENCE, playtimeHours: syncedGameInfo.playtimeHours },
         });
         return null;
       }
@@ -527,8 +502,13 @@ export class GamesService {
         // Case 4: DUPLICATE_MATCH — different game colliding on same IGDB ID
         await prismaInstance.unmappedSyncedGame.upsert({
           where: { userId_syncedGameId: { userId: userID, syncedGameId: syncedGameRow.id } },
-          create: { userId: userID, syncedGameId: syncedGameRow.id, reason: UnmappedReason.DUPLICATE_MATCH },
-          update: { reason: UnmappedReason.DUPLICATE_MATCH },
+          create: {
+            userId: userID,
+            syncedGameId: syncedGameRow.id,
+            reason: UnmappedReason.DUPLICATE_MATCH,
+            playtimeHours: syncedGameInfo.playtimeHours,
+          },
+          update: { reason: UnmappedReason.DUPLICATE_MATCH, playtimeHours: syncedGameInfo.playtimeHours },
         });
         return null;
       } else {
@@ -581,6 +561,32 @@ export class GamesService {
     });
 
     return this._toResponse(userGame);
+  }
+
+  private _toResponse(game: UserGameWithRelations): GameResponse {
+    return {
+      id: game.id,
+      userID: game.userId,
+      igdbID: game.igdbGame.igdbId,
+      title: game.igdbGame.title,
+      coverURL: game.igdbGame.coverUrl ?? undefined,
+      genres: game.igdbGame.genres as Genre[],
+      status: game.status as GameStatus,
+      playtimeHours: game.playtimeHours,
+      releaseDate: game.igdbGame.releaseDate,
+      userRating: game.userRating ?? undefined,
+      notes: game.notes ?? undefined,
+      moods: game.moods as Mood[],
+      addedAt: game.addedAt,
+      updatedAt: game.updatedAt,
+      isMappedManually: game.isMappedManually,
+      platforms: game.userGamePlatforms.map((ugp: UserGameWithRelations['userGamePlatforms'][number]) => ({
+        platformID: ugp.syncedGame.platform.id,
+        platformName: ugp.syncedGame.platform.platform as Platform,
+        externalID: ugp.syncedGame.externalId,
+        externalTitle: ugp.syncedGame.externalTitle,
+      })),
+    };
   }
 
   private async _findOwned(userId: string, gameID: string): Promise<void> {

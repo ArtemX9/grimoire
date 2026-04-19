@@ -201,17 +201,18 @@ enum UnmappedReason {
 }
 
 model UnmappedSyncedGame {
-  id           String         @id @default(cuid())
-  syncedGameId String
-  userId       String
-  reason       UnmappedReason
-  isMapped     Boolean        @default(false)
-  igdbGameId   Int?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  syncedGame   SyncedGame     @relation(fields: [syncedGameId], references: [id], onDelete: Cascade)
-  igdbGame     IGDBGame?      @relation(fields: [igdbGameId], references: [igdbId], onDelete: SetNull, onUpdate: SetNull)
+  id            String         @id @default(cuid())
+  syncedGameId  String
+  userId        String
+  reason        UnmappedReason
+  playtimeHours Float          @default(0)
+  isMapped      Boolean        @default(false)
+  igdbGameId    Int?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  syncedGame    SyncedGame     @relation(fields: [syncedGameId], references: [id], onDelete: Cascade)
+  igdbGame      IGDBGame?      @relation(fields: [igdbGameId], references: [igdbId], onDelete: SetNull, onUpdate: SetNull)
 
   @@unique([userId, syncedGameId])
 }

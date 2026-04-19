@@ -729,7 +729,7 @@ describe('GamesService', () => {
       expect(prisma.unmappedSyncedGame.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { userId_syncedGameId: { userId: 'user-1', syncedGameId: 'synced-1' } },
-          update: { reason: UnmappedReason.LOW_CONFIDENCE },
+          update: { reason: UnmappedReason.LOW_CONFIDENCE, playtimeHours: 100 },
         }),
       );
       expect(result).toBeNull();
@@ -759,7 +759,7 @@ describe('GamesService', () => {
       expect(prisma.unmappedSyncedGame.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { userId_syncedGameId: { userId: 'user-1', syncedGameId: 'synced-1' } },
-          update: { reason: UnmappedReason.DUPLICATE_MATCH },
+          update: { reason: UnmappedReason.DUPLICATE_MATCH, playtimeHours: 100 },
         }),
       );
       expect(result).toBeNull();
