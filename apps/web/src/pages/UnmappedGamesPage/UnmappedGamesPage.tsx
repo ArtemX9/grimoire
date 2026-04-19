@@ -95,6 +95,7 @@ function UnmappedGamesPage({
         dialogTitle='Map game'
         progressIndicatorText='Mapping...'
         actionButtonTitle='Map game'
+        initialSearchQuery={mappingGame?.syncedGameTitle ?? ''}
         open={mappingGame !== null}
         onOpenChange={onDialogOpenChange}
         onGameSelect={(game, _status, onSuccessCallback, onErrorCallback) =>

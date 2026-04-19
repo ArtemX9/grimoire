@@ -10,8 +10,8 @@ import { generateUnmappedGame } from '@/test';
 import UnmappedGamesPage from './UnmappedGamesPage';
 
 vi.mock('@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer', () => ({
-  default: ({ open }: { open: boolean }) =>
-    open ? <div data-testid='map-dialog' /> : null,
+  default: ({ open, initialSearchQuery }: { open: boolean; initialSearchQuery?: string }) =>
+    open ? <div data-testid='map-dialog' data-initial-query={initialSearchQuery} /> : null,
 }));
 
 vi.mock('@/components/ui/scroll-area', () => ({
@@ -108,6 +108,14 @@ describe('UnmappedGamesPage', () => {
     renderPage({ games: [game] });
 
     expect(screen.getByText('Hades')).toBeInTheDocument();
+  });
+
+  it('passes syncedGameTitle as initialSearchQuery to the map dialog', () => {
+    const game = generateUnmappedGame({ syncedGameTitle: 'Celeste' });
+
+    renderPage({ mappingGame: game });
+
+    expect(screen.getByTestId('map-dialog')).toHaveAttribute('data-initial-query', 'Celeste');
   });
 
   it('shows cover image when coverURL is provided', () => {
