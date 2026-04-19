@@ -53,11 +53,10 @@ async function upsertUser(
 async function main() {
   // Seed platform lookup table
   for (const platform of Object.values(PlatformTitle)) {
-    await prisma.platforms.upsert({
-      where: { platform },
-      update: {},
-      create: { platform },
-    });
+    const existing = await prisma.platforms.findFirst({ where: { platform } });
+    if (!existing) {
+      await prisma.platforms.create({ data: { platform } });
+    }
   }
 
   const [regularHash, regular2Hash, adminHash] = await Promise.all([
