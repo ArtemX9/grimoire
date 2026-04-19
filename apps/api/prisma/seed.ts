@@ -172,10 +172,68 @@ async function main() {
     });
   }
 
+  // Seed UnmappedSyncedGame records for E2E tests (test@grimoire.test)
+  const steamPlatform = await prisma.platforms.findFirstOrThrow({ where: { platform: PlatformTitle.STEAM } });
+
+  const syncedGame1 = await prisma.syncedGame.upsert({
+    where: { platformId_externalId: { platformId: steamPlatform.id, externalId: '413150' } },
+    update: {},
+    create: {
+      platformId: steamPlatform.id,
+      externalId: '413150',
+      externalTitle: 'Stardew Valley',
+      coverUrl: null,
+    },
+  });
+
+  const syncedGame2 = await prisma.syncedGame.upsert({
+    where: { platformId_externalId: { platformId: steamPlatform.id, externalId: '1145360' } },
+    update: {},
+    create: {
+      platformId: steamPlatform.id,
+      externalId: '1145360',
+      externalTitle: 'Hades II',
+      coverUrl: null,
+    },
+  });
+
+  // UnmappedSyncedGame 1: NO_MATCH
+  const existingUnmapped1 = await prisma.unmappedSyncedGame.findFirst({
+    where: { userId: regularUser.id, syncedGameId: syncedGame1.id },
+  });
+  if (!existingUnmapped1) {
+    await prisma.unmappedSyncedGame.create({
+      data: {
+        userId: regularUser.id,
+        syncedGameId: syncedGame1.id,
+        reason: 'NO_MATCH',
+        playtimeHours: 5,
+        isMapped: false,
+      },
+    });
+  }
+
+  // UnmappedSyncedGame 2: LOW_CONFIDENCE
+  const existingUnmapped2 = await prisma.unmappedSyncedGame.findFirst({
+    where: { userId: regularUser.id, syncedGameId: syncedGame2.id },
+  });
+  if (!existingUnmapped2) {
+    await prisma.unmappedSyncedGame.create({
+      data: {
+        userId: regularUser.id,
+        syncedGameId: syncedGame2.id,
+        reason: 'LOW_CONFIDENCE',
+        playtimeHours: 10.5,
+        isMapped: false,
+      },
+    });
+  }
+
   console.log('Seed complete:');
   console.log(`  Regular user:   ${REGULAR_USER.email} / ${REGULAR_USER.password}`);
   console.log(`  Regular user 2: ${REGULAR_USER_2.email} / ${REGULAR_USER_2.password}`);
   console.log(`  Admin user:     ${ADMIN_USER.email} / ${ADMIN_USER.password}`);
+  console.log('  Unresolved games seeded for test@grimoire.test (Stardew Valley: NO_MATCH, Hades II: LOW_CONFIDENCE)');
 }
 
 main()
