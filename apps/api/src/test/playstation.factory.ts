@@ -18,12 +18,22 @@ import { generateUserPlatformRow } from './platform.factory';
 export interface IGeneratePsnAuthorization {
   accessToken?: string;
   expiresIn?: number;
+  refreshToken?: string;
+  refreshTokenExpiresIn?: number;
+  idToken?: string;
+  scope?: string;
+  tokenType?: string;
 }
 
 export function generatePsnAuthorization(params: IGeneratePsnAuthorization = {}) {
   return {
     accessToken: params.accessToken ?? faker.string.alphanumeric(32),
     expiresIn: params.expiresIn ?? 3600,
+    refreshToken: params.refreshToken ?? faker.string.alphanumeric(32),
+    refreshTokenExpiresIn: params.refreshTokenExpiresIn ?? 5184000,
+    idToken: params.idToken ?? faker.string.alphanumeric(32),
+    scope: params.scope ?? 'psn:mobile.v2.core psn:clientapp',
+    tokenType: params.tokenType ?? 'bearer',
   };
 }
 
