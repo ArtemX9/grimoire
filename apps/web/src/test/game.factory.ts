@@ -1,6 +1,5 @@
 import { faker } from '@faker-js/faker';
 import { GameStatus, Genre, IgdbGame, Mood, Platform, PlatformType, UnmappedGame, UnmappedReasons, UserGame } from '@grimoire/shared';
-
 import type { GamePlatform } from '@grimoire/shared';
 
 // ---------------------------------------------------------------------------

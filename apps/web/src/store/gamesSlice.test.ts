@@ -406,7 +406,7 @@ describe('gamesSlice — selectedGameRemoved', () => {
 
   it('is safe when the id is not found in the list (no-op for games)', () => {
     const game = makeGame({ id: 'game-1' });
-    let state = reducer(initialState, gamesLoaded([game]));
+    const state = reducer(initialState, gamesLoaded([game]));
 
     const next = reducer(state, selectedGameRemoved('game-nonexistent'));
 

@@ -1,7 +1,6 @@
-import { useState } from 'react';
-
 import { GameStatus, Genre, IgdbGame } from '@grimoire/shared';
 import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
+import { useState } from 'react';
 
 import { GameStats } from '@/api/gamesApi';
 import AiPanelContainer from '@/components/AiPanel/AiPanelContainer';
@@ -83,7 +82,12 @@ export function LibraryPage({
 
   function renderMobileAiDrawer() {
     return (
-      <BottomDrawer open={aiDrawerOpen} onOpenChange={(open) => { if (!open) onAIDrawerOpen(); }}>
+      <BottomDrawer
+        open={aiDrawerOpen}
+        onOpenChange={(open) => {
+          if (!open) onAIDrawerOpen();
+        }}
+      >
         <BottomDrawerPortal>
           <BottomDrawerOverlay />
           <BottomDrawerContent>

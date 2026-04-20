@@ -1,7 +1,7 @@
 import { Platform, UserGame } from '@grimoire/shared';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { generateUserGame } from '@/test';
 
@@ -33,7 +33,11 @@ function renderPage(game: UserGame | null, props = {}) {
     onRemapGame: vi.fn(),
     onBack: vi.fn(),
   };
-  return render(<MemoryRouter><GameDetailPage {...defaults} {...props} /></MemoryRouter>);
+  return render(
+    <MemoryRouter>
+      <GameDetailPage {...defaults} {...props} />
+    </MemoryRouter>,
+  );
 }
 
 describe('GameDetailPage', () => {

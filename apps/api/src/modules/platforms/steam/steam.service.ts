@@ -4,10 +4,10 @@ import { ConfigService } from '@nestjs/config';
 
 import { Queue } from 'bullmq';
 
-import { Platform, SteamGame } from '@grimoire/shared';
+import { SteamGame } from '@grimoire/shared';
 
 import { PrismaService } from '../../../prisma/prisma.service';
-import { PLATFORM_ID_STEAM } from './constants';
+import { PLATFORM_ID_STEAM, STEAM_QUEUE_TITLE } from './constants';
 import { EnqueueResult, PlatformResponse, SyncStatusResponse, UserPlatformRelations } from './steam.types';
 
 type PrismaPlatform = {
@@ -23,20 +23,10 @@ type PrismaPlatform = {
 @Injectable()
 export class SteamService {
   constructor(
-    @InjectQueue('steam-sync') private steamQueue: Queue,
+    @InjectQueue(STEAM_QUEUE_TITLE) private steamQueue: Queue,
     private config: ConfigService,
     private prisma: PrismaService,
   ) {}
-
-  private _toResponse(platform: UserPlatformRelations): PlatformResponse {
-    return {
-      id: platform.id,
-      userId: platform.userId,
-      platform: platform.platform.platform,
-      externalId: platform.externalId,
-      lastSyncAt: platform.lastSyncAt ?? undefined,
-    };
-  }
 
   async getOwnedGames(steamId: string): Promise<SteamGame[]> {
     const apiKey = this.config.get('app.steam.apiKey');
@@ -51,7 +41,7 @@ export class SteamService {
     const platform = await this.prisma.userPlatform.upsert({
       where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
       update: { externalId: steamId },
-      create: { userId, platformId: 1, externalId: steamId },
+      create: { userId, platformId: PLATFORM_ID_STEAM, externalId: steamId },
       include: {
         platform: true,
       },
@@ -63,7 +53,7 @@ export class SteamService {
     const platform = await this.prisma.userPlatform.findUnique({
       where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
     });
-    if (!platform) return { queued: false, reason: 'Steam not connected' };
+    if (!platform) return { queued: false, reason: 'Steam platform not connected' };
     await this.steamQueue.add(
       'sync',
       { userId, steamId: platform.externalId },
@@ -77,5 +67,15 @@ export class SteamService {
       where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
     });
     return { connected: !!platform, lastSyncAt: platform?.lastSyncAt ?? undefined };
+  }
+
+  private _toResponse(platform: UserPlatformRelations): PlatformResponse {
+    return {
+      id: platform.id,
+      userId: platform.userId,
+      platform: platform.platform.platform,
+      externalId: platform.externalId,
+      lastSyncAt: platform.lastSyncAt ?? undefined,
+    };
   }
 }

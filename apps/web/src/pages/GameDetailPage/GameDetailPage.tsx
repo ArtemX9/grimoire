@@ -157,7 +157,10 @@ export function GameDetailPage({
       <div className='flex flex-wrap items-center gap-2'>
         <span className='font-sans text-xs text-grimoire-muted'>Owned on</span>
         {game!.platforms.map((p) => (
-          <span key={p.platformID} className='flex items-center gap-1 rounded border border-grimoire-border px-2 py-0.5 font-sans text-xs text-grimoire-muted'>
+          <span
+            key={p.platformID}
+            className='flex items-center gap-1 rounded border border-grimoire-border px-2 py-0.5 font-sans text-xs text-grimoire-muted'
+          >
             <PlatformIcon platform={p.platformName} />
             {p.platformName}
           </span>
@@ -334,9 +337,7 @@ export function GameDetailPage({
   function renderContentGrid() {
     return (
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-        <div className='lg:col-span-2'>
-          {renderNotesCard()}
-        </div>
+        <div className='lg:col-span-2'>{renderNotesCard()}</div>
         <div className='flex flex-col gap-6'>
           {renderRatingCard()}
           {renderSessionsCard()}

@@ -1,6 +1,5 @@
 import { faker } from '@faker-js/faker';
 import { Platform, UserPlatform } from '@grimoire/shared';
-
 import type { PlatformType } from '@grimoire/shared';
 
 // ---------------------------------------------------------------------------

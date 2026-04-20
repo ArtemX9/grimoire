@@ -9,13 +9,12 @@ import { useAppDispatch } from '@/store/hooks';
 // On normal network requests both extraReducers and useSliceSync fire —
 // writing the same data twice is harmless.
 export function useSliceSync<TArgs, TResult>(
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   queryHook: (args: TArgs) => { data?: TResult },
   args: TArgs,
   actionCreator: ActionCreatorWithPayload<TResult>,
 ): void {
   const dispatch = useAppDispatch();
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+
   const { data } = queryHook(args);
 
   useEffect(

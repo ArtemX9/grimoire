@@ -87,13 +87,10 @@ const gamesSlice = createSlice({
       .addMatcher(isGetGamesAction('api/executeQuery/pending'), (state) => {
         state.isGamesLoading = true;
       })
-      .addMatcher(
-        isGetGamesAction('api/executeQuery/fulfilled'),
-        (state, action: PayloadAction<UserGame[]>) => {
-          state.games = action.payload;
-          state.isGamesLoading = false;
-        },
-      )
+      .addMatcher(isGetGamesAction('api/executeQuery/fulfilled'), (state, action: PayloadAction<UserGame[]>) => {
+        state.games = action.payload;
+        state.isGamesLoading = false;
+      })
       .addMatcher(isGetGamesAction('api/executeQuery/rejected'), (state) => {
         state.isGamesLoading = false;
       });

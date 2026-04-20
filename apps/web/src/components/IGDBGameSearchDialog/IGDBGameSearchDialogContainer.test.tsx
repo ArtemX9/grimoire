@@ -35,10 +35,7 @@ function makeGame(overrides: Partial<IgdbGame> = {}): IgdbGame {
   return generateIgdbGame({ id: 1, name: 'Elden Ring', ...overrides });
 }
 
-function renderContainer(
-  store: ReturnType<typeof makeStore>,
-  onOpenChange = vi.fn(),
-) {
+function renderContainer(store: ReturnType<typeof makeStore>, onOpenChange = vi.fn()) {
   render(
     <Provider store={store}>
       <IGDBGameSearchDialogContainer

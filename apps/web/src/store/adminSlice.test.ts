@@ -26,7 +26,15 @@ import { generateAdminUserRow } from '@/test';
 const initialState = reducer(undefined, { type: '@@INIT' });
 
 function makeUser(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
-  return generateAdminUserRow({ id: 'user-1', email: 'alice@grimoire.app', name: 'Alice', aiEnabled: true, aiRequestsLimit: 10, gamesCount: 5, ...overrides });
+  return generateAdminUserRow({
+    id: 'user-1',
+    email: 'alice@grimoire.app',
+    name: 'Alice',
+    aiEnabled: true,
+    aiRequestsLimit: 10,
+    gamesCount: 5,
+    ...overrides,
+  });
 }
 
 function makeStats(overrides: Partial<AdminStats> = {}): AdminStats {

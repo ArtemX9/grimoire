@@ -11,7 +11,7 @@ export enum Genre {
   Metroidvania = 'Metroidvania',
   Music = 'Music',
   Noir = 'Noir',
-  Platformer = 'Platformer',
+  Platform = 'Platform',
   PointAndClick = 'Point-and-click',
   Puzzle = 'Puzzle',
   QuizTrivia = 'Quiz/Trivia',

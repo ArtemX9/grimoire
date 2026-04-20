@@ -18,10 +18,7 @@ function UnresolvedGamesBanner({ count }: IUnresolvedGamesBanner) {
           {count} {count === 1 ? 'game' : 'games'} couldn&apos;t be synced automatically
         </span>
       </div>
-      <Link
-        to={ROUTES.UNMAPPED_GAMES}
-        className='font-sans text-xs text-grimoire-gold transition-colors hover:text-grimoire-gold-bright'
-      >
+      <Link to={ROUTES.UNMAPPED_GAMES} className='font-sans text-xs text-grimoire-gold transition-colors hover:text-grimoire-gold-bright'>
         Review
       </Link>
     </div>

@@ -12,7 +12,14 @@ import { generateSession } from '@/test';
 const initialState = reducer(undefined, { type: '@@INIT' });
 
 function makeSession(overrides: Partial<Session['user']> = {}): Session {
-  return generateSession({ id: 'user-1', email: 'tester@grimoire.app', name: 'Tester', aiEnabled: true, aiRequestsLimit: 10, ...overrides });
+  return generateSession({
+    id: 'user-1',
+    email: 'tester@grimoire.app',
+    name: 'Tester',
+    aiEnabled: true,
+    aiRequestsLimit: 10,
+    ...overrides,
+  });
 }
 
 // ---------------------------------------------------------------------------

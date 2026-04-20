@@ -7,15 +7,17 @@ import { api } from '@/api/api';
 import { useSignOutMutation } from '@/api/authApi';
 import { useConnectSteamMutation, useGetSteamStatusQuery, useSyncSteamMutation } from '@/api/steamApi';
 import { useGetMeQuery, useUpdateMeMutation } from '@/api/usersApi';
+import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/use-toast';
-import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
 import { ROUTES } from '@/constants/routes';
 import { useAppDispatch } from '@/store/hooks';
 import { cn } from '@/utils/cn';
+
+import PSNRow from './components/PSNRow';
 
 const steamIDRegex = /^\d{17}$/;
 
@@ -74,9 +76,7 @@ function ProfileSection() {
   return (
     <section>
       <h2 className='mb-3 font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>Profile</h2>
-      <div className='rounded-lg border border-grimoire-border bg-grimoire-card p-4'>
-        {isLoading ? renderSkeleton() : renderContent()}
-      </div>
+      <div className='rounded-lg border border-grimoire-border bg-grimoire-card p-4'>{isLoading ? renderSkeleton() : renderContent()}</div>
     </section>
   );
 
@@ -169,7 +169,7 @@ function PlatformsSection() {
       <h2 className='mb-3 font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>Platform connections</h2>
       <div className='flex flex-col divide-y divide-grimoire-border rounded-lg border border-grimoire-border bg-grimoire-card'>
         <SteamRow />
-        <InactivePlatformRow label='PlayStation Network' platform={Platform.PlayStation} />
+        <PSNRow />
         <InactivePlatformRow label='Xbox' platform={Platform.Xbox} />
         <InactivePlatformRow label='Epic Games' />
       </div>
@@ -228,9 +228,7 @@ function SteamRow() {
           <span className='font-sans text-sm text-grimoire-ink'>Steam</span>
           {renderConnectionStatus()}
         </div>
-        <div className='flex items-center gap-2'>
-          {renderActions()}
-        </div>
+        <div className='flex items-center gap-2'>{renderActions()}</div>
       </div>
     );
   }

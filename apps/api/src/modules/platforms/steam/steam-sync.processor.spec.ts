@@ -129,11 +129,7 @@ describe('SteamSyncProcessor', () => {
 
       await processor.process(makeJob({ userId: 'user-1', steamId: 'steam-id' }));
 
-      expect(gamesService.ingestFromSync).toHaveBeenCalledWith(
-        'user-1',
-        expect.any(Object),
-        undefined,
-      );
+      expect(gamesService.ingestFromSync).toHaveBeenCalledWith('user-1', expect.any(Object), undefined);
     });
 
     it('converts playtime_forever from minutes to hours', async () => {
@@ -144,11 +140,7 @@ describe('SteamSyncProcessor', () => {
 
       await processor.process(makeJob({ userId: 'user-1', steamId: 'steam-id' }));
 
-      expect(gamesService.ingestFromSync).toHaveBeenCalledWith(
-        'user-1',
-        expect.objectContaining({ playtimeHours: 2 }),
-        expect.anything(),
-      );
+      expect(gamesService.ingestFromSync).toHaveBeenCalledWith('user-1', expect.objectContaining({ playtimeHours: 2 }), expect.anything());
     });
 
     it('uses the Steam icon URL as coverURL fallback in the IGDB info when IGDB cover is missing', async () => {
@@ -249,11 +241,7 @@ describe('SteamSyncProcessor', () => {
 
       await processor.process(makeJob({ userId: 'user-99', steamId: 'steam-id' }));
 
-      expect(gamesService.ingestFromSync).toHaveBeenCalledWith(
-        'user-99',
-        expect.any(Object),
-        expect.anything(),
-      );
+      expect(gamesService.ingestFromSync).toHaveBeenCalledWith('user-99', expect.any(Object), expect.anything());
     });
   });
 });

@@ -237,9 +237,7 @@ describe('GamesService', () => {
     });
 
     it('maps null userRating and notes to undefined', async () => {
-      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([
-        makePrismaGame({ userRating: null, notes: null }),
-      ]);
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([makePrismaGame({ userRating: null, notes: null })]);
 
       const [result] = await service.findAll('user-1');
 
@@ -346,9 +344,7 @@ describe('GamesService', () => {
 
       await service.addManually('user-1', dto);
 
-      expect(prisma.iGDBGame.upsert).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { igdbId: dto.igdbId } }),
-      );
+      expect(prisma.iGDBGame.upsert).toHaveBeenCalledWith(expect.objectContaining({ where: { igdbId: dto.igdbId } }));
     });
 
     it('creates UserGame with correct fields and zero playtime', async () => {
@@ -420,9 +416,7 @@ describe('GamesService', () => {
 
       await service.update('user-1', 'game-1', dto);
 
-      expect(prisma.userGame.update).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 'game-1', userId: 'user-1' } }),
-      );
+      expect(prisma.userGame.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'game-1', userId: 'user-1' } }));
     });
 
     it('passes the correct data fields to update', async () => {
@@ -444,9 +438,7 @@ describe('GamesService', () => {
     });
 
     it('maps null optional fields to undefined in the response', async () => {
-      (prisma.userGame.update as jest.Mock).mockResolvedValue(
-        makePrismaGame({ userRating: null, notes: null }),
-      );
+      (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame({ userRating: null, notes: null }));
 
       const result = await service.update('user-1', 'game-1', dto);
 
@@ -548,9 +540,7 @@ describe('GamesService', () => {
 
       await service.getStats('user-1');
 
-      expect(prisma.userGame.groupBy).toHaveBeenCalledWith(
-        expect.objectContaining({ by: ['status'], _count: true }),
-      );
+      expect(prisma.userGame.groupBy).toHaveBeenCalledWith(expect.objectContaining({ by: ['status'], _count: true }));
     });
   });
 
@@ -623,9 +613,7 @@ describe('GamesService', () => {
 
       const result = await service.ingestFromSync('user-1', { ...syncedGameInfo, playtimeHours: 100 }, igdbInfo);
 
-      expect(prisma.userGame.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { playtimeHours: 100 } }),
-      );
+      expect(prisma.userGame.update).toHaveBeenCalledWith(expect.objectContaining({ data: { playtimeHours: 100 } }));
       expect(result!.playtimeHours).toBe(100);
     });
 

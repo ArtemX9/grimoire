@@ -1,10 +1,11 @@
-import 'dotenv/config';
-
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../src/generated/prisma/client';
 import * as bcryptjs from 'bcryptjs';
+import 'dotenv/config';
 import * as pg from 'pg';
+
 import { GameStatus, Genre, Mood, Plan, Role } from '@grimoire/shared';
+
+import { PrismaClient } from '../src/generated/prisma/client';
 import { PlatformTitle } from '../src/generated/prisma/client';
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -15,14 +16,7 @@ const REGULAR_USER = { email: 'test@grimoire.test', password: 'password123', nam
 const REGULAR_USER_2 = { email: 'test2@grimoire.test', password: 'password123', name: 'Test User 2' };
 const ADMIN_USER = { email: 'admin@grimoire.test', password: 'password123', name: 'Admin User' };
 
-async function upsertUser(
-  email: string,
-  name: string,
-  passwordHash: string,
-  role: Role,
-  plan: Plan,
-  mustChangePassword: boolean,
-) {
+async function upsertUser(email: string, name: string, passwordHash: string, role: Role, plan: Plan, mustChangePassword: boolean) {
   const user = await prisma.user.upsert({
     where: { email },
     update: {},
@@ -63,32 +57,11 @@ async function main() {
     bcryptjs.hash(ADMIN_USER.password, 12),
   ]);
 
-  const regularUser = await upsertUser(
-    REGULAR_USER.email,
-    REGULAR_USER.name,
-    regularHash,
-    Role.USER,
-    Plan.FREE,
-    false,
-  );
+  const regularUser = await upsertUser(REGULAR_USER.email, REGULAR_USER.name, regularHash, Role.USER, Plan.FREE, false);
 
-  const regularUser2 = await upsertUser(
-    REGULAR_USER_2.email,
-    REGULAR_USER_2.name,
-    regular2Hash,
-    Role.USER,
-    Plan.FREE,
-    false,
-  );
+  const regularUser2 = await upsertUser(REGULAR_USER_2.email, REGULAR_USER_2.name, regular2Hash, Role.USER, Plan.FREE, false);
 
-  await upsertUser(
-    ADMIN_USER.email,
-    ADMIN_USER.name,
-    adminHash,
-    Role.ADMIN,
-    Plan.LIFETIME,
-    false,
-  );
+  await upsertUser(ADMIN_USER.email, ADMIN_USER.name, adminHash, Role.ADMIN, Plan.LIFETIME, false);
 
   // Seed IGDB game records
   const hollowKnightIgdb = await prisma.iGDBGame.upsert({
@@ -98,7 +71,7 @@ async function main() {
       igdbId: 1177,
       title: 'Hollow Knight',
       coverUrl: '//images.igdb.com/igdb/image/upload/t_cover_big/co1rgi.jpg',
-      genres: [Genre.Platformer, Genre.Adventure],
+      genres: [Genre.Platform, Genre.Adventure],
     },
   });
 
@@ -109,7 +82,7 @@ async function main() {
       igdbId: 26765,
       title: 'Celeste',
       coverUrl: '//images.igdb.com/igdb/image/upload/t_cover_big/co1tmu.jpg',
-      genres: [Genre.Platformer, Genre.Adventure],
+      genres: [Genre.Platform, Genre.Adventure],
     },
   });
 

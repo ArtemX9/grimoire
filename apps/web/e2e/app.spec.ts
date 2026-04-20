@@ -1,4 +1,4 @@
-import { expect, Page, test } from '@playwright/test';
+import { Page, expect, test } from '@playwright/test';
 
 // ---------------------------------------------------------------------------
 // Credentials (matching the backend seed script)
@@ -141,7 +141,10 @@ test.describe('Data isolation', () => {
     await expect(sessionsHeading).toBeVisible({ timeout: 10_000 });
 
     // At least one session row should exist (seed data guarantees one).
-    const sessionRows = page.locator('div').filter({ hasText: /\d+ min/ }).first();
+    const sessionRows = page
+      .locator('div')
+      .filter({ hasText: /\d+ min/ })
+      .first();
     await expect(sessionRows).toBeVisible({ timeout: 10_000 });
 
     // No session rows should carry user 2's game title.
@@ -169,7 +172,12 @@ test.describe('Data isolation', () => {
     await expect(page.getByText('Sessions', { exact: true }).first()).toBeVisible({ timeout: 10_000 });
 
     // At least one session row should exist (seed data guarantees one).
-    await expect(page.locator('div').filter({ hasText: /\d+ min/ }).first()).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page
+        .locator('div')
+        .filter({ hasText: /\d+ min/ })
+        .first(),
+    ).toBeVisible({ timeout: 10_000 });
 
     // No session rows should carry user 1's game title.
     await expect(page.getByText(USER1_GAME)).not.toBeVisible({ timeout: 3_000 });
@@ -197,9 +205,7 @@ test.describe('Unresolved games', () => {
     await expect(page.getByRole('heading', { name: /Unresolved Games/i })).toBeVisible({
       timeout: 10_000,
     });
-    await expect(
-      page.getByText("These games couldn't be mapped automatically during sync"),
-    ).toBeVisible();
+    await expect(page.getByText("These games couldn't be mapped automatically during sync")).toBeVisible();
   });
 
   // -------------------------------------------------------------------------
@@ -236,9 +242,7 @@ test.describe('Unresolved games', () => {
   // -------------------------------------------------------------------------
   // 4. Map manually button opens the IGDB search dialog
   // -------------------------------------------------------------------------
-  test('clicking Map manually opens the IGDB search dialog pre-filled with the game title', async ({
-    page,
-  }) => {
+  test('clicking Map manually opens the IGDB search dialog pre-filled with the game title', async ({ page }) => {
     await login(page, USER_EMAIL, USER_PASSWORD);
     await page.waitForURL('**/library');
 
@@ -247,11 +251,12 @@ test.describe('Unresolved games', () => {
     await expect(page.getByRole('button', { name: /Map manually/i }).first()).toBeVisible({
       timeout: 10_000,
     });
-    await page.getByRole('button', { name: /Map manually/i }).first().click();
+    await page
+      .getByRole('button', { name: /Map manually/i })
+      .first()
+      .click();
 
-    await expect(
-      page.getByRole('dialog').or(page.locator('[role="dialog"]')).first(),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('dialog').or(page.locator('[role="dialog"]')).first()).toBeVisible({ timeout: 10_000 });
 
     const searchInput = page.getByPlaceholder(/Search IGDB/i).first();
     await expect(searchInput).toBeVisible();

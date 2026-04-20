@@ -1,8 +1,8 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite'
-import { defaultExclude } from 'vitest/config'
-import react from '@vitejs/plugin-react'
-import * as path from 'path'
+import react from '@vitejs/plugin-react';
+import * as path from 'path';
+import { defineConfig } from 'vite';
+import { defaultExclude } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
@@ -27,4 +27,4 @@ export default defineConfig({
       '@grimoire/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts'),
     },
   },
-})
+});

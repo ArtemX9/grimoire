@@ -1,9 +1,9 @@
 import { IgdbGame, Platform, UnmappedGame } from '@grimoire/shared';
 
+import IGDBGameSearchDialogContainer from '@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import IGDBGameSearchDialogContainer from '@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer';
 import UnmappedGameCard from './components/UnmappedGameCard/UnmappedGameCard';
 import UnmappedSteamGameRow from './components/UnmappedSteamGameRow/UnmappedSteamGameRow';
 
@@ -16,21 +16,12 @@ interface IUnmappedGamesPage {
   onGameSelect: (game: IgdbGame, onSuccessCallback: () => void, onErrorCallback: () => void) => void;
 }
 
-function UnmappedGamesPage({
-  games,
-  isLoading,
-  mappingGame,
-  onMapClick,
-  onDialogOpenChange,
-  onGameSelect,
-}: IUnmappedGamesPage) {
+function UnmappedGamesPage({ games, isLoading, mappingGame, onMapClick, onDialogOpenChange, onGameSelect }: IUnmappedGamesPage) {
   return (
     <div className='flex h-full flex-col overflow-hidden'>
       {renderHeader()}
       <ScrollArea className='flex-1'>
-        <div className='p-5'>
-          {renderContent()}
-        </div>
+        <div className='p-5'>{renderContent()}</div>
       </ScrollArea>
       {renderMapDialog()}
     </div>
@@ -40,9 +31,7 @@ function UnmappedGamesPage({
     return (
       <header className='border-b border-grimoire-border px-4 py-3 sm:px-5 sm:py-4'>
         <h1 className='font-grimoire text-xl text-grimoire-ink'>Unresolved Games</h1>
-        <p className='font-sans text-sm text-grimoire-muted mt-1'>
-          These games couldn&apos;t be mapped automatically during sync
-        </p>
+        <p className='font-sans text-sm text-grimoire-muted mt-1'>These games couldn&apos;t be mapped automatically during sync</p>
       </header>
     );
   }
@@ -73,11 +62,7 @@ function UnmappedGamesPage({
   }
 
   function renderGameList() {
-    return (
-      <div className='flex flex-col gap-3'>
-        {games.map((game) => renderGameRow(game))}
-      </div>
-    );
+    return <div className='flex flex-col gap-3'>{games.map((game) => renderGameRow(game))}</div>;
   }
 
   function renderGameRow(game: UnmappedGame) {
@@ -98,9 +83,7 @@ function UnmappedGamesPage({
         initialSearchQuery={mappingGame?.syncedGameTitle ?? ''}
         open={mappingGame !== null}
         onOpenChange={onDialogOpenChange}
-        onGameSelect={(game, _status, onSuccessCallback, onErrorCallback) =>
-          onGameSelect(game, onSuccessCallback, onErrorCallback)
-        }
+        onGameSelect={(game, _status, onSuccessCallback, onErrorCallback) => onGameSelect(game, onSuccessCallback, onErrorCallback)}
       />
     );
   }

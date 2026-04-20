@@ -1,0 +1,55 @@
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+
+import {
+  AuthTokensResponse,
+  exchangeAccessCodeForAuthTokens,
+  exchangeNpssoForAccessCode,
+  exchangeRefreshTokenForAuthTokens,
+} from 'psn-api';
+
+@Injectable()
+export class PlaystationAuthService implements OnModuleInit {
+  private accessCode?: string;
+  private authorization?: AuthTokensResponse;
+  private tokenExpiry: number = 0;
+
+  constructor(private config: ConfigService) {}
+
+  async onModuleInit() {
+    this.accessCode = await this._getAccessCode();
+    console.debug('PlaystationService: Successfully exchanged NPSSO to Access Code');
+    await this._getAuthorization();
+  }
+
+  async getAuthorization(): Promise<AuthTokensResponse> {
+    if (Date.now() >= this.tokenExpiry) await this.refreshToken();
+    if (!this.authorization) {
+      throw new Error('Cannot obtain authorisation data');
+    }
+    return this.authorization;
+  }
+
+  private _getAccessCode() {
+    const npsso = this.config.get('app.playstation.npsso');
+    return exchangeNpssoForAccessCode(npsso);
+  }
+
+  private async _getAuthorization() {
+    if (!this.accessCode) {
+      throw new Error('PlaystationAuthService: PSN access code is missing');
+    }
+    this.authorization = await exchangeAccessCodeForAuthTokens(this.accessCode);
+    this.tokenExpiry = Date.now() + this.authorization.expiresIn * 1000;
+  }
+
+  private async refreshToken() {
+    if (!this.authorization) {
+      throw new Error('PlaystationAuthService: authorization data is missing');
+    }
+
+    const updatedAuthorization = await exchangeRefreshTokenForAuthTokens(this.authorization.refreshToken);
+    this.tokenExpiry = Date.now() + updatedAuthorization.expiresIn * 1000;
+    this.authorization = updatedAuthorization;
+  }
+}

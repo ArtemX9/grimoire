@@ -4,6 +4,7 @@ export default registerAs('app', () => ({
   port: parseInt(process.env.PORT ?? '3000', 10),
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
   steam: { apiKey: process.env.STEAM_API_KEY },
+  playstation: { npsso: process.env.PSN_NPSSO },
   igdb: {
     clientId: process.env.TWITCH_CLIENT_ID,
     clientSecret: process.env.TWITCH_CLIENT_SECRET,

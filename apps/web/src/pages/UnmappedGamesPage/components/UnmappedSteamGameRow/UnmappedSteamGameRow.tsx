@@ -38,13 +38,7 @@ function UnmappedSteamGameRow({ game, onMapClick }: IUnmappedSteamGameRow) {
 
   function renderCover() {
     if (game.coverURL) {
-      return (
-        <img
-          src={game.coverURL}
-          alt={game.syncedGameTitle}
-          className='h-8 w-8 shrink-0 rounded object-cover'
-        />
-      );
+      return <img src={game.coverURL} alt={game.syncedGameTitle} className='h-8 w-8 shrink-0 rounded object-cover' />;
     }
 
     return (
@@ -71,9 +65,7 @@ function UnmappedSteamGameRow({ game, onMapClick }: IUnmappedSteamGameRow) {
           <PlatformIcon platform={game.platform.platform} />
           {game.platform.platform}
         </span>
-        <span className={cn('font-sans text-xs px-2 py-0.5 rounded', reasonStyle)}>
-          {reasonLabel}
-        </span>
+        <span className={cn('font-sans text-xs px-2 py-0.5 rounded', reasonStyle)}>{reasonLabel}</span>
       </div>
     );
   }

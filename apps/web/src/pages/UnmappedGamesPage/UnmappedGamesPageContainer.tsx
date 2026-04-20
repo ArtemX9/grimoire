@@ -1,6 +1,5 @@
-import { useState } from 'react';
-
 import { IgdbGame, UnmappedGame } from '@grimoire/shared';
+import { useState } from 'react';
 
 import { useGetUnmappedGamesQuery, useMapUnmappedGameMutation } from '@/api/unmappedGamesApi';
 import { toast } from '@/components/ui/use-toast';
@@ -20,11 +19,7 @@ function UnmappedGamesPageContainer() {
     if (!open) setMappingGame(null);
   }
 
-  async function handleGameSelect(
-    igdbGame: IgdbGame,
-    onSuccessCallback: () => void,
-    onErrorCallback: () => void,
-  ) {
+  async function handleGameSelect(igdbGame: IgdbGame, onSuccessCallback: () => void, onErrorCallback: () => void) {
     if (!mappingGame) return;
 
     try {
@@ -38,9 +33,7 @@ function UnmappedGamesPageContainer() {
             id: igdbGame.id,
             title: igdbGame.name,
             genres: igdbGame.genres ?? [],
-            releaseDate: igdbGame.first_release_date
-              ? new Date(igdbGame.first_release_date * 1000)
-              : new Date(0),
+            releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : new Date(0),
             coverUrl: igdbGame.cover,
             summary: igdbGame.summary,
             storyLine: igdbGame.storyline,

@@ -35,7 +35,15 @@ import { generateAdminUserRow } from '@/test';
 // ---------------------------------------------------------------------------
 
 function makeUserRow(overrides: Partial<AdminUserRow> = {}): AdminUserRow {
-  return generateAdminUserRow({ id: 'user-1', email: 'alice@grimoire.app', name: 'Alice', aiEnabled: true, aiRequestsLimit: 10, gamesCount: 5, ...overrides });
+  return generateAdminUserRow({
+    id: 'user-1',
+    email: 'alice@grimoire.app',
+    name: 'Alice',
+    aiEnabled: true,
+    aiRequestsLimit: 10,
+    gamesCount: 5,
+    ...overrides,
+  });
 }
 
 function makeStore() {
@@ -108,7 +116,7 @@ describe('adminApi — updateUserRole — onQueryStarted', () => {
     const queryFulfilled = Promise.resolve({ data: updatedUser });
 
     // Call onQueryStarted manually with the same signature RTK Query uses
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const { adminApi } = await import('@/api/adminApi');
     const endpointConfig = adminApi.endpoints.updateUserRole;
 

@@ -1,26 +1,23 @@
-import { LibraryPage } from '@/pages/LibraryPage/LibraryPage';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { useState } from 'react';
-import { useCreateGameMutation, useGetGameStatsQuery } from '@/api/gamesApi';
 import { GameStatus, Genre, IgdbGame } from '@grimoire/shared';
-import { setGenreFilter, setSearch, setStatusFilter } from '@/store/filtersSlice';
-import { toggleAIDrawer } from '@/store/uiSlice';
+import { useState } from 'react';
+
+import { useCreateGameMutation, useGetGameStatsQuery } from '@/api/gamesApi';
 import { toast } from '@/components/ui/use-toast';
+import { LibraryPage } from '@/pages/LibraryPage/LibraryPage';
+import { setGenreFilter, setSearch, setStatusFilter } from '@/store/filtersSlice';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { toggleAIDrawer } from '@/store/uiSlice';
 
 export function LibraryPageContainer() {
   const dispatch = useAppDispatch();
   const filters = useAppSelector((s) => s.filters);
-  const {
-    stats,
-    isStatsLoading
-  } = useAppSelector((s) => s.games);
+  const { stats, isStatsLoading } = useAppSelector((s) => s.games);
   const isAIDrawerOpen = useAppSelector((s) => s.ui.isAIDrawerOpen);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [createGame] = useCreateGameMutation();
 
   // Trigger the RTK Query fetch so onQueryStarted populates the slice.
   useGetGameStatsQuery();
-
 
   async function handleAddGame(game: IgdbGame, status: GameStatus, onSuccessCallback: () => void, onErrorCallback: () => void) {
     try {
@@ -56,17 +53,19 @@ export function LibraryPageContainer() {
     dispatch(setSearch(search));
   }
 
-  return <LibraryPage
-    addDialogOpen={addDialogOpen}
-    aiDrawerOpen={isAIDrawerOpen}
-    stats={stats}
-    filters={filters}
-    isStatsLoading={isStatsLoading}
-    onAddDialogOpen={setAddDialogOpen}
-    onAIDrawerOpen={() => dispatch(toggleAIDrawer())}
-    onStatusChange={handleStatusChange}
-    onGenreChange={handleGenreChange}
-    onSearchChange={handleSearchChange}
-    onGameSelect={handleAddGame}
-  />;
+  return (
+    <LibraryPage
+      addDialogOpen={addDialogOpen}
+      aiDrawerOpen={isAIDrawerOpen}
+      stats={stats}
+      filters={filters}
+      isStatsLoading={isStatsLoading}
+      onAddDialogOpen={setAddDialogOpen}
+      onAIDrawerOpen={() => dispatch(toggleAIDrawer())}
+      onStatusChange={handleStatusChange}
+      onGenreChange={handleGenreChange}
+      onSearchChange={handleSearchChange}
+      onGameSelect={handleAddGame}
+    />
+  );
 }

@@ -45,11 +45,7 @@ function IGDBGameSearchDialogContainer({
     [open], // intentionally only [open] — we want to reset on each open, not on every prop change while open
   );
 
-  useSliceSync(
-    (q) => useSearchIgdbQuery(q, { skip: q.length < 2 }),
-    debouncedQuery,
-    searchLoaded,
-  );
+  useSliceSync((q) => useSearchIgdbQuery(q, { skip: q.length < 2 }), debouncedQuery, searchLoaded);
 
   const searchResults = useAppSelector((s) => s.igdb.searchResults);
   const isSearching = useAppSelector((s) => s.igdb.isSearchLoading);

@@ -143,9 +143,7 @@ describe('UnmappedGamesService', () => {
 
       await service.getUnmappedGamesForUser('user-1');
 
-      expect(prisma.unmappedSyncedGame.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ orderBy: { createdAt: 'asc' } }),
-      );
+      expect(prisma.unmappedSyncedGame.findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { createdAt: 'asc' } }));
     });
 
     it('applies limit and offset pagination', async () => {
@@ -153,9 +151,7 @@ describe('UnmappedGamesService', () => {
 
       await service.getUnmappedGamesForUser('user-1', 5, 10);
 
-      expect(prisma.unmappedSyncedGame.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ take: 5, skip: 10 }),
-      );
+      expect(prisma.unmappedSyncedGame.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 5, skip: 10 }));
     });
 
     it('maps the DB row to the UnmappedGame response shape', async () => {
@@ -277,12 +273,7 @@ describe('UnmappedGamesService', () => {
       await service.mapGameForUser('user-1', 'unmapped-1', makeMapDto());
 
       // The 4th argument must be the tx client — not undefined and not prisma
-      expect(gamesService.ingestFromSync).toHaveBeenCalledWith(
-        'user-1',
-        expect.any(Object),
-        expect.any(Object),
-        tx,
-      );
+      expect(gamesService.ingestFromSync).toHaveBeenCalledWith('user-1', expect.any(Object), expect.any(Object), tx);
     });
 
     it('builds syncedGameInfo from the synced game row found in the transaction', async () => {

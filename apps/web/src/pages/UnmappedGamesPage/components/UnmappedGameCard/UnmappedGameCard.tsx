@@ -50,9 +50,7 @@ function UnmappedGameCard({ game, onMapClick }: IUnmappedGameCard) {
           <PlatformIcon platform={game.platform.platform} />
           {game.platform.platform}
         </span>
-        <span className={cn('font-sans text-xs px-2 py-0.5 rounded', reasonStyle)}>
-          {reasonLabel}
-        </span>
+        <span className={cn('font-sans text-xs px-2 py-0.5 rounded', reasonStyle)}>{reasonLabel}</span>
       </div>
     );
   }
