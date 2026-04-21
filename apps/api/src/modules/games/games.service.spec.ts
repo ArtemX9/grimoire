@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { GameStatus, Genre, Mood } from '@grimoire/shared';
+import { GameStatus, Genre, Mood, Platform, SortableField } from '@grimoire/shared';
 
 import { UnmappedReason } from '../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -243,6 +243,95 @@ describe('GamesService', () => {
 
       expect(result.userRating).toBeUndefined();
       expect(result.notes).toBeUndefined();
+    });
+
+    it('passes platform filter via userGamePlatforms.some when provided', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('user-1', undefined, undefined, undefined, Platform.STEAM);
+
+      const call = (prisma.userGame.findMany as jest.Mock).mock.calls[0][0];
+      expect(call.where.userGamePlatforms).toEqual({
+        some: {
+          syncedGame: {
+            platform: {
+              platform: Platform.STEAM,
+            },
+          },
+        },
+      });
+    });
+
+    it('omits userGamePlatforms clause when no platform is provided', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('user-1');
+
+      const call = (prisma.userGame.findMany as jest.Mock).mock.calls[0][0];
+      expect(call.where).not.toHaveProperty('userGamePlatforms');
+    });
+
+    it('orders by playtimeHours when sortBy is playtimeHours', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('user-1', undefined, undefined, undefined, undefined, SortableField.playtimeHours, 'desc');
+
+      const call = (prisma.userGame.findMany as jest.Mock).mock.calls[0][0];
+      expect(call.orderBy).toEqual({ playtimeHours: 'desc' });
+    });
+
+    it('orders by addedAt when sortBy is addedAt', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('user-1', undefined, undefined, undefined, undefined, SortableField.addedAt, 'asc');
+
+      const call = (prisma.userGame.findMany as jest.Mock).mock.calls[0][0];
+      expect(call.orderBy).toEqual({ addedAt: 'asc' });
+    });
+
+    it('orders by status when sortBy is status', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('user-1', undefined, undefined, undefined, undefined, SortableField.status, 'asc');
+
+      const call = (prisma.userGame.findMany as jest.Mock).mock.calls[0][0];
+      expect(call.orderBy).toEqual({ status: 'asc' });
+    });
+
+    it('orders by userRating when sortBy is userRating', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('user-1', undefined, undefined, undefined, undefined, SortableField.userRating, 'desc');
+
+      const call = (prisma.userGame.findMany as jest.Mock).mock.calls[0][0];
+      expect(call.orderBy).toEqual({ userRating: 'desc' });
+    });
+
+    it('orders by igdbGame.releaseDate when sortBy is releaseDate', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('user-1', undefined, undefined, undefined, undefined, SortableField.releaseDate, 'desc');
+
+      const call = (prisma.userGame.findMany as jest.Mock).mock.calls[0][0];
+      expect(call.orderBy).toEqual({ igdbGame: { releaseDate: 'desc' } });
+    });
+
+    it('defaults to ordering by igdbGame.title asc when no sortBy is provided', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('user-1');
+
+      const call = (prisma.userGame.findMany as jest.Mock).mock.calls[0][0];
+      expect(call.orderBy).toEqual({ igdbGame: { title: 'asc' } });
+    });
+
+    it('respects the order param when defaulting to title sort', async () => {
+      (prisma.userGame.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.findAll('user-1', undefined, undefined, undefined, undefined, undefined, 'desc');
+
+      const call = (prisma.userGame.findMany as jest.Mock).mock.calls[0][0];
+      expect(call.orderBy).toEqual({ igdbGame: { title: 'desc' } });
     });
   });
 

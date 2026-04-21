@@ -78,4 +78,29 @@ describe('GameDetailPage', () => {
     expect(getByText(Platform.STEAM)).toBeInTheDocument();
     expect(getByText(Platform.PlayStation)).toBeInTheDocument();
   });
+
+  it('shows summary when both summary and storyLine are present', () => {
+    const game = generateUserGame({ summary: 'The summary text', storyLine: 'The storyline text' });
+    const { getByText, queryByText } = renderPage(game);
+    expect(getByText('The summary text')).toBeInTheDocument();
+    expect(queryByText('The storyline text')).toBeNull();
+  });
+
+  it('shows storyLine when only storyLine is present and summary is absent', () => {
+    const game = generateUserGame({ storyLine: 'The storyline text' });
+    const { getByText } = renderPage(game);
+    expect(getByText('The storyline text')).toBeInTheDocument();
+  });
+
+  it('shows summary when only summary is present and storyLine is absent', () => {
+    const game = generateUserGame({ summary: 'The summary text' });
+    const { getByText } = renderPage(game);
+    expect(getByText('The summary text')).toBeInTheDocument();
+  });
+
+  it('renders nothing when neither summary nor storyLine is present', () => {
+    const game = generateUserGame({ summary: undefined, storyLine: undefined });
+    const { queryByText } = renderPage(game);
+    expect(queryByText('About')).toBeNull();
+  });
 });

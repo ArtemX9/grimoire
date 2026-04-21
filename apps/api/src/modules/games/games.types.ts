@@ -11,8 +11,6 @@ export type GameResponse = {
   genres: Genre[];
   status: GameStatus;
   playtimeHours: number;
-  userRating?: number;
-  notes?: string;
   moods: Mood[];
   addedAt: Date;
   releaseDate: Date | null;
@@ -24,6 +22,10 @@ export type GameResponse = {
     externalID: string;
     externalTitle: string;
   }[];
+  summary?: string;
+  storyLine?: string;
+  userRating?: number;
+  notes?: string;
 };
 
 export interface GameStatsResponse {

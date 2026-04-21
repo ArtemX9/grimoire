@@ -23,6 +23,8 @@ export interface IGenerateUserGame {
   updatedAt?: Date;
   isMappedManually?: boolean;
   platforms?: GamePlatform[];
+  summary?: string;
+  storyLine?: string;
 }
 
 export function generateUserGame(params: IGenerateUserGame = {}): UserGame {
@@ -43,6 +45,8 @@ export function generateUserGame(params: IGenerateUserGame = {}): UserGame {
     updatedAt: params.updatedAt ?? faker.date.recent(),
     isMappedManually: params.isMappedManually ?? false,
     platforms: params.platforms ?? [],
+    summary: params.summary,
+    storyLine: params.storyLine,
   };
 }
 

@@ -29,6 +29,8 @@ export type UserGame = {
   updatedAt: Date
   isMappedManually: boolean
   platforms: GamePlatform[]
+  summary?: string
+  storyLine?: string
 }
 
 export type IgdbGame = {

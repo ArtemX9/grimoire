@@ -1,7 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 
-import { CreateGameSchema, GameStatus, Genre, Platform, RemapGameSchema, UpdateGameSchema, User } from '@grimoire/shared';
-import { SortableField } from '@grimoire/shared/dist/constants/gamesSort';
+import { CreateGameSchema, GameStatus, Genre, Platform, RemapGameSchema, SortableField, UpdateGameSchema, User } from '@grimoire/shared';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';

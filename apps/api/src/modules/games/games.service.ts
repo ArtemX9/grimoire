@@ -2,8 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 
 import { PrismaClient } from '@prisma/client/extension';
 
-import { CreateGameDto, GameStatus, Genre, Mood, Platform, RemapGameDto, UpdateGameDto } from '@grimoire/shared';
-import { SortableField } from '@grimoire/shared/dist/constants/gamesSort';
+import { CreateGameDto, GameStatus, Genre, Mood, Platform, RemapGameDto, SortableField, UpdateGameDto } from '@grimoire/shared';
 
 import { UnmappedReason } from '../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -628,6 +627,8 @@ export class GamesService {
       coverURL: game.igdbGame.coverUrl ?? undefined,
       genres: game.igdbGame.genres as Genre[],
       status: game.status as GameStatus,
+      summary: game.igdbGame.summary ?? undefined,
+      storyLine: game.igdbGame.storyLine ?? undefined,
       playtimeHours: game.playtimeHours,
       releaseDate: game.igdbGame.releaseDate,
       userRating: game.userRating ?? undefined,

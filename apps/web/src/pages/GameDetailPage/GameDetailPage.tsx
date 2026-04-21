@@ -337,12 +337,30 @@ export function GameDetailPage({
   function renderContentGrid() {
     return (
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-        <div className='lg:col-span-2'>{renderNotesCard()}</div>
+        <div className='flex flex-col gap-6 lg:col-span-2'>
+          {renderDescriptionCard()}
+          {renderNotesCard()}
+        </div>
         <div className='flex flex-col gap-6'>
           {renderRatingCard()}
           {renderSessionsCard()}
         </div>
       </div>
+    );
+  }
+
+  function renderDescriptionCard() {
+    const text = game!.summary ?? game!.storyLine;
+    if (!text) return null;
+    return (
+      <Card>
+        <CardHeader className='pb-3'>
+          <CardTitle>About</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className='font-sans text-sm leading-relaxed text-grimoire-muted'>{text}</p>
+        </CardContent>
+      </Card>
     );
   }
 

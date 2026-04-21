@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { GameStatus, Genre } from '@grimoire/shared';
+import { GameStatus, Genre, Platform, SortableField } from '@grimoire/shared';
 
 import { generateGameResponse, generateUser } from '../../test';
 import { GamesController } from './games.controller';
@@ -46,7 +46,7 @@ describe('GamesController', () => {
 
       const result = await controller.findAll(user);
 
-      expect(gamesService.findAll).toHaveBeenCalledWith('user-1', undefined, undefined, undefined);
+      expect(gamesService.findAll).toHaveBeenCalledWith('user-1', undefined, undefined, undefined, undefined, undefined, undefined);
       expect(result).toBe(games);
     });
 
@@ -56,7 +56,25 @@ describe('GamesController', () => {
 
       await controller.findAll(user, GameStatus.COMPLETED);
 
-      expect(gamesService.findAll).toHaveBeenCalledWith('user-1', GameStatus.COMPLETED, undefined, undefined);
+      expect(gamesService.findAll).toHaveBeenCalledWith('user-1', GameStatus.COMPLETED, undefined, undefined, undefined, undefined, undefined);
+    });
+
+    it('forwards the optional platform query param to the service', async () => {
+      const user = generateUser({ id: 'user-1' });
+      gamesService.findAll.mockResolvedValue([]);
+
+      await controller.findAll(user, undefined, undefined, undefined, Platform.STEAM);
+
+      expect(gamesService.findAll).toHaveBeenCalledWith('user-1', undefined, undefined, undefined, Platform.STEAM, undefined, undefined);
+    });
+
+    it('forwards sortBy and order query params to the service', async () => {
+      const user = generateUser({ id: 'user-1' });
+      gamesService.findAll.mockResolvedValue([]);
+
+      await controller.findAll(user, undefined, undefined, undefined, undefined, SortableField.playtimeHours, 'desc');
+
+      expect(gamesService.findAll).toHaveBeenCalledWith('user-1', undefined, undefined, undefined, undefined, SortableField.playtimeHours, 'desc');
     });
 
     it('returns the service result directly', async () => {
@@ -76,7 +94,7 @@ describe('GamesController', () => {
 
       await controller.findAll(user);
 
-      expect(gamesService.findAll).toHaveBeenCalledWith('user-99', undefined, undefined, undefined);
+      expect(gamesService.findAll).toHaveBeenCalledWith('user-99', undefined, undefined, undefined, undefined, undefined, undefined);
     });
   });
 
