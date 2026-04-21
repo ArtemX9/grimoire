@@ -1,4 +1,4 @@
-import { CreateGameDto, GameStatus, RemapGameDto, UpdateGameDto, UserGame } from '@grimoire/shared';
+import { CreateGameDto, GameStatus, Platform, RemapGameDto, SortableField, UpdateGameDto, UserGame } from '@grimoire/shared';
 
 import type { RootState } from '@/store/store';
 import {
@@ -23,7 +23,10 @@ export type GameStats = {
 export type GamesQuery = {
   status?: GameStatus;
   genre?: string;
+  platform?: Platform;
   search?: string;
+  sortBy?: SortableField;
+  order?: 'asc' | 'desc';
 };
 
 export type UpdateGameArgs = {

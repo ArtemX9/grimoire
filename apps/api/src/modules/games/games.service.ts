@@ -3,6 +3,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaClient } from '@prisma/client/extension';
 
 import { CreateGameDto, GameStatus, Genre, Mood, Platform, RemapGameDto, UpdateGameDto } from '@grimoire/shared';
+import { SortableField } from '@grimoire/shared/dist/constants/gamesSort';
 
 import { UnmappedReason } from '../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -13,7 +14,55 @@ import { GameResponse, GameStatsResponse, IgdbSyncGameInfo, IngestedSyncGameInfo
 export class GamesService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(userId: string, status?: GameStatus, search?: string, genre?: Genre): Promise<GameResponse[]> {
+  async findAll(
+    userId: string,
+    status?: GameStatus,
+    search?: string,
+    genre?: Genre,
+    platform?: Platform,
+    sortBy?: SortableField,
+    order: 'asc' | 'desc' = 'asc',
+  ): Promise<GameResponse[]> {
+    let orderBy: any = {
+      igdbGame: {
+        title: order,
+      },
+    };
+
+    switch (sortBy) {
+      case SortableField.addedAt: {
+        orderBy = {
+          addedAt: order,
+        };
+        break;
+      }
+      case SortableField.playtimeHours: {
+        orderBy = {
+          playtimeHours: order,
+        };
+        break;
+      }
+      case SortableField.releaseDate: {
+        orderBy = {
+          igdbGame: {
+            releaseDate: order,
+          },
+        };
+        break;
+      }
+      case SortableField.status: {
+        orderBy = {
+          status: order,
+        };
+        break;
+      }
+      case SortableField.userRating: {
+        orderBy = {
+          userRating: order,
+        };
+      }
+    }
+
     try {
       const games = await this.prisma.userGame.findMany({
         where: {
@@ -31,6 +80,17 @@ export class GamesService {
             igdbGame: {
               genres: {
                 has: genre,
+              },
+            },
+          }),
+          ...(platform && {
+            userGamePlatforms: {
+              some: {
+                syncedGame: {
+                  platform: {
+                    platform,
+                  },
+                },
               },
             },
           }),
@@ -52,11 +112,7 @@ export class GamesService {
             },
           },
         },
-        orderBy: {
-          igdbGame: {
-            title: 'desc',
-          },
-        },
+        orderBy,
       });
       return games.map((g) => this._toResponse(g));
     } catch (e) {

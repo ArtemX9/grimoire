@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 
-import { CreateGameSchema, GameStatus, Genre, RemapGameSchema, UpdateGameSchema, User } from '@grimoire/shared';
+import { CreateGameSchema, GameStatus, Genre, Platform, RemapGameSchema, UpdateGameSchema, User } from '@grimoire/shared';
+import { SortableField } from '@grimoire/shared/dist/constants/gamesSort';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
@@ -16,8 +17,11 @@ export class GamesController {
     @Query('status') status?: GameStatus,
     @Query('search') search?: string,
     @Query('genre') genre?: Genre,
+    @Query('platform') platform?: Platform,
+    @Query('sortBy') sortBy?: SortableField,
+    @Query('order') order?: 'asc' | 'desc',
   ) {
-    return this.gamesService.findAll(user.id, status, search, genre);
+    return this.gamesService.findAll(user.id, status, search, genre, platform, sortBy, order);
   }
 
   @Get('stats')

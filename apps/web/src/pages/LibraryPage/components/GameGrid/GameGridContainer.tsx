@@ -15,7 +15,10 @@ function GameGridContainer() {
   const args = {
     status: filters.status ?? undefined,
     genre: filters.genre ?? undefined,
+    platform: filters.platform ?? undefined,
     search: debouncedSearch || undefined,
+    sortBy: filters.sortBy ?? undefined,
+    order: filters.order,
   };
 
   useSliceSync(useGetGamesQuery, args, gamesLoaded);

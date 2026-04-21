@@ -1,4 +1,4 @@
-import { GameStatus, Genre, IgdbGame } from '@grimoire/shared';
+import { GameStatus, Genre, IgdbGame, Platform, SortableField } from '@grimoire/shared';
 import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -29,7 +29,10 @@ interface ILibraryPage {
   onAIDrawerOpen: () => void;
   onStatusChange: (status: GameStatus | null) => void;
   onGenreChange: (genre: Genre | null) => void;
+  onPlatformChange: (platform: Platform | null) => void;
   onSearchChange: (search: string) => void;
+  onSortByChange: (sortBy: SortableField | null) => void;
+  onOrderChange: (order: 'asc' | 'desc') => void;
   onGameSelect: (game: IgdbGame, status: GameStatus, onSuccessCallback: () => void, onErrorCallback: () => void) => void;
 }
 
@@ -43,7 +46,10 @@ export function LibraryPage({
   onAIDrawerOpen,
   onStatusChange,
   onGenreChange,
+  onPlatformChange,
   onSearchChange,
+  onSortByChange,
+  onOrderChange,
   onGameSelect,
 }: ILibraryPage) {
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -156,10 +162,16 @@ export function LibraryPage({
         <FilterBar
           activeStatus={filters.status}
           activeGenre={filters.genre}
+          activePlatform={filters.platform}
+          activeSortBy={filters.sortBy}
+          activeOrder={filters.order}
           search={filters.search}
           onStatusChange={onStatusChange}
           onGenreChange={onGenreChange}
+          onPlatformChange={onPlatformChange}
           onSearchChange={onSearchChange}
+          onSortByChange={onSortByChange}
+          onOrderChange={onOrderChange}
         />
       </div>
     );

@@ -1,4 +1,5 @@
 export * from './genres'
+export * from './gamesSort'
 export * from './mood'
 export * from './platforms'
 export * from './plans'

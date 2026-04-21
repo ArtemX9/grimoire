@@ -1,10 +1,10 @@
-import { GameStatus, Genre, IgdbGame } from '@grimoire/shared';
+import { GameStatus, Genre, IgdbGame, Platform, SortableField } from '@grimoire/shared';
 import { useState } from 'react';
 
 import { useCreateGameMutation, useGetGameStatsQuery } from '@/api/gamesApi';
 import { toast } from '@/components/ui/use-toast';
 import { LibraryPage } from '@/pages/LibraryPage/LibraryPage';
-import { setGenreFilter, setSearch, setStatusFilter } from '@/store/filtersSlice';
+import { setGenreFilter, setOrder, setPlatformFilter, setSearch, setSortBy, setStatusFilter } from '@/store/filtersSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { toggleAIDrawer } from '@/store/uiSlice';
 
@@ -49,8 +49,20 @@ export function LibraryPageContainer() {
     dispatch(setGenreFilter(genre));
   }
 
+  function handlePlatformChange(platform: Platform | null) {
+    dispatch(setPlatformFilter(platform));
+  }
+
   function handleSearchChange(search: string) {
     dispatch(setSearch(search));
+  }
+
+  function handleSortByChange(sortBy: SortableField | null) {
+    dispatch(setSortBy(sortBy));
+  }
+
+  function handleOrderChange(order: 'asc' | 'desc') {
+    dispatch(setOrder(order));
   }
 
   return (
@@ -64,7 +76,10 @@ export function LibraryPageContainer() {
       onAIDrawerOpen={() => dispatch(toggleAIDrawer())}
       onStatusChange={handleStatusChange}
       onGenreChange={handleGenreChange}
+      onPlatformChange={handlePlatformChange}
       onSearchChange={handleSearchChange}
+      onSortByChange={handleSortByChange}
+      onOrderChange={handleOrderChange}
       onGameSelect={handleAddGame}
     />
   );
