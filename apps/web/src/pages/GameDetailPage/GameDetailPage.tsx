@@ -1,4 +1,4 @@
-import { GameStatus, IgdbGame, Mood, UserGame } from '@grimoire/shared';
+import { GamePlatform, GameStatus, IgdbGame, Mood, UserGame } from '@grimoire/shared';
 import { ArrowLeft, Clock, Gamepad2, RefreshCcw, Star, Trash2 } from 'lucide-react';
 
 import IGDBGameSearchDialogContainer from '@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer';
@@ -54,6 +54,11 @@ interface IGameDetailPage {
   onDelete: () => void;
   onRemapGame: (game: IgdbGame, status: GameStatus, onSuccess: () => void, onError: () => void) => void;
   onBack: () => void;
+}
+
+function buildRemapSubtitle(platforms: GamePlatform[]): string | undefined {
+  if (platforms.length === 0) return undefined;
+  return platforms.map((p) => `Originally titled "${p.externalTitle}" on ${p.platformName}`).join(' · ');
 }
 
 export function GameDetailPage({
@@ -403,6 +408,7 @@ export function GameDetailPage({
 
         <IGDBGameSearchDialogContainer
           dialogTitle='Remap game'
+          subtitle={buildRemapSubtitle(game!.platforms)}
           progressIndicatorText='Remapping...'
           actionButtonTitle='Remap'
           open={remapDialogOpen}

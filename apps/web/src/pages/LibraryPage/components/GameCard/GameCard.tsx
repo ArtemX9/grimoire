@@ -2,6 +2,7 @@ import { GameStatus, UserGame } from '@grimoire/shared';
 import { Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import PLATFORM_ICONS from '@/constants/platformIcons';
 import { getGameDetailsURL } from '@/constants/routes';
 import { cn } from '@/utils/cn';
 
@@ -68,6 +69,19 @@ function GameCard({ game }: IGameCard) {
             </span>
           )}
         </div>
+        {renderPlatformIcons()}
+      </div>
+    );
+  }
+
+  function renderPlatformIcons() {
+    if (game.platforms.length === 0) return null;
+
+    return (
+      <div className='flex items-center gap-1 text-grimoire-muted'>
+        {game.platforms.map((p) => (
+          <span key={p.platformID}>{PLATFORM_ICONS[p.platformName]}</span>
+        ))}
       </div>
     );
   }

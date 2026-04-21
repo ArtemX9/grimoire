@@ -12,6 +12,7 @@ interface IAddGameDialog {
   open: boolean;
   searchQuery: string;
   dialogTitle: string;
+  subtitle?: string;
   progressIndicatorText: string;
   actionButtonTitle: string;
   searchResults: IgdbGame[];
@@ -29,6 +30,7 @@ function IGDBGameSearchDialog({
   searchQuery,
   searchResults,
   dialogTitle,
+  subtitle,
   actionButtonTitle,
   progressIndicatorText,
   isSearching,
@@ -60,6 +62,7 @@ function IGDBGameSearchDialog({
       <DialogContent className='max-w-md'>
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
+          {subtitle && <p className='font-sans text-xs text-grimoire-muted mt-0.5'>{subtitle}</p>}
         </DialogHeader>
 
         {renderSearch()}

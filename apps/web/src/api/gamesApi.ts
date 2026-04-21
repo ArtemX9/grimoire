@@ -87,10 +87,30 @@ export const gamesApi = api.injectEndpoints({
     updateGame: builder.mutation<UserGame, UpdateGameArgs>({
       query: ({ id, data }) => ({ url: `${BASE_URL_PATH}/${id}`, method: 'PATCH', body: data }),
       invalidatesTags: (_r, _e, { id }) => [{ type: 'Game', id }, 'Stats'],
-      onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
+      onQueryStarted: async ({ id }, { dispatch, queryFulfilled, getState }) => {
         try {
-          const { data } = await queryFulfilled;
-          dispatch(selectedGamePatched(data));
+          const { data: updatedGame } = await queryFulfilled;
+          dispatch(selectedGamePatched(updatedGame));
+
+          // Patch every active getGames cache entry that contains the updated game,
+          // so the Library list reflects the new data without a full refetch.
+          const state = getState() as RootState;
+          const queries = state[api.reducerPath].queries;
+
+          for (const key of Object.keys(queries)) {
+            const entry = queries[key];
+            if (entry?.endpointName !== 'getGames') continue;
+
+            const cachedGames = entry.data as UserGame[] | undefined;
+            if (!cachedGames?.some((g) => g.id === id)) continue;
+
+            dispatch(
+              gamesApi.util.updateQueryData('getGames', entry.originalArgs as unknown as GamesQuery, (draft) => {
+                const idx = draft.findIndex((g) => g.id === id);
+                if (idx !== -1) draft[idx] = updatedGame;
+              }),
+            );
+          }
         } catch {
           // leave slice state unchanged on failure — component handles toast
         }

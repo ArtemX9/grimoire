@@ -11,7 +11,7 @@ import { toggleAIDrawer } from '@/store/uiSlice';
 export function LibraryPageContainer() {
   const dispatch = useAppDispatch();
   const filters = useAppSelector((s) => s.filters);
-  const { stats, isStatsLoading } = useAppSelector((s) => s.games);
+  const { stats, isStatsLoading, isGamesLoading } = useAppSelector((s) => s.games);
   const isAIDrawerOpen = useAppSelector((s) => s.ui.isAIDrawerOpen);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [createGame] = useCreateGameMutation();
@@ -72,6 +72,7 @@ export function LibraryPageContainer() {
       stats={stats}
       filters={filters}
       isStatsLoading={isStatsLoading}
+      isGamesLoading={isGamesLoading}
       onAddDialogOpen={setAddDialogOpen}
       onAIDrawerOpen={() => dispatch(toggleAIDrawer())}
       onStatusChange={handleStatusChange}

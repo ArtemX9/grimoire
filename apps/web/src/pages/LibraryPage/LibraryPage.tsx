@@ -1,6 +1,9 @@
 import { GameStatus, Genre, IgdbGame, Platform, SortableField } from '@grimoire/shared';
 import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigationType } from 'react-router-dom';
+
+let _savedScrollTop = 0;
 
 import { GameStats } from '@/api/gamesApi';
 import AiPanelContainer from '@/components/AiPanel/AiPanelContainer';
@@ -23,6 +26,7 @@ interface ILibraryPage {
   addDialogOpen: boolean;
   aiDrawerOpen: boolean;
   isStatsLoading: boolean;
+  isGamesLoading: boolean;
   filters: FiltersState;
   stats: GameStats | null;
   onAddDialogOpen: (shouldOpen: boolean) => void;
@@ -42,6 +46,7 @@ export function LibraryPage({
   filters,
   stats,
   isStatsLoading,
+  isGamesLoading,
   onAddDialogOpen,
   onAIDrawerOpen,
   onStatusChange,
@@ -52,7 +57,41 @@ export function LibraryPage({
   onOrderChange,
   onGameSelect,
 }: ILibraryPage) {
+  const scrollRootRef = useRef<HTMLDivElement>(null);
+  const hasRestoredScroll = useRef(false);
+  const navigationType = useNavigationType();
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  useEffect(
+    function resetScrollOnFreshVisit() {
+      if (navigationType !== 'POP') {
+        _savedScrollTop = 0;
+      }
+    },
+    [],
+  );
+
+  useEffect(
+    function restoreScrollAfterGamesLoad() {
+      if (isGamesLoading) return;
+      if (hasRestoredScroll.current) return;
+      hasRestoredScroll.current = true;
+
+      if (navigationType !== 'POP' || _savedScrollTop === 0) return;
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const viewport = scrollRootRef.current?.querySelector<HTMLElement>('[data-radix-scroll-area-viewport]');
+          if (viewport) viewport.scrollTop = _savedScrollTop;
+        });
+      });
+    },
+    [isGamesLoading, navigationType],
+  );
+
+  function handleScroll(event: React.UIEvent<HTMLDivElement>) {
+    _savedScrollTop = (event.target as HTMLDivElement).scrollTop;
+  }
 
   return (
     <div className='flex h-full'>
@@ -69,7 +108,7 @@ export function LibraryPage({
         {renderHeader()}
         <UnresolvedGamesBannerContainer />
         {renderFilterBar()}
-        <ScrollArea className='flex-1'>
+        <ScrollArea ref={scrollRootRef} className='flex-1' onScrollCapture={handleScroll}>
           <div className='p-5'>
             <GameGridContainer />
           </div>

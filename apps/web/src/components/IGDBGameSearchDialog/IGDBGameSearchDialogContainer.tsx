@@ -11,6 +11,7 @@ import IGDBGameSearchDialog from './IGDBGameSearchDialog';
 
 interface IAddGameDialogContainer {
   dialogTitle: string;
+  subtitle?: string;
   progressIndicatorText: string;
   actionButtonTitle: string;
   open: boolean;
@@ -23,6 +24,7 @@ interface IAddGameDialogContainer {
 function IGDBGameSearchDialogContainer({
   gameStatusOptions,
   dialogTitle,
+  subtitle,
   progressIndicatorText,
   actionButtonTitle,
   open,
@@ -76,6 +78,7 @@ function IGDBGameSearchDialogContainer({
     <IGDBGameSearchDialog
       gameStatusOptions={gameStatusOptions}
       dialogTitle={dialogTitle}
+      subtitle={subtitle}
       progressIndicatorText={progressIndicatorText}
       actionButtonTitle={actionButtonTitle}
       open={open}

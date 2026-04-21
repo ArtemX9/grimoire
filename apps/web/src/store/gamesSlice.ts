@@ -15,6 +15,10 @@ function isRemapGameFulfilled(action: { type: string; meta?: { arg?: { endpointN
   return action.type === 'api/executeMutation/fulfilled' && action.meta?.arg?.endpointName === 'remapGame';
 }
 
+function isUpdateGameFulfilled(action: { type: string; meta?: { arg?: { endpointName?: string } } }) {
+  return action.type === 'api/executeMutation/fulfilled' && action.meta?.arg?.endpointName === 'updateGame';
+}
+
 export const GAMES_SLICE = 'games';
 
 export interface GamesState {
@@ -99,6 +103,12 @@ const gamesSlice = createSlice({
         state.isGamesLoading = false;
       })
       .addMatcher(isRemapGameFulfilled, (state, action: PayloadAction<UserGame>) => {
+        state.games = state.games.map((g) => (g.id === action.payload.id ? action.payload : g));
+        if (state.selectedGame?.id === action.payload.id) {
+          state.selectedGame = action.payload;
+        }
+      })
+      .addMatcher(isUpdateGameFulfilled, (state, action: PayloadAction<UserGame>) => {
         state.games = state.games.map((g) => (g.id === action.payload.id ? action.payload : g));
         if (state.selectedGame?.id === action.payload.id) {
           state.selectedGame = action.payload;
