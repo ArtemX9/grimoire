@@ -26,5 +26,6 @@ export enum Genre {
   Stealth = 'Stealth',
   Strategy = 'Strategy',
   Tactical = 'Tactical',
+  TBS = 'Turn-based strategy (TBS)',
   VisualNovel = 'Visual Novel',
 }
