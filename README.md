@@ -4,6 +4,8 @@ Personal game backlog manager with Steam sync, IGDB metadata, and AI-powered moo
 
 **Self-hostable. Open source. MIT.**
 
+![Grimoire library](.github/assets/library-screenshot.png)
+
 ## Features
 
 - Track games across statuses: backlog, playing, completed, dropped, wishlist
