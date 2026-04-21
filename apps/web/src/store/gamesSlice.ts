@@ -3,12 +3,16 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import type { GameStats } from '@/api/gamesApi';
 
-// String-based matchers for RTK Query getGames lifecycle actions.
+// String-based matchers for RTK Query lifecycle actions.
 // We cannot import gamesApi here (circular: gamesApi imports from gamesSlice),
 // so we match by action type string and endpointName instead.
 function isGetGamesAction(type: string) {
   return (action: { type: string; meta?: { arg?: { endpointName?: string } } }) =>
     action.type === type && action.meta?.arg?.endpointName === 'getGames';
+}
+
+function isRemapGameFulfilled(action: { type: string; meta?: { arg?: { endpointName?: string } } }) {
+  return action.type === 'api/executeMutation/fulfilled' && action.meta?.arg?.endpointName === 'remapGame';
 }
 
 export const GAMES_SLICE = 'games';
@@ -93,6 +97,12 @@ const gamesSlice = createSlice({
       })
       .addMatcher(isGetGamesAction('api/executeQuery/rejected'), (state) => {
         state.isGamesLoading = false;
+      })
+      .addMatcher(isRemapGameFulfilled, (state, action: PayloadAction<UserGame>) => {
+        state.games = state.games.map((g) => (g.id === action.payload.id ? action.payload : g));
+        if (state.selectedGame?.id === action.payload.id) {
+          state.selectedGame = action.payload;
+        }
       });
   },
 });
