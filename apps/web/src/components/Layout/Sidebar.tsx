@@ -75,7 +75,7 @@ function Sidebar() {
           onClick={handleAIClick}
           aria-label='Open AI recommendations'
           className={cn(
-            'flex flex-col items-center gap-1 px-6 py-3 font-sans text-[10px] transition-colors',
+            'hidden md:flex lg:hidden flex-col items-center gap-1 px-6 py-3 font-sans text-[10px] transition-colors',
             isAIDrawerOpen ? 'text-grimoire-gold' : 'text-grimoire-muted',
           )}
         >
@@ -133,7 +133,7 @@ function Sidebar() {
           onClick={handleAIClick}
           aria-label='Open AI recommendations'
           className={cn(
-            'flex items-center gap-3 rounded px-2 py-2 font-sans text-sm transition-colors',
+            'hidden md:flex lg:hidden items-center gap-3 rounded px-2 py-2 font-sans text-sm transition-colors',
             isAIDrawerOpen ? 'bg-grimoire-hover text-grimoire-gold' : 'text-grimoire-muted hover:bg-grimoire-hover hover:text-grimoire-ink',
           )}
         >
