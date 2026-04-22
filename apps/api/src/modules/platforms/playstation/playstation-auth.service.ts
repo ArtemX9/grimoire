@@ -17,16 +17,18 @@ export class PlaystationAuthService implements OnModuleInit {
   constructor(private config: ConfigService) {}
 
   async onModuleInit() {
+    const npsso = this.config.get<string>('app.playstation.npsso');
+    if (!npsso) return;
     this.accessCode = await this._getAccessCode();
     console.debug('PlaystationService: Successfully exchanged NPSSO to Access Code');
     await this._getAuthorization();
   }
 
   async getAuthorization(): Promise<AuthTokensResponse> {
-    if (Date.now() >= this.tokenExpiry) await this.refreshToken();
     if (!this.authorization) {
-      throw new Error('Cannot obtain authorisation data');
+      throw new Error('PSN is not configured — set PSN_NPSSO to use PlayStation features');
     }
+    if (Date.now() >= this.tokenExpiry) await this.refreshToken();
     return this.authorization;
   }
 

@@ -144,12 +144,26 @@ describe('PlaystationAuthService', () => {
       expect(psnApi.exchangeRefreshTokenForAuthTokens).toHaveBeenCalledTimes(1);
     });
 
-    it('throws when the NPSSO is undefined', async () => {
-      (psnApi.exchangeNpssoForAccessCode as jest.Mock).mockRejectedValue(new Error('Invalid NPSSO'));
+    it('is a no-op when the NPSSO is undefined — does not call PSN APIs', async () => {
+      jest.resetAllMocks();
 
-      service = await createService(undefined);
+      const { ConfigService } = await import('@nestjs/config');
+      const configGetMock = jest.fn().mockReturnValue(undefined);
+      const configMock = { get: configGetMock };
 
-      await expect(service.onModuleInit()).rejects.toThrow('Invalid NPSSO');
+      const localModule = await Test.createTestingModule({
+        providers: [
+          PlaystationAuthService,
+          { provide: ConfigService, useValue: configMock },
+        ],
+      }).compile();
+      const localService = localModule.get<PlaystationAuthService>(PlaystationAuthService);
+
+      await expect(localService.onModuleInit()).resolves.toBeUndefined();
+      expect(psnApi.exchangeNpssoForAccessCode).not.toHaveBeenCalled();
+      expect(psnApi.exchangeAccessCodeForAuthTokens).not.toHaveBeenCalled();
+
+      await localModule.close();
     });
 
     it('propagates PSN API errors that occur during the access-code exchange', async () => {
