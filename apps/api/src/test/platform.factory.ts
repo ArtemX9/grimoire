@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 
 import { Platform } from '@grimoire/shared';
 
-import { PlatformResponse } from '../modules/platforms/steam/steam.types';
+import { PlatformResponse } from '../modules/platforms/common/types';
 
 export interface IGeneratePlatform {
   id?: string;

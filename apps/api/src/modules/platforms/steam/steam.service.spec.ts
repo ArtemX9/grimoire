@@ -157,12 +157,12 @@ describe('SteamService', () => {
   // connectPlatform
   // ---------------------------------------------------------------------------
 
-  describe('connectPlatform', () => {
+  describe('connect', () => {
     it('upserts the platform record and returns a mapped response', async () => {
       const platformRow = makePlatformRow();
       (prisma.userPlatform.upsert as jest.Mock).mockResolvedValue(platformRow);
 
-      const result = await service.connectPlatform('user-1', '76561198000000001');
+      const result = await service.connect('user-1', '76561198000000001');
 
       expect(prisma.userPlatform.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -178,7 +178,7 @@ describe('SteamService', () => {
     it('does not expose accessToken or refreshToken in the response', async () => {
       (prisma.userPlatform.upsert as jest.Mock).mockResolvedValue(makePlatformRow({ accessToken: 'secret', refreshToken: 'also-secret' }));
 
-      const result = await service.connectPlatform('user-1', 'steam-id');
+      const result = await service.connect('user-1', 'steam-id');
 
       expect(result).not.toHaveProperty('accessToken');
       expect(result).not.toHaveProperty('refreshToken');
@@ -187,7 +187,7 @@ describe('SteamService', () => {
     it('maps a null lastSyncAt to undefined in the response', async () => {
       (prisma.userPlatform.upsert as jest.Mock).mockResolvedValue(makePlatformRow({ lastSyncAt: null }));
 
-      const result = await service.connectPlatform('user-1', 'steam-id');
+      const result = await service.connect('user-1', 'steam-id');
 
       expect(result.lastSyncAt).toBeUndefined();
     });
@@ -196,7 +196,7 @@ describe('SteamService', () => {
       const syncDate = new Date('2024-01-15T12:00:00Z');
       (prisma.userPlatform.upsert as jest.Mock).mockResolvedValue(makePlatformRow({ lastSyncAt: syncDate }));
 
-      const result = await service.connectPlatform('user-1', 'steam-id');
+      const result = await service.connect('user-1', 'steam-id');
 
       expect(result.lastSyncAt).toEqual(syncDate);
     });
@@ -206,12 +206,12 @@ describe('SteamService', () => {
   // enqueueSteamSync
   // ---------------------------------------------------------------------------
 
-  describe('enqueueSteamSync', () => {
+  describe('enqueueSync', () => {
     it('adds a sync job to the queue and returns { queued: true } when Steam is connected', async () => {
       (prisma.userPlatform.findUnique as jest.Mock).mockResolvedValue(makePlatformRow());
       steamQueue.add.mockResolvedValue({});
 
-      const result = await service.enqueueSteamSync('user-1');
+      const result = await service.enqueueSync('user-1');
 
       expect(steamQueue.add).toHaveBeenCalledWith(
         'sync',
@@ -224,7 +224,7 @@ describe('SteamService', () => {
     it('returns { queued: false } with a reason when Steam is not connected', async () => {
       (prisma.userPlatform.findUnique as jest.Mock).mockResolvedValue(null);
 
-      const result = await service.enqueueSteamSync('user-1');
+      const result = await service.enqueueSync('user-1');
 
       expect(steamQueue.add).not.toHaveBeenCalled();
       expect(result.queued).toBe(false);
@@ -234,7 +234,7 @@ describe('SteamService', () => {
     it('looks up the platform using the correct userId_platformId compound key', async () => {
       (prisma.userPlatform.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await service.enqueueSteamSync('user-99');
+      await service.enqueueSync('user-99');
 
       expect(prisma.userPlatform.findUnique).toHaveBeenCalledWith({
         where: { userId_platformId: { userId: 'user-99', platformId: 1 } },
@@ -245,7 +245,7 @@ describe('SteamService', () => {
       (prisma.userPlatform.findUnique as jest.Mock).mockResolvedValue(makePlatformRow());
       steamQueue.add.mockResolvedValue({});
 
-      await service.enqueueSteamSync('user-1');
+      await service.enqueueSync('user-1');
 
       const opts = steamQueue.add.mock.calls[0][2];
       expect(opts.attempts).toBe(3);
@@ -257,7 +257,7 @@ describe('SteamService', () => {
       (prisma.userPlatform.findUnique as jest.Mock).mockResolvedValue(makePlatformRow({ externalId: customSteamId }));
       steamQueue.add.mockResolvedValue({});
 
-      await service.enqueueSteamSync('user-1');
+      await service.enqueueSync('user-1');
 
       const payload = steamQueue.add.mock.calls[0][1];
       expect(payload.steamId).toBe(customSteamId);
