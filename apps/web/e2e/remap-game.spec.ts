@@ -151,6 +151,25 @@ test.describe('Remap game — navigates to merged game', () => {
       await expect(remapDialog).toBeVisible({ timeout: 10_000 });
 
       // -----------------------------------------------------------------------
+      // Mock IGDB search to return deterministic results in CI
+      // -----------------------------------------------------------------------
+      await page.route('**/api/v1/igdb/search*', (route) => {
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([
+            {
+              id: 119133,
+              name: 'Elden Ring',
+              cover: 'https://images.igdb.com/igdb/image/upload/t_cover_big_2x/co4jni.jpg',
+              genres: ['Role-playing (RPG)', 'Action'],
+              summary: 'An action RPG developed by FromSoftware.',
+            },
+          ]),
+        });
+      });
+
+      // -----------------------------------------------------------------------
       // 9. Type a search term and wait for real IGDB results to appear.
       //    We search for "Elden Ring" — a well-known game that will always
       //    appear in IGDB — and click whichever result comes back first.

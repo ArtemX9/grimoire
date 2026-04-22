@@ -11,6 +11,9 @@ export class IgdbService implements OnModuleInit {
   constructor(private config: ConfigService) {}
 
   async onModuleInit() {
+    const clientId = this.config.get<string>('app.igdb.clientId');
+    const clientSecret = this.config.get<string>('app.igdb.clientSecret');
+    if (!clientId || !clientSecret) return;
     await this.refreshToken();
   }
 
@@ -22,6 +25,7 @@ export class IgdbService implements OnModuleInit {
       body: `search "${query}"; fields id,name,cover.url,genres.name,summary,storyline,first_release_date,total_rating; limit ${limit};`,
     });
     const games: IgdbGameRaw[] = await res.json();
+    if (!Array.isArray(games)) return [];
     return games.map((game) => ({
       ...game,
       genres: game.genres?.map((genre) => genre.name),
@@ -37,7 +41,8 @@ export class IgdbService implements OnModuleInit {
       body: `where id = ${id}; fields id,name,cover.url,genres.name,summary,storyline,first_release_date,total_rating;`,
     });
     const data: IgdbGameRaw[] = await res.json();
-    const game = { ...data?.[0] } as IgdbGame;
+    if (!Array.isArray(data) || !data[0]) return undefined;
+    const game = { ...data[0] } as IgdbGame;
     if (!!data[0]) {
       game.genres = data[0].genres?.map((genre) => genre?.name) ?? [];
       game.cover = 'https:' + data[0].cover?.url.replace('thumb', 'cover_big_2x');
