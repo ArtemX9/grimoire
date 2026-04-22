@@ -7,21 +7,12 @@ import { Queue } from 'bullmq';
 import { SteamGame } from '@grimoire/shared';
 
 import { PrismaService } from '../../../prisma/prisma.service';
+import { iPlatformService } from '../common/sync-service';
+import { EnqueueResult, PlatformResponse, SyncStatusResponse, UserPlatformRelations } from '../common/types';
 import { PLATFORM_ID_STEAM, STEAM_QUEUE_TITLE } from './constants';
-import { EnqueueResult, PlatformResponse, SyncStatusResponse, UserPlatformRelations } from './steam.types';
-
-type PrismaPlatform = {
-  id: string;
-  userId: string;
-  platform: string;
-  externalId: string;
-  accessToken: string | null;
-  refreshToken: string | null;
-  lastSyncAt: Date | null;
-};
 
 @Injectable()
-export class SteamService {
+export class SteamService implements iPlatformService {
   constructor(
     @InjectQueue(STEAM_QUEUE_TITLE) private steamQueue: Queue,
     private config: ConfigService,
@@ -37,7 +28,7 @@ export class SteamService {
     return data.response?.games ?? [];
   }
 
-  async connectPlatform(userId: string, steamId: string): Promise<PlatformResponse> {
+  async connect(userId: string, steamId: string): Promise<PlatformResponse> {
     const platform = await this.prisma.userPlatform.upsert({
       where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
       update: { externalId: steamId },
@@ -49,7 +40,7 @@ export class SteamService {
     return this._toResponse(platform);
   }
 
-  async enqueueSteamSync(userId: string): Promise<EnqueueResult> {
+  async enqueueSync(userId: string): Promise<EnqueueResult> {
     const platform = await this.prisma.userPlatform.findUnique({
       where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
     });

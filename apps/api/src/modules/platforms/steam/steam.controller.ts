@@ -13,12 +13,12 @@ export class SteamController {
   @Post('connect')
   @IsValidSteamID()
   connect(@CurrentUser() user: User, @Body('steamId') steamId: string) {
-    return this.steamService.connectPlatform(user.id, steamId);
+    return this.steamService.connect(user.id, steamId);
   }
 
   @Post('sync')
   sync(@CurrentUser() user: User) {
-    return this.steamService.enqueueSteamSync(user.id);
+    return this.steamService.enqueueSync(user.id);
   }
 
   @Get('status')

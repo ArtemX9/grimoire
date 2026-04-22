@@ -5,12 +5,13 @@ import { Queue } from 'bullmq';
 import { UserPlayedGamesResponse, getProfileFromUserName, getUserPlayedGames, makeUniversalSearch } from 'psn-api';
 
 import { PrismaService } from '../../../prisma/prisma.service';
-import { PlatformResponse, SyncStatusResponse, UserPlatformRelations } from '../steam/steam.types';
+import { iPlatformService } from '../common/sync-service';
+import { PlatformResponse, SyncStatusResponse, UserPlatformRelations } from '../common/types';
 import { GAMES_LIST_LIMIT, PLATFORM_ID_PLAYSTATION, PLAYSTATION_QUEUE_TITLE } from './constants';
 import { PlaystationAuthService } from './playstation-auth.service';
 
 @Injectable()
-export class PlaystationService {
+export class PlaystationService implements iPlatformService {
   constructor(
     @InjectQueue(PLAYSTATION_QUEUE_TITLE) private playstationQueue: Queue,
     private playstationAuth: PlaystationAuthService,
