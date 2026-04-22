@@ -22,9 +22,13 @@ function renderPage(game: UserGame | null, props = {}) {
     deleteDialogOpen: false,
     logSessionOpen: false,
     remapDialogOpen: false,
+    platformPickerOpen: false,
+    selectedPlatformForRemap: null,
     onDeleteDialogOpen: vi.fn(),
     onLogSessionOpen: vi.fn(),
     onRemapDialogOpen: vi.fn(),
+    onPlatformPickerOpen: vi.fn(),
+    onPlatformSelect: vi.fn(),
     onStatusChange: vi.fn(),
     onMoodsChange: vi.fn(),
     onRatingChange: vi.fn(),
@@ -102,5 +106,61 @@ describe('GameDetailPage', () => {
     const game = generateUserGame({ summary: undefined, storyLine: undefined });
     const { queryByText } = renderPage(game);
     expect(queryByText('About')).toBeNull();
+  });
+
+  it('calls onRemapDialogOpen when Re-map is clicked and game has no platforms', () => {
+    const onRemapDialogOpen = vi.fn();
+    const game = generateUserGame({ platforms: [] });
+    const { getByRole } = renderPage(game, { onRemapDialogOpen });
+    getByRole('button', { name: /re-map/i }).click();
+    expect(onRemapDialogOpen).toHaveBeenCalledWith(true);
+  });
+
+  it('calls onPlatformSelect with the single platform when Re-map is clicked and game has 1 platform', () => {
+    const onPlatformSelect = vi.fn();
+    const platform = { platformID: 1, platformName: Platform.STEAM, externalID: '123', externalTitle: 'Half-Life 2' };
+    const game = generateUserGame({ platforms: [platform] });
+    const { getByRole } = renderPage(game, { onPlatformSelect });
+    getByRole('button', { name: /re-map/i }).click();
+    expect(onPlatformSelect).toHaveBeenCalledWith(platform);
+  });
+
+  it('calls onPlatformPickerOpen when Re-map is clicked and game has 2+ platforms', () => {
+    const onPlatformPickerOpen = vi.fn();
+    const game = generateUserGame({
+      platforms: [
+        { platformID: 1, platformName: Platform.STEAM, externalID: '123', externalTitle: 'Half-Life 2' },
+        { platformID: 2, platformName: Platform.PlayStation, externalID: 'CUSA001', externalTitle: 'Half-Life 2 PS' },
+      ],
+    });
+    const { getByRole } = renderPage(game, { onPlatformPickerOpen });
+    getByRole('button', { name: /re-map/i }).click();
+    expect(onPlatformPickerOpen).toHaveBeenCalledWith(true);
+  });
+
+  it('renders platform picker dialog entries when platformPickerOpen is true', () => {
+    const game = generateUserGame({
+      platforms: [
+        { platformID: 1, platformName: Platform.STEAM, externalID: '123', externalTitle: 'Half-Life 2' },
+        { platformID: 2, platformName: Platform.PlayStation, externalID: 'CUSA001', externalTitle: 'Half-Life 2 PS' },
+      ],
+    });
+    const { getByText } = renderPage(game, { platformPickerOpen: true });
+    expect(getByText('Half-Life 2')).toBeInTheDocument();
+    expect(getByText('Half-Life 2 PS')).toBeInTheDocument();
+  });
+
+  it('calls onPlatformSelect when a platform entry is clicked in the picker', () => {
+    const onPlatformSelect = vi.fn();
+    const platform = { platformID: 1, platformName: Platform.STEAM, externalID: '123', externalTitle: 'Half-Life 2' };
+    const game = generateUserGame({
+      platforms: [
+        platform,
+        { platformID: 2, platformName: Platform.PlayStation, externalID: 'CUSA001', externalTitle: 'Half-Life 2 PS' },
+      ],
+    });
+    const { getByText } = renderPage(game, { platformPickerOpen: true, onPlatformSelect });
+    getByText('Half-Life 2').closest('button')!.click();
+    expect(onPlatformSelect).toHaveBeenCalledWith(platform);
   });
 });

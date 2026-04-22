@@ -1,11 +1,11 @@
-import { GameStatus, IgdbGame, Mood, UpdateGameDto } from '@grimoire/shared';
+import { GamePlatform, GameStatus, IgdbGame, Mood, UpdateGameDto } from '@grimoire/shared';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useDeleteGameMutation, useGetGameQuery, useRemapGameMutation, useUpdateGameMutation } from '@/api/gamesApi';
 import { useGetGameSessionsQuery } from '@/api/sessionsApi';
 import { toast } from '@/components/ui/use-toast';
-import { ROUTES } from '@/constants/routes';
+import { ROUTES, getGameDetailsURL } from '@/constants/routes';
 import { useAppSelector } from '@/store/hooks';
 
 import { GameDetailPage } from './GameDetailPage';
@@ -28,6 +28,8 @@ function GameDetailPageContainer() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [logSessionOpen, setLogSessionOpen] = useState(false);
   const [remapDialogOpen, setRemapDialogOpen] = useState(false);
+  const [platformPickerOpen, setPlatformPickerOpen] = useState(false);
+  const [selectedPlatformForRemap, setSelectedPlatformForRemap] = useState<GamePlatform | null>(null);
 
   async function handleStatusChange(status: GameStatus) {
     try {
@@ -73,9 +75,15 @@ function GameDetailPageContainer() {
     }
   }
 
+  function handlePlatformSelect(platform: GamePlatform) {
+    setSelectedPlatformForRemap(platform);
+    setPlatformPickerOpen(false);
+    setRemapDialogOpen(true);
+  }
+
   async function handleRemapGame(igdbGame: IgdbGame, _status: GameStatus, onSuccessCallback: () => void, onErrorCallback: () => void) {
     try {
-      await remapGame({
+      const returnedGame = await remapGame({
         id: game!.id,
         data: {
           igdbId: igdbGame.id,
@@ -85,8 +93,15 @@ function GameDetailPageContainer() {
           summary: igdbGame.summary,
           storyLine: igdbGame.storyline,
           releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,
+          ...(selectedPlatformForRemap
+            ? { platformId: selectedPlatformForRemap.platformID, externalId: selectedPlatformForRemap.externalID }
+            : {}),
         },
       }).unwrap();
+      setSelectedPlatformForRemap(null);
+      if (returnedGame.id !== game!.id) {
+        navigate(getGameDetailsURL(returnedGame.id), { replace: true });
+      }
       toast({ title: `Re-mapped to "${igdbGame.name}"` });
       onSuccessCallback();
     } catch {
@@ -105,9 +120,13 @@ function GameDetailPageContainer() {
       deleteDialogOpen={deleteDialogOpen}
       logSessionOpen={logSessionOpen}
       remapDialogOpen={remapDialogOpen}
+      platformPickerOpen={platformPickerOpen}
+      selectedPlatformForRemap={selectedPlatformForRemap}
       onDeleteDialogOpen={setDeleteDialogOpen}
       onLogSessionOpen={setLogSessionOpen}
       onRemapDialogOpen={setRemapDialogOpen}
+      onPlatformPickerOpen={setPlatformPickerOpen}
+      onPlatformSelect={handlePlatformSelect}
       onStatusChange={handleStatusChange}
       onMoodsChange={handleMoodsChange}
       onRatingChange={handleRatingChange}

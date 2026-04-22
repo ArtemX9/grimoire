@@ -44,9 +44,13 @@ interface IGameDetailPage {
   deleteDialogOpen: boolean;
   logSessionOpen: boolean;
   remapDialogOpen: boolean;
+  platformPickerOpen: boolean;
+  selectedPlatformForRemap: GamePlatform | null;
   onDeleteDialogOpen: (open: boolean) => void;
   onLogSessionOpen: (open: boolean) => void;
   onRemapDialogOpen: (open: boolean) => void;
+  onPlatformPickerOpen: (open: boolean) => void;
+  onPlatformSelect: (platform: GamePlatform) => void;
   onStatusChange: (status: GameStatus) => void;
   onMoodsChange: (moods: Mood[]) => void;
   onRatingChange: (rating: number) => void;
@@ -56,7 +60,8 @@ interface IGameDetailPage {
   onBack: () => void;
 }
 
-function buildRemapSubtitle(platforms: GamePlatform[]): string | undefined {
+function buildRemapSubtitle(platforms: GamePlatform[], selected: GamePlatform | null): string | undefined {
+  if (selected) return `Originally titled "${selected.externalTitle}" on ${selected.platformName}`;
   if (platforms.length === 0) return undefined;
   return platforms.map((p) => `Originally titled "${p.externalTitle}" on ${p.platformName}`).join(' · ');
 }
@@ -70,9 +75,13 @@ export function GameDetailPage({
   deleteDialogOpen,
   logSessionOpen,
   remapDialogOpen,
+  platformPickerOpen,
+  selectedPlatformForRemap,
   onDeleteDialogOpen,
   onLogSessionOpen,
   onRemapDialogOpen,
+  onPlatformPickerOpen,
+  onPlatformSelect,
   onStatusChange,
   onMoodsChange,
   onRatingChange,
@@ -213,6 +222,16 @@ export function GameDetailPage({
   }
 
   function renderActionButtons() {
+    function handleRemapClick() {
+      if (game!.platforms.length > 1) {
+        onPlatformPickerOpen(true);
+      } else if (game!.platforms.length === 1) {
+        onPlatformSelect(game!.platforms[0]);
+      } else {
+        onRemapDialogOpen(true);
+      }
+    }
+
     return (
       <div className='mt-auto flex flex-wrap items-center gap-2 pt-2'>
         <button
@@ -222,7 +241,7 @@ export function GameDetailPage({
           Log session
         </button>
         <button
-          onClick={() => onRemapDialogOpen(true)}
+          onClick={handleRemapClick}
           className='flex items-center gap-1.5 rounded border border-grimoire-border px-4 py-2 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
         >
           <RefreshCcw className='h-3.5 w-3.5' />
@@ -406,9 +425,11 @@ export function GameDetailPage({
 
         <LogSessionDialog open={logSessionOpen} gameId={game!.id} onOpenChange={onLogSessionOpen} />
 
+        {renderPlatformPickerDialog()}
+
         <IGDBGameSearchDialogContainer
           dialogTitle='Remap game'
-          subtitle={buildRemapSubtitle(game!.platforms)}
+          subtitle={buildRemapSubtitle(game!.platforms, selectedPlatformForRemap)}
           progressIndicatorText='Remapping...'
           actionButtonTitle='Remap'
           open={remapDialogOpen}
@@ -416,6 +437,36 @@ export function GameDetailPage({
           onGameSelect={onRemapGame}
         />
       </>
+    );
+  }
+
+  function renderPlatformPickerDialog() {
+    return (
+      <Dialog open={platformPickerOpen} onOpenChange={onPlatformPickerOpen}>
+        <DialogContent className='max-w-sm'>
+          <DialogHeader>
+            <DialogTitle>Which platform entry to remap?</DialogTitle>
+          </DialogHeader>
+          <p className='font-sans text-sm text-grimoire-muted'>
+            This game has multiple platform entries. Select the one you want to remap.
+          </p>
+          <div className='flex flex-col gap-2 pt-1'>
+            {game!.platforms.map((platform) => (
+              <button
+                key={platform.platformID}
+                onClick={() => onPlatformSelect(platform)}
+                className='flex items-center gap-3 rounded border border-grimoire-border bg-grimoire-hover px-4 py-3 text-left transition-colors hover:border-grimoire-border-lg hover:bg-grimoire-card'
+              >
+                <PlatformIcon platform={platform.platformName} className='h-4 w-4 shrink-0 text-grimoire-muted' />
+                <div className='flex min-w-0 flex-col gap-0.5'>
+                  <span className='font-sans text-xs font-medium text-grimoire-ink'>{platform.platformName}</span>
+                  <span className='truncate font-sans text-xs text-grimoire-muted'>{platform.externalTitle}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
