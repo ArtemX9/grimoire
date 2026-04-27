@@ -25,7 +25,7 @@ Personal game backlog manager with Steam and PSN sync, IGDB metadata, and AI-pow
 - IGDB metadata: covers, genres, ratings
 - AI recommendations based on your mood, session length, and actual play history (not generic suggestions)
 - LLM streaming via SSE — token-by-token responses
-- Multi-provider LLM: Grok (default), Claude, OpenAI — swap via config
+- Multi-provider LLM: Grok (default), Claude, OpenAI, or Ollama (local) — swap via config
 
 ## Stack
 
@@ -85,12 +85,65 @@ docker compose exec api npx prisma migrate deploy
 4. Set up Cloudflare for dynamic DNS + SSL
 5. `docker compose -f docker-compose.prod.yml up -d`
 
+## Testing
+
+### Unit tests
+
+```bash
+pnpm --filter api test
+pnpm --filter web test:run
+```
+
+### E2E tests (Playwright)
+
+E2E tests run against a separate `tests` database to avoid touching your dev data.
+
+**One-time setup — create the test database:**
+
+```bash
+docker compose exec postgres psql -U postgres -c "CREATE DATABASE tests;"
+```
+
+**Each time before running E2E:**
+
+```bash
+# 1. Migrate and seed the test database
+pnpm --filter api e2e:setup
+
+# 2. Start the API pointed at the test database
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/tests pnpm --filter api dev
+
+# 3. In a separate terminal — start the frontend
+pnpm --filter web dev
+
+# 4. In a third terminal — run the tests
+pnpm --filter web e2e
+```
+
+Test credentials (created by the seed script):
+
+| Role | Email | Password |
+|---|---|---|
+| User | `test@grimoire.test` | `password123` |
+| User 2 | `test2@grimoire.test` | `password123` |
+| Admin | `admin@grimoire.test` | `password123` |
+
+To run against a built frontend (closer to production):
+
+```bash
+pnpm --filter web build
+E2E_BASE_URL=http://localhost:4173 pnpm --filter web preview &
+pnpm --filter web e2e
+```
+
 ## Environment variables
 
 See `apps/api/.env.example` for full reference.
 
 Key vars:
-- `LLM_PROVIDER` — `grok` | `claude` | `openai`
+- `LLM_PROVIDER` — `grok` | `claude` | `openai` | `ollama`
+- `OLLAMA_BASE_URL` — Ollama server URL (default: `http://localhost:11434`)
+- `OLLAMA_MODEL` — model name to use, e.g. `llama3.2`, `mistral` (default: `llama3.2`)
 - `STEAM_API_KEY` — from [Steam Web API](https://steamcommunity.com/dev/apikey)
 - `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET` — from [Twitch Dev Console](https://dev.twitch.tv/console) for IGDB
 - `PSN_NPSSO` — 64-character token for PlayStation Network sync. To obtain: log in to [account.sonyentertainment.com](https://account.sonyentertainment.com), then visit `https://ca.account.sony.com/api/v1/ssocookie` — the `npsso` field in the response is your token. Tokens expire; regenerate by repeating this step.
