@@ -8,6 +8,7 @@
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
+    "seed:demo": "pnpm --filter api seed:demo",
     "db:migrate": "pnpm --filter api prisma migrate dev",
     "db:generate": "pnpm --filter api prisma generate",
     "db:studio": "pnpm --filter api prisma studio",

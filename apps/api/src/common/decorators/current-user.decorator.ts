@@ -6,6 +6,7 @@ export interface RequestUser {
   role: 'ADMIN' | 'USER';
   plan: string;
   mustChangePassword: boolean;
+  isDemo: boolean;
 }
 
 export const CurrentUser = createParamDecorator((_data: unknown, ctx: ExecutionContext) => {

@@ -4,6 +4,16 @@ Personal game backlog manager with Steam sync, IGDB metadata, and AI-powered moo
 
 **Self-hostable. Open source. MIT.**
 
+[![Live demo](https://img.shields.io/badge/Live%20Demo-grimoire.arty--nas.work-blue?logo=googlechrome&logoColor=white)](https://grimoire.arty-nas.work)
+[![API health](https://img.shields.io/website?label=api&url=https%3A%2F%2Fgrimoire.arty-nas.work%2Fhealth)](https://grimoire.arty-nas.work/health)
+![Steam](https://img.shields.io/badge/Steam-sync-1b2838?logo=steam&logoColor=white)
+![PlayStation](https://img.shields.io/badge/PSN-sync-003791?logo=playstation&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-compatible-412991?logo=openai&logoColor=white)
+![Grok](https://img.shields.io/badge/Grok-xAI-000000?logo=x&logoColor=white)
+
+> **Try it live →** [Open app](https://grimoire.arty-nas.work)  
+> Demo account: `demo@grimoire.app` / `demo1234`
+
 ![Grimoire library](.github/assets/library-screenshot.png)
 
 ## Features
@@ -35,8 +45,8 @@ Personal game backlog manager with Steam sync, IGDB metadata, and AI-powered moo
 
 ```bash
 # Clone
-git clone https://github.com/YOUR_USERNAME/backlog-gg
-cd backlog-gg
+git clone https://github.com/YOUR_USERNAME/grimoire
+cd grimoire
 
 # Install
 pnpm install
@@ -81,12 +91,16 @@ Key vars:
 - `LLM_PROVIDER` — `grok` | `claude` | `openai`
 - `STEAM_API_KEY` — from [Steam Web API](https://steamcommunity.com/dev/apikey)
 - `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET` — from [Twitch Dev Console](https://dev.twitch.tv/console) for IGDB
+- `PSN_NPSSO` — 64-character token for PlayStation Network sync. To obtain: log in to [account.sonyentertainment.com](https://account.sonyentertainment.com), then visit `https://ca.account.sony.com/api/v1/ssocookie` — the `npsso` field in the response is your token. Tokens expire; regenerate by repeating this step.
 
 ## Architecture
 
 ### Auth and admin flow
 
 Grimoire uses a closed registration model — there is no public sign-up endpoint.
+
+**Liveness probe**
+`GET /health` returns `{ status: 'ok' }` — unauthenticated, excluded from the `/api/v1` prefix. Suitable for Docker healthchecks, load balancers, or uptime monitors.
 
 **First-time setup**
 `POST /api/v1/admin/setup` is the only unauthenticated write endpoint. It creates the first admin account and is rejected with `400 Bad Request` once any user exists.

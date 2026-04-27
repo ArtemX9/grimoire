@@ -13,10 +13,17 @@ import { ClaudeProvider } from './providers/claude.provider';
 import { GrokProvider } from './providers/grok.provider';
 import { LLMProvider } from './providers/llm-provider.interface';
 import { OllamaProvider } from './providers/ollama.provider';
+import { DEMO_AI_HOURLY_LIMIT } from './redis.provider';
+
+interface DemoHourlyBucket {
+  count: number;
+  windowStart: number;
+}
 
 @Injectable()
 export class AiService {
   private provider: LLMProvider;
+  private readonly demoHourlyCounters = new Map<string, DemoHourlyBucket>();
 
   constructor(
     private config: ConfigService,
@@ -48,12 +55,15 @@ export class AiService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { aiEnabled: true, aiRequestsUsed: true, aiRequestsLimit: true },
+      select: { isDemo: true, aiEnabled: true, aiRequestsUsed: true, aiRequestsLimit: true },
     });
 
     if (!user) throw new ForbiddenException('User not found');
     if (!user.aiEnabled) throw new ForbiddenException('AI features are disabled for your account');
-    if (user.aiRequestsLimit !== null && user.aiRequestsUsed >= user.aiRequestsLimit) {
+
+    if (user.isDemo) {
+      this._checkDemoAiHourlyLimit(userId);
+    } else if (user.aiRequestsLimit !== null && user.aiRequestsUsed >= user.aiRequestsLimit) {
       throw new ForbiddenException('AI request limit reached');
     }
 
@@ -61,6 +71,23 @@ export class AiService {
       where: { id: userId },
       data: { aiRequestsUsed: { increment: 1 } },
     });
+  }
+
+  private _checkDemoAiHourlyLimit(userId: string): void {
+    const now = Date.now();
+    const windowMs = 3_600_000;
+    const bucket = this.demoHourlyCounters.get(userId);
+
+    if (!bucket || now - bucket.windowStart >= windowMs) {
+      this.demoHourlyCounters.set(userId, { count: 1, windowStart: now });
+      return;
+    }
+
+    if (bucket.count >= DEMO_AI_HOURLY_LIMIT) {
+      throw new ForbiddenException(`Demo AI limit reached (${DEMO_AI_HOURLY_LIMIT} requests per hour)`);
+    }
+
+    bucket.count += 1;
   }
 
   async buildContext(userId: string, request: RecommendationRequest): Promise<RecommendationContext> {

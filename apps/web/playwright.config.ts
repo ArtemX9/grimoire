@@ -17,6 +17,25 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
 
+  webServer: [
+    {
+      command: 'pnpm --filter api dev',
+      url: 'http://localhost:3000/health',
+      timeout: 60_000,
+      reuseExistingServer: true,
+      stdout: 'ignore',
+      stderr: 'ignore',
+    },
+    {
+      command: 'pnpm --filter web dev',
+      url: 'http://localhost:5173',
+      timeout: 60_000,
+      reuseExistingServer: true,
+      stdout: 'ignore',
+      stderr: 'ignore',
+    },
+  ],
+
   projects: [
     {
       name: 'chromium',

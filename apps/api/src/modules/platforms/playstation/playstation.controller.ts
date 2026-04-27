@@ -3,6 +3,7 @@ import { Controller, Get, Post, Query } from '@nestjs/common';
 import { User } from '@grimoire/shared';
 
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import { NotDemo } from '../../../common/decorators/not-demo.decorator';
 import { PlaystationService } from './playstation.service';
 
 @Controller('platforms/playstation')
@@ -20,6 +21,7 @@ export class PlaystationController {
   }
 
   @Post('sync')
+  @NotDemo()
   sync(@CurrentUser() user: User) {
     return this.playstationService.enqueueSync(user.id);
   }

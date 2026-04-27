@@ -14,6 +14,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma": "prisma",
     "seed": "tsx prisma/seed.ts",
+    "seed:demo": "tsx prisma/seed-demo.ts",
     "seed:test": "DOTENV_CONFIG_PATH=.env.test tsx prisma/seed.ts",
     "migrate:test": "dotenv -e .env.test -- prisma migrate deploy",
     "e2e:setup": "pnpm migrate:test && pnpm seed:test"

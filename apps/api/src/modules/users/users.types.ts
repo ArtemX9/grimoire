@@ -4,6 +4,7 @@ export interface UserResponse {
   name?: string;
   plan: string;
   role: string;
+  isDemo: boolean;
   mustChangePassword: boolean;
   aiEnabled: boolean;
   aiRequestsLimit: number | null;

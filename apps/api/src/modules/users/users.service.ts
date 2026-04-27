@@ -11,6 +11,7 @@ type PrismaUser = {
   name: string | null;
   plan: string;
   role: string;
+  isDemo: boolean;
   mustChangePassword: boolean;
   aiEnabled: boolean;
   aiRequestsLimit: number | null;
@@ -29,6 +30,7 @@ export class UsersService {
       name: user.name ?? undefined,
       plan: user.plan,
       role: user.role,
+      isDemo: user.isDemo,
       mustChangePassword: user.mustChangePassword,
       aiEnabled: user.aiEnabled,
       aiRequestsLimit: user.aiRequestsLimit,
@@ -45,6 +47,7 @@ export class UsersService {
         name: true,
         plan: true,
         role: true,
+        isDemo: true,
         mustChangePassword: true,
         aiEnabled: true,
         aiRequestsLimit: true,
@@ -65,6 +68,7 @@ export class UsersService {
         name: true,
         plan: true,
         role: true,
+        isDemo: true,
         mustChangePassword: true,
         aiEnabled: true,
         aiRequestsLimit: true,
@@ -85,6 +89,7 @@ export class UsersService {
         name: true,
         plan: true,
         role: true,
+        isDemo: true,
         mustChangePassword: true,
         aiEnabled: true,
         aiRequestsLimit: true,

@@ -11,6 +11,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { GamesModule } from './modules/games/games.module';
+import { HealthController } from './modules/health/health.controller';
 import { IgdbModule } from './modules/igdb/igdb.module';
 import { PlatformsModule } from './modules/platforms/platforms.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
@@ -19,6 +20,7 @@ import { UsersModule } from './modules/users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
+  controllers: [HealthController],
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [appConfig] }),
     ScheduleModule.forRoot(),

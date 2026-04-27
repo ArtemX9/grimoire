@@ -10,7 +10,6 @@ import { AiService } from './ai.service';
 import { ClaudeProvider } from './providers/claude.provider';
 import { GrokProvider } from './providers/grok.provider';
 import { OllamaProvider } from './providers/ollama.provider';
-
 @Module({
   imports: [AuthModule, UsersModule, PrismaModule, SessionsModule, GamesModule],
   controllers: [AiController],
