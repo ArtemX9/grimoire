@@ -18,6 +18,7 @@ function Sidebar() {
   const isMobile = useIsMobile();
   const dispatch = useAppDispatch();
   const isAIDrawerOpen = useAppSelector((s) => s.ui.isAIDrawerOpen);
+  const aiEnabled = useAppSelector((s) => s.auth.session?.user.aiEnabled ?? false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -71,17 +72,19 @@ function Sidebar() {
             {label}
           </NavLink>
         ))}
-        <button
-          onClick={handleAIClick}
-          aria-label='Open AI recommendations'
-          className={cn(
-            'hidden md:flex lg:hidden flex-col items-center gap-1 px-6 py-3 font-sans text-[10px] transition-colors',
-            isAIDrawerOpen ? 'text-grimoire-gold' : 'text-grimoire-muted',
-          )}
-        >
-          <Sparkles className='h-6 w-6 shrink-0' />
-          AI Pick
-        </button>
+        {aiEnabled && (
+          <button
+            onClick={handleAIClick}
+            aria-label='Open AI recommendations'
+            className={cn(
+              'flex flex-col items-center gap-1 px-6 py-3 font-sans text-[10px] transition-colors',
+              isAIDrawerOpen ? 'text-grimoire-gold' : 'text-grimoire-muted',
+            )}
+          >
+            <Sparkles className='h-6 w-6 shrink-0' />
+            AI Pick
+          </button>
+        )}
       </nav>
     );
   }
@@ -129,17 +132,19 @@ function Sidebar() {
             <span className='hidden sm:block'>{label}</span>
           </NavLink>
         ))}
-        <button
-          onClick={handleAIClick}
-          aria-label='Open AI recommendations'
-          className={cn(
-            'hidden md:flex lg:hidden items-center gap-3 rounded px-2 py-2 font-sans text-sm transition-colors',
-            isAIDrawerOpen ? 'bg-grimoire-hover text-grimoire-gold' : 'text-grimoire-muted hover:bg-grimoire-hover hover:text-grimoire-ink',
-          )}
-        >
-          <Sparkles className='h-4 w-4 shrink-0' />
-          <span className='hidden sm:block'>AI Pick</span>
-        </button>
+        {aiEnabled && (
+          <button
+            onClick={handleAIClick}
+            aria-label='Open AI recommendations'
+            className={cn(
+              'flex lg:hidden items-center gap-3 rounded px-2 py-2 font-sans text-sm transition-colors',
+              isAIDrawerOpen ? 'bg-grimoire-hover text-grimoire-gold' : 'text-grimoire-muted hover:bg-grimoire-hover hover:text-grimoire-ink',
+            )}
+          >
+            <Sparkles className='h-4 w-4 shrink-0' />
+            <span className='hidden sm:block'>AI Pick</span>
+          </button>
+        )}
       </nav>
     );
   }
