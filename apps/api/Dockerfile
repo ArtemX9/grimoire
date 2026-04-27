@@ -26,6 +26,7 @@ COPY --from=build /app/packages/shared ./packages/shared
 COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY apps/api/prisma ./apps/api/prisma
+COPY apps/api/scripts ./apps/api/scripts
 COPY apps/api/prisma.config.ts ./apps/api/prisma.config.ts
 EXPOSE 3000
 CMD ["sh", "-c", "cd /app/apps/api && node_modules/.bin/prisma migrate deploy && node dist/main"]
