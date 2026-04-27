@@ -3,7 +3,6 @@ import { AlertCircle, CheckCircle2, LogOut, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { api } from '@/api/api';
 import { useSignOutMutation } from '@/api/authApi';
 import { useConnectSteamMutation, useGetSteamStatusQuery, useSyncSteamMutation } from '@/api/steamApi';
 import { useGetMeQuery, useUpdateMeMutation } from '@/api/usersApi';
@@ -14,7 +13,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/use-toast';
 import { ROUTES } from '@/constants/routes';
-import { useAppDispatch } from '@/store/hooks';
 import { cn } from '@/utils/cn';
 
 import PSNRow from './components/PSNRow';
@@ -39,7 +37,6 @@ export function SettingsPage() {
 
 function ProfileSection() {
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
 
   const { data: user, isLoading } = useGetMeQuery();
   const [updateMe, { isLoading: isUpdating }] = useUpdateMeMutation();
@@ -69,7 +66,6 @@ function ProfileSection() {
     } catch {
       // session may already be gone — proceed regardless
     }
-    dispatch(api.util.resetApiState());
     navigate(ROUTES.LOGIN, { replace: true });
   }
 

@@ -36,6 +36,22 @@ export class AuthController {
     }
   }
 
+  @Post('/sign-out')
+  @Public()
+  async signOut(@Req() req: Request, @Res() res: Response) {
+    try {
+      const response = await this.authService.auth.api.signOut({
+        // @ts-ignore
+        headers: req.headers,
+        asResponse: true,
+      });
+      response.headers.forEach((value, key) => res.setHeader(key, value));
+      res.status(response.status).send(await response.text());
+    } catch (error) {
+      throw new ForbiddenException(error);
+    }
+  }
+
   @Post('/sign-in/email')
   @Public()
   async emailSignIn(@Req() req: Request, @Res() res: Response) {

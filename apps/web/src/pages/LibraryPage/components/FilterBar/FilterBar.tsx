@@ -1,7 +1,7 @@
 import { GameStatus, Genre, Platform, PLATFORM_LABELS, SortableField } from '@grimoire/shared';
 import { Search, X } from 'lucide-react';
 
-import PLATFORM_ICONS from '@/constants/platformIcons';
+import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/utils/cn';
 
@@ -118,7 +118,7 @@ function FilterBar({
                 : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg hover:text-grimoire-ink',
             )}
           >
-            {PLATFORM_ICONS[platform]}
+            <PlatformIcon platform={platform} />
             {PLATFORM_LABELS[platform]}
           </button>
         ))}
