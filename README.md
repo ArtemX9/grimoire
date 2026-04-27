@@ -1,15 +1,17 @@
 # Grimoire
-
-Personal game backlog manager with Steam sync, IGDB metadata, and AI-powered mood-based recommendations.
-
-**Self-hostable. Open source. MIT.**
-
-[![Live demo](https://img.shields.io/badge/Live%20Demo-grimoire.arty--nas.work-blue?logo=googlechrome&logoColor=white)](https://grimoire.arty-nas.work)
-[![API health](https://img.shields.io/website?label=api&url=https%3A%2F%2Fgrimoire.arty-nas.work%2Fhealth)](https://grimoire.arty-nas.work/health)
 ![Steam](https://img.shields.io/badge/Steam-sync-1b2838?logo=steam&logoColor=white)
 ![PlayStation](https://img.shields.io/badge/PSN-sync-003791?logo=playstation&logoColor=white)
 ![OpenAI](https://img.shields.io/badge/OpenAI-compatible-412991?logo=openai&logoColor=white)
 ![Grok](https://img.shields.io/badge/Grok-xAI-000000?logo=x&logoColor=white)
+
+[![API health](https://img.shields.io/website?label=api&url=https%3A%2F%2Fgrimoire.arty-nas.work%2Fhealth)](https://grimoire.arty-nas.work/health)
+[![Tests](https://github.com/ArtemX9/grimoire/actions/workflows/ci.yml/badge.svg)](https://github.com/ArtemX9/grimoire/actions/workflows/ci.yml)
+
+[![Live demo](https://img.shields.io/badge/Live%20Demo-grimoire.arty--nas.work-blue?logo=googlechrome&logoColor=white)](https://grimoire.arty-nas.work)
+
+Personal game backlog manager with Steam and PSN sync, IGDB metadata, and AI-powered mood-based recommendations.
+
+**Self-hostable. Open source. MIT.**
 
 > **Try it live →** [Open app](https://grimoire.arty-nas.work)  
 > Demo account: `demo@grimoire.app` / `demo1234`

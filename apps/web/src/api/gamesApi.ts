@@ -68,8 +68,8 @@ export const gamesApi = api.injectEndpoints({
     getGame: builder.query<UserGame, string>({
       query: (id) => `${BASE_URL_PATH}/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'Game', id }],
-      onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
-        dispatch(selectedGameLoadingStarted());
+      onQueryStarted: async (id, { dispatch, queryFulfilled }) => {
+        dispatch(selectedGameLoadingStarted(id));
         try {
           const { data } = await queryFulfilled;
           dispatch(selectedGameLoaded(data));

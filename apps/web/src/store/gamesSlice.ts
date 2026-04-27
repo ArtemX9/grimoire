@@ -28,6 +28,7 @@ export interface GamesState {
   isStatsLoading: boolean;
   selectedGame: UserGame | null;
   isSelectedGameLoading: boolean;
+  pendingSelectedGameId: string | null;
 }
 
 const initialState: GamesState = {
@@ -37,6 +38,7 @@ const initialState: GamesState = {
   isStatsLoading: false,
   selectedGame: null,
   isSelectedGameLoading: false,
+  pendingSelectedGameId: null,
 };
 
 const gamesSlice = createSlice({
@@ -65,11 +67,19 @@ const gamesSlice = createSlice({
       state.isStatsLoading = false;
     },
 
-    selectedGameLoadingStarted: (state) => {
+    selectedGameLoadingStarted: (state, action: PayloadAction<string>) => {
       state.isSelectedGameLoading = true;
       state.selectedGame = null;
+      state.pendingSelectedGameId = action.payload;
     },
     selectedGameLoaded: (state, action: PayloadAction<UserGame>) => {
+      // Guard against stale responses: only commit if this game is still the
+      // one the UI navigated to. The merge/remap scenario can trigger a refetch
+      // of the OLD game via invalidatesTags while the NEW game is also in flight;
+      // without this guard the old response would overwrite the new one.
+      if (state.pendingSelectedGameId !== null && state.pendingSelectedGameId !== action.payload.id) {
+        return;
+      }
       state.selectedGame = action.payload;
       state.isSelectedGameLoading = false;
     },

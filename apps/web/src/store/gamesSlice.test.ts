@@ -230,36 +230,41 @@ describe('gamesSlice — statsFailed', () => {
 
 describe('gamesSlice — selectedGameLoadingStarted', () => {
   it('sets isSelectedGameLoading to true', () => {
-    const next = reducer(initialState, selectedGameLoadingStarted());
+    const next = reducer(initialState, selectedGameLoadingStarted('game-1'));
     expect(next.isSelectedGameLoading).toBe(true);
   });
 
   it('clears the previously selected game while loading', () => {
     const withGame = reducer(initialState, selectedGameLoaded(makeGame()));
-    const next = reducer(withGame, selectedGameLoadingStarted());
+    const next = reducer(withGame, selectedGameLoadingStarted('game-1'));
 
     expect(next.selectedGame).toBeNull();
   });
 
   it('does not affect games or stats loading flags', () => {
-    const next = reducer(initialState, selectedGameLoadingStarted());
+    const next = reducer(initialState, selectedGameLoadingStarted('game-1'));
 
     expect(next.isGamesLoading).toBe(false);
     expect(next.isStatsLoading).toBe(false);
+  });
+
+  it('sets pendingSelectedGameId to the requested game id', () => {
+    const next = reducer(initialState, selectedGameLoadingStarted('game-abc'));
+    expect(next.pendingSelectedGameId).toBe('game-abc');
   });
 });
 
 describe('gamesSlice — selectedGameLoaded', () => {
   it('stores the selected game and clears loading flag', () => {
     const game = makeGame();
-    const loading = reducer(initialState, selectedGameLoadingStarted());
+    const loading = reducer(initialState, selectedGameLoadingStarted('game-1'));
     const next = reducer(loading, selectedGameLoaded(game));
 
     expect(next.selectedGame).toEqual(game);
     expect(next.isSelectedGameLoading).toBe(false);
   });
 
-  it('overwrites a previously selected game', () => {
+  it('overwrites a previously selected game when pendingSelectedGameId is null', () => {
     const first = reducer(initialState, selectedGameLoaded(makeGame({ id: 'game-1' })));
     const next = reducer(first, selectedGameLoaded(makeGame({ id: 'game-2' })));
 
@@ -273,11 +278,29 @@ describe('gamesSlice — selectedGameLoaded', () => {
     expect(next.games).toHaveLength(1);
     expect(next.games[0].id).toBe('game-list-1');
   });
+
+  it('ignores a stale response when pendingSelectedGameId does not match', () => {
+    const loading = reducer(initialState, selectedGameLoadingStarted('game-new'));
+    const staleGame = makeGame({ id: 'game-old' });
+    const next = reducer(loading, selectedGameLoaded(staleGame));
+
+    expect(next.selectedGame).toBeNull();
+    expect(next.isSelectedGameLoading).toBe(true);
+  });
+
+  it('accepts the response when pendingSelectedGameId matches', () => {
+    const game = makeGame({ id: 'game-new' });
+    const loading = reducer(initialState, selectedGameLoadingStarted('game-new'));
+    const next = reducer(loading, selectedGameLoaded(game));
+
+    expect(next.selectedGame?.id).toBe('game-new');
+    expect(next.isSelectedGameLoading).toBe(false);
+  });
 });
 
 describe('gamesSlice — selectedGameFailed', () => {
   it('clears loading flag on failure', () => {
-    const loading = reducer(initialState, selectedGameLoadingStarted());
+    const loading = reducer(initialState, selectedGameLoadingStarted('game-1'));
     const next = reducer(loading, selectedGameFailed());
 
     expect(next.isSelectedGameLoading).toBe(false);
@@ -285,7 +308,7 @@ describe('gamesSlice — selectedGameFailed', () => {
 
   it('does not wipe a previously selected game', () => {
     const withGame = reducer(initialState, selectedGameLoaded(makeGame()));
-    const loading = reducer(withGame, selectedGameLoadingStarted());
+    const loading = reducer(withGame, selectedGameLoadingStarted('game-1'));
     // selectedGameLoadingStarted clears selectedGame — simulate a retry scenario
     // where loading was triggered but the selectedGame was cleared on start
     const next = reducer(loading, selectedGameFailed());
@@ -295,7 +318,7 @@ describe('gamesSlice — selectedGameFailed', () => {
   });
 
   it('does not affect games or stats loading flags', () => {
-    const loading = reducer(initialState, selectedGameLoadingStarted());
+    const loading = reducer(initialState, selectedGameLoadingStarted('game-1'));
     const next = reducer(loading, selectedGameFailed());
 
     expect(next.isGamesLoading).toBe(false);
@@ -440,7 +463,7 @@ describe('gamesSlice — sub-domain independence', () => {
   });
 
   it('loading selectedGame does not flip games or stats loading flags', () => {
-    const next = reducer(initialState, selectedGameLoadingStarted());
+    const next = reducer(initialState, selectedGameLoadingStarted('game-1'));
     expect(next.isGamesLoading).toBe(false);
     expect(next.isStatsLoading).toBe(false);
   });
@@ -449,7 +472,7 @@ describe('gamesSlice — sub-domain independence', () => {
     let state = initialState;
     state = reducer(state, gamesLoadingStarted());
     state = reducer(state, statsLoadingStarted());
-    state = reducer(state, selectedGameLoadingStarted());
+    state = reducer(state, selectedGameLoadingStarted('game-detail'));
 
     expect(state.isGamesLoading).toBe(true);
     expect(state.isStatsLoading).toBe(true);
