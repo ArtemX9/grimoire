@@ -1,6 +1,8 @@
 import { faker } from '@faker-js/faker';
 
-import { Plan, Role, User } from '@grimoire/shared';
+import { Plan, Role } from '@grimoire/shared';
+
+import { RequestUser } from '../common/decorators/current-user.decorator';
 
 export interface IGenerateUser {
   id?: string;
@@ -9,21 +11,16 @@ export interface IGenerateUser {
   plan?: Plan;
   role?: Role;
   mustChangePassword?: boolean;
-  aiEnabled?: boolean;
-  aiRequestsLimit?: number | null;
-  createdAt?: Date;
+  isDemo?: boolean;
 }
 
-export function generateUser(params: IGenerateUser = {}): User {
+export function generateUser(params: IGenerateUser = {}): RequestUser {
   return {
     id: params.id ?? faker.string.uuid(),
     email: params.email ?? faker.internet.email(),
-    name: params.name ?? faker.person.fullName(),
     plan: params.plan ?? Plan.FREE,
     role: params.role ?? Role.USER,
     mustChangePassword: params.mustChangePassword ?? false,
-    aiEnabled: params.aiEnabled ?? false,
-    aiRequestsLimit: params.aiRequestsLimit !== undefined ? params.aiRequestsLimit : null,
-    createdAt: params.createdAt ?? faker.date.past(),
+    isDemo: params.isDemo ?? false,
   };
 }

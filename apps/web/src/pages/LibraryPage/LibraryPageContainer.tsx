@@ -1,5 +1,5 @@
 import { GameStatus, Genre, IgdbGame, Platform, SortableField } from '@grimoire/shared';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useCreateGameMutation, useGetGameStatsQuery } from '@/api/gamesApi';
 import { toast } from '@/components/ui/use-toast';
@@ -11,10 +11,23 @@ import { toggleAIDrawer } from '@/store/uiSlice';
 export function LibraryPageContainer() {
   const dispatch = useAppDispatch();
   const filters = useAppSelector((s) => s.filters);
-  const { stats, isStatsLoading, isGamesLoading } = useAppSelector((s) => s.games);
+  const { games, stats, isStatsLoading, isGamesLoading } = useAppSelector((s) => s.games);
   const isAIDrawerOpen = useAppSelector((s) => s.ui.isAIDrawerOpen);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [createGame] = useCreateGameMutation();
+
+  const availablePlatforms = useMemo(
+    function deriveAvailablePlatforms() {
+      const platformSet = new Set<Platform>();
+      for (const game of games) {
+        for (const gp of game.platforms) {
+          platformSet.add(gp.platformName);
+        }
+      }
+      return Array.from(platformSet);
+    },
+    [games],
+  );
 
   // Trigger the RTK Query fetch so onQueryStarted populates the slice.
   useGetGameStatsQuery();
@@ -71,6 +84,7 @@ export function LibraryPageContainer() {
       aiDrawerOpen={isAIDrawerOpen}
       stats={stats}
       filters={filters}
+      availablePlatforms={availablePlatforms}
       isStatsLoading={isStatsLoading}
       isGamesLoading={isGamesLoading}
       onAddDialogOpen={setAddDialogOpen}

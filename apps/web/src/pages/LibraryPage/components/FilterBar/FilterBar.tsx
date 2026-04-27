@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/utils/cn';
 
 const STATUS_OPTIONS = Object.values(GameStatus);
-const PLATFORM_OPTIONS = Object.values(Platform);
 
 const SORT_OPTIONS: { label: string; value: SortableField }[] = [
   { label: 'Playtime', value: SortableField.playtimeHours },
@@ -23,6 +22,7 @@ interface IFilterBar {
   activeSortBy: SortableField | null;
   activeOrder: 'asc' | 'desc';
   search: string;
+  availablePlatforms: Platform[];
   onStatusChange: (status: GameStatus | null) => void;
   onGenreChange: (genre: Genre | null) => void;
   onPlatformChange: (platform: Platform | null) => void;
@@ -38,6 +38,7 @@ function FilterBar({
   activeSortBy,
   activeOrder,
   search,
+  availablePlatforms,
   onStatusChange,
   onGenreChange,
   onPlatformChange,
@@ -49,7 +50,7 @@ function FilterBar({
     <div className='flex flex-col gap-3'>
       {renderSearch()}
       {renderStatusFilters()}
-      {renderPlatformFilters()}
+      {availablePlatforms.length >= 2 && renderPlatformFilters()}
       {renderSortFilters()}
       {renderGenreFilters()}
     </div>
@@ -107,7 +108,7 @@ function FilterBar({
   function renderPlatformFilters() {
     return (
       <div className='flex flex-wrap gap-1.5'>
-        {PLATFORM_OPTIONS.map((platform) => (
+        {availablePlatforms.map((platform) => (
           <button
             key={platform}
             onClick={() => onPlatformChange(activePlatform === platform ? null : platform)}

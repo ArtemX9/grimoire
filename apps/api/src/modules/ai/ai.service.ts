@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { Observable } from 'rxjs';
 
-import { GameStatus, Genre, Mood, RecommendationContext, RecommendationRequest } from '@grimoire/shared';
+import { GameStatus, Genre, Mood, RecommendationContext, RecommendationRequestDto } from '@grimoire/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { GamesService } from '../games/games.service';
@@ -90,11 +90,11 @@ export class AiService {
     bucket.count += 1;
   }
 
-  async buildContext(userId: string, request: RecommendationRequest): Promise<RecommendationContext> {
+  async buildContext(userId: string, request: RecommendationRequestDto): Promise<RecommendationContext> {
     await this._checkAndIncrementAiUsage(userId);
 
     const [games, recentSessions] = await Promise.all([
-      this.gamesService.findAll(userId, undefined, undefined, undefined),
+      this.gamesService.findAll(userId, undefined, undefined, undefined, request.desiredPlatform),
       this.sessionsService.findRecent(userId, 5),
     ]);
 

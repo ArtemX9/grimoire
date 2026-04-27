@@ -29,6 +29,7 @@ interface ILibraryPage {
   isGamesLoading: boolean;
   filters: FiltersState;
   stats: GameStats | null;
+  availablePlatforms: Platform[];
   onAddDialogOpen: (shouldOpen: boolean) => void;
   onAIDrawerOpen: () => void;
   onStatusChange: (status: GameStatus | null) => void;
@@ -45,6 +46,7 @@ export function LibraryPage({
   aiDrawerOpen,
   filters,
   stats,
+  availablePlatforms,
   isStatsLoading,
   isGamesLoading,
   onAddDialogOpen,
@@ -205,6 +207,7 @@ export function LibraryPage({
           activeSortBy={filters.sortBy}
           activeOrder={filters.order}
           search={filters.search}
+          availablePlatforms={availablePlatforms}
           onStatusChange={onStatusChange}
           onGenreChange={onGenreChange}
           onPlatformChange={onPlatformChange}

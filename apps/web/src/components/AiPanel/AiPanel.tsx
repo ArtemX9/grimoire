@@ -1,7 +1,8 @@
-import { Mood } from '@grimoire/shared';
+import { Mood, Platform, PLATFORM_LABELS } from '@grimoire/shared';
 import { Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
+import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
 import { cn } from '@/utils/cn';
 
 const SESSION_OPTIONS = [60, 120, 240, 480, 720] as const;
@@ -12,8 +13,11 @@ interface IAiPanel {
   streamedTokens: string;
   isStreaming: boolean;
   aiEnabled: boolean;
+  availablePlatforms: Platform[];
+  selectedPlatform: Platform | undefined;
   onMoodToggle: (mood: string) => void;
   onSessionLengthChange: (minutes: number) => void;
+  onPlatformChange: (platform: Platform | undefined) => void;
   onRequest: () => void;
 }
 
@@ -23,15 +27,21 @@ function AiPanel({
   streamedTokens,
   isStreaming,
   aiEnabled,
+  availablePlatforms,
+  selectedPlatform,
   onMoodToggle,
   onSessionLengthChange,
+  onPlatformChange,
   onRequest,
 }: IAiPanel) {
+  const showPlatformPicker = availablePlatforms.length > 1;
+
   return (
     <aside className='flex flex-col gap-4 border-l border-grimoire-border bg-grimoire-card p-4 w-full'>
       {renderHeader()}
       {renderMoods()}
       {renderSessionLength()}
+      {showPlatformPicker && renderPlatformPicker()}
       {renderRecommendation()}
       {renderButton()}
     </aside>
@@ -94,6 +104,46 @@ function AiPanel({
               )}
             >
               {min < 60 ? `${min}m` : `${min / 60}h`}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function renderPlatformPicker() {
+    return (
+      <div className={cn('flex flex-col gap-2', !aiEnabled && 'opacity-40')}>
+        <p className='font-sans text-xs text-grimoire-muted'>Platform</p>
+        <div className='flex flex-wrap gap-1.5'>
+          <button
+            onClick={() => onPlatformChange(undefined)}
+            disabled={!aiEnabled}
+            className={cn(
+              'rounded-full border px-2.5 py-1 font-sans text-xs transition-colors',
+              selectedPlatform === undefined
+                ? 'border-grimoire-gold bg-grimoire-gold/10 text-grimoire-gold'
+                : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg hover:text-grimoire-ink',
+              !aiEnabled && 'cursor-not-allowed',
+            )}
+          >
+            Any
+          </button>
+          {availablePlatforms.map((platform) => (
+            <button
+              key={platform}
+              onClick={() => onPlatformChange(platform)}
+              disabled={!aiEnabled}
+              className={cn(
+                'flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-sans text-xs transition-colors',
+                selectedPlatform === platform
+                  ? 'border-grimoire-gold bg-grimoire-gold/10 text-grimoire-gold'
+                  : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg hover:text-grimoire-ink',
+                !aiEnabled && 'cursor-not-allowed',
+              )}
+            >
+              <PlatformIcon platform={platform} />
+              {PLATFORM_LABELS[platform]}
             </button>
           ))}
         </div>

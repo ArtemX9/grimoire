@@ -1,9 +1,11 @@
 import {Genre, Mood} from '../constants';
+import { Platform } from './platform';
 
 export type RecommendationRequest = {
-  moods: Mood[]
-  sessionLengthMinutes: number
-  userID: string
+  moods: string[];
+  sessionLengthMinutes: number;
+  userId?: string;
+  desiredPlatform?: Platform;
 }
 
 export type RecommendationContext = {

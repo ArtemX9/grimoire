@@ -2,7 +2,7 @@ import { ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { Mood } from '@grimoire/shared';
+import { Mood, RecommendationRequestDto } from '@grimoire/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { GamesService } from '../games/games.service';
@@ -12,8 +12,8 @@ import { ClaudeProvider } from './providers/claude.provider';
 import { GrokProvider } from './providers/grok.provider';
 import { OllamaProvider } from './providers/ollama.provider';
 
-const MOCK_REQUEST: import('@grimoire/shared').RecommendationRequest = {
-  userID: 'user-1',
+const MOCK_REQUEST: RecommendationRequestDto = {
+  userId: 'user-1',
   moods: [Mood.CHILL],
   sessionLengthMinutes: 60,
 };

@@ -1,4 +1,4 @@
-import { Mood } from '@grimoire/shared';
+import { Mood, Platform } from '@grimoire/shared';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 export const AI_SLICE = 'ai';
@@ -10,6 +10,7 @@ export interface AiState {
   sessionLengthMinutes: number;
   streamedTokens: string;
   isStreaming: boolean;
+  desiredPlatform: Platform | undefined;
 }
 
 const initialState: AiState = {
@@ -17,6 +18,7 @@ const initialState: AiState = {
   sessionLengthMinutes: 120,
   streamedTokens: '',
   isStreaming: false,
+  desiredPlatform: undefined,
 };
 
 const aiSlice = createSlice({
@@ -47,9 +49,12 @@ const aiSlice = createSlice({
     loadRecommendation: (state, action: PayloadAction<string>) => {
       state.streamedTokens = action.payload;
     },
+    setDesiredPlatform: (state, action: PayloadAction<Platform | undefined>) => {
+      state.desiredPlatform = action.payload;
+    },
   },
 });
 
-export const { toggleMood, setSessionLength, appendToken, startStreaming, stopStreaming, loadRecommendation } = aiSlice.actions;
+export const { toggleMood, setSessionLength, appendToken, startStreaming, stopStreaming, loadRecommendation, setDesiredPlatform } = aiSlice.actions;
 
 export default aiSlice.reducer;

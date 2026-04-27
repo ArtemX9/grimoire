@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 
 export function useAiStream(me?: User) {
   const dispatch = useAppDispatch();
-  const { selectedMoods, sessionLengthMinutes } = useAppSelector((s) => s.ai);
+  const { selectedMoods, sessionLengthMinutes, desiredPlatform } = useAppSelector((s) => s.ai);
 
   const streamRecommendation = useCallback(
     async function fetchRecommendationStream() {
@@ -16,7 +16,7 @@ export function useAiStream(me?: User) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ moods: selectedMoods, sessionLengthMinutes, userId: me?.id }),
+          body: JSON.stringify({ moods: selectedMoods, sessionLengthMinutes, userId: me?.id, desiredPlatform }),
         });
 
         if (!res.ok || !res.body) {
@@ -48,7 +48,7 @@ export function useAiStream(me?: User) {
         dispatch(stopStreaming());
       }
     },
-    [dispatch, selectedMoods, sessionLengthMinutes],
+    [dispatch, selectedMoods, sessionLengthMinutes, desiredPlatform],
   );
 
   return { streamRecommendation };

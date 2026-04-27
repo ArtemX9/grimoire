@@ -1,3 +1,4 @@
+import { Platform } from '@grimoire/shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -15,8 +16,11 @@ interface PanelProps {
   streamedTokens: string;
   isStreaming: boolean;
   aiEnabled: boolean;
+  availablePlatforms: Platform[];
+  selectedPlatform: Platform | undefined;
   onMoodToggle: (mood: string) => void;
   onSessionLengthChange: (minutes: number) => void;
+  onPlatformChange: (platform: Platform | undefined) => void;
   onRequest: () => void;
 }
 
@@ -26,8 +30,11 @@ const defaultProps: PanelProps = {
   streamedTokens: '',
   isStreaming: false,
   aiEnabled: true,
+  availablePlatforms: [],
+  selectedPlatform: undefined,
   onMoodToggle: vi.fn(),
   onSessionLengthChange: vi.fn(),
+  onPlatformChange: vi.fn(),
   onRequest: vi.fn(),
 };
 
@@ -140,5 +147,68 @@ describe('AiPanel — aiEnabled=true', () => {
     renderPanel({ aiEnabled: true, streamedTokens: 'Try Dark Souls tonight.' });
 
     expect(screen.getByText('Try Dark Souls tonight.')).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests — platform picker
+// ---------------------------------------------------------------------------
+
+describe('AiPanel — platform picker', () => {
+  it('does not render platform picker when there is only one available platform', () => {
+    renderPanel({ availablePlatforms: [Platform.STEAM] });
+
+    expect(screen.queryByText('Any')).not.toBeInTheDocument();
+  });
+
+  it('does not render platform picker when there are no available platforms', () => {
+    renderPanel({ availablePlatforms: [] });
+
+    expect(screen.queryByText('Any')).not.toBeInTheDocument();
+  });
+
+  it('renders platform picker with Any tag when there are multiple platforms', () => {
+    renderPanel({ availablePlatforms: [Platform.STEAM, Platform.PC] });
+
+    expect(screen.getByRole('button', { name: 'Any' })).toBeInTheDocument();
+  });
+
+  it('renders a button for each available platform', () => {
+    renderPanel({ availablePlatforms: [Platform.STEAM, Platform.PC] });
+
+    expect(screen.getByRole('button', { name: /steam/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /pc other/i })).toBeInTheDocument();
+  });
+
+  it('calls onPlatformChange with undefined when Any is clicked', async () => {
+    const onPlatformChange = vi.fn();
+    renderPanel({ availablePlatforms: [Platform.STEAM, Platform.PC], onPlatformChange });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Any' }));
+
+    expect(onPlatformChange).toHaveBeenCalledWith(undefined);
+  });
+
+  it('calls onPlatformChange with the platform enum value when a platform tag is clicked', async () => {
+    const onPlatformChange = vi.fn();
+    renderPanel({ availablePlatforms: [Platform.STEAM, Platform.PC], onPlatformChange });
+
+    await userEvent.click(screen.getByRole('button', { name: /steam/i }));
+
+    expect(onPlatformChange).toHaveBeenCalledWith(Platform.STEAM);
+  });
+
+  it('highlights the Any tag when selectedPlatform is undefined', () => {
+    renderPanel({ availablePlatforms: [Platform.STEAM, Platform.PC], selectedPlatform: undefined });
+
+    const anyButton = screen.getByRole('button', { name: 'Any' });
+    expect(anyButton.className).toContain('text-grimoire-gold');
+  });
+
+  it('highlights the selected platform tag', () => {
+    renderPanel({ availablePlatforms: [Platform.STEAM, Platform.PC], selectedPlatform: Platform.STEAM });
+
+    const steamButton = screen.getByRole('button', { name: /steam/i });
+    expect(steamButton.className).toContain('text-grimoire-gold');
   });
 });

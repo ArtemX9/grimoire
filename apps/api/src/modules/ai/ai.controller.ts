@@ -2,7 +2,7 @@ import { Body, Controller, MessageEvent, Post, Sse, UseGuards } from '@nestjs/co
 
 import { Observable, map } from 'rxjs';
 
-import { RecommendationRequest, RecommendationRequestSchema } from '@grimoire/shared';
+import { RecommendationRequestDto, RecommendationRequestSchema } from '@grimoire/shared';
 
 import { CurrentUser, RequestUser } from '../../common/decorators/current-user.decorator';
 import { PlanFeature } from '../../common/decorators/plan-feature.decorator';
@@ -20,7 +20,7 @@ export class AiController {
   @Sse()
   async streamRecommendation(
     @CurrentUser() user: RequestUser,
-    @Body(new ZodValidationPipe(RecommendationRequestSchema)) body: RecommendationRequest,
+    @Body(new ZodValidationPipe(RecommendationRequestSchema)) body: RecommendationRequestDto,
   ): Promise<Observable<MessageEvent>> {
     const context = await this.aiService.buildContext(user.id, body);
     return this.aiService.streamRecommendation(context).pipe(map((token) => ({ data: { token } }) as MessageEvent));
