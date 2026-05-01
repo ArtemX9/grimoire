@@ -14,7 +14,8 @@ Personal game backlog manager with Steam and PSN sync, IGDB metadata, and AI-pow
 **Self-hostable. Open source. MIT.**
 
 > **Try it live →** [Open app](https://grimoire.arty-nas.work)  
-> Demo account: `demo@grimoire.app` / `demo1234`
+> Demo account: `demo@grimoire.app` / `demo1234`  
+> **Note:** AI features (mood-based picks) may respond slowly — the demo runs on a local Ollama instance on my home machine.
 
 ![Grimoire library](.github/assets/library-screenshot.png)
 
