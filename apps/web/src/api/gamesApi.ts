@@ -92,20 +92,11 @@ export const gamesApi = api.injectEndpoints({
           const { data: updatedGame } = await queryFulfilled;
           dispatch(selectedGamePatched(updatedGame));
 
-          // Patch every active getGames cache entry that contains the updated game,
-          // so the Library list reflects the new data without a full refetch.
-          const state = getState() as RootState;
-          const queries = state[api.reducerPath].queries;
-
-          for (const key of Object.keys(queries)) {
-            const entry = queries[key];
-            if (entry?.endpointName !== 'getGames') continue;
-
-            const cachedGames = entry.data as UserGame[] | undefined;
-            if (!cachedGames?.some((g) => g.id === id)) continue;
-
+          const invalidated = gamesApi.util.selectInvalidatedBy(getState() as RootState, [{ type: 'Game', id }]);
+          for (const { endpointName, originalArgs } of invalidated) {
+            if (endpointName !== 'getGames') continue;
             dispatch(
-              gamesApi.util.updateQueryData('getGames', entry.originalArgs as unknown as GamesQuery, (draft) => {
+              gamesApi.util.updateQueryData('getGames', originalArgs as GamesQuery, (draft) => {
                 const idx = draft.findIndex((g) => g.id === id);
                 if (idx !== -1) draft[idx] = updatedGame;
               }),
@@ -125,19 +116,11 @@ export const gamesApi = api.injectEndpoints({
         try {
           const { data: updatedGame } = await queryFulfilled;
 
-          // Patch every active getGames cache entry that contains the remapped game.
-          const state = getState() as RootState;
-          const queries = state[api.reducerPath].queries;
-
-          for (const key of Object.keys(queries)) {
-            const entry = queries[key];
-            if (entry?.endpointName !== 'getGames') continue;
-
-            const cachedGames = entry.data as UserGame[] | undefined;
-            if (!cachedGames?.some((g) => g.id === id)) continue;
-
+          const invalidated = gamesApi.util.selectInvalidatedBy(getState() as RootState, [{ type: 'Game', id }]);
+          for (const { endpointName, originalArgs } of invalidated) {
+            if (endpointName !== 'getGames') continue;
             dispatch(
-              gamesApi.util.updateQueryData('getGames', entry.originalArgs as unknown as GamesQuery, (draft) => {
+              gamesApi.util.updateQueryData('getGames', originalArgs as GamesQuery, (draft) => {
                 const idx = draft.findIndex((g) => g.id === id);
                 if (idx !== -1) draft[idx] = updatedGame;
               }),

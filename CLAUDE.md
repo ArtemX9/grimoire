@@ -66,7 +66,7 @@ Key modules:
 - `sessions/` — play session logging with daily cap enforcement
 - `platforms/steam/` — OAuth + background library sync (BullMQ)
 - `igdb/` — search and metadata fetch
-- `ai/` — LLM adapter (Grok default, Claude/OpenAI fallback), SSE streaming
+- `ai/` — LLM adapter (Grok default, Ollama/Claude fallback), SSE streaming. All three providers extend `BaseLLMProvider` (Template Method pattern). Subclasses implement `buildRequest()` (returns `LLMRequest`) and `parseLine()` (returns `ParsedLine`). `lineMode: 'sse' | 'ndjson'` controls how the base class splits stream chunks. `parseLine` receives a per-stream `state` bag for accumulation across chunks (e.g. Grok's tool-call argument stitching). To add a provider: extend `BaseLLMProvider`, implement the two methods, register in `ai.module.ts`, add a selection branch in `AiService` constructor.
 
 Auth is handled by **Better Auth** (not Passport). All protected routes use `AuthGuard`. Admin routes use `@AdminOnly()` which composes `AuthGuard + AdminGuard`. Plan-gated features use `@Plan(PlanFeature.X) + PlanGuard`.
 

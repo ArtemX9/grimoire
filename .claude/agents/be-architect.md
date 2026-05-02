@@ -599,29 +599,77 @@ Every new environment variable must be registered in `app.config.ts` before use.
 
 ## LLM Provider Pattern
 
-Provider interface enables swappable LLM backends without touching business logic.
+All providers use the **Template Method** pattern via `BaseLLMProvider`. The base class owns `recommend()` — subclasses must NOT override it.
 
 ```ts
 // llm-provider.interface.ts
 export interface LLMProvider {
   recommend(context: RecommendationContext): Observable<string>
 }
+
+// base-llm.provider.ts — the only place recommend() is implemented
+export abstract class BaseLLMProvider implements LLMProvider {
+  protected abstract readonly lineMode: 'sse' | 'ndjson';
+  protected abstract buildRequest(context: RecommendationContext): LLMRequest;
+  protected abstract parseLine(line: string, state: Record<string, unknown>): ParsedLine;
+
+  recommend(context: RecommendationContext): Observable<string> { /* ... */ }
+}
 ```
 
-Provider selection at service init — never hardcoded:
+**Abstract surface every provider must implement:**
+
+- `lineMode` — `'sse'` for `data:`-prefixed SSE streams (Grok, Claude); `'ndjson'` for newline-delimited JSON (Ollama). Controls how `recommend()` splits incoming chunks into lines.
+- `buildRequest(context)` — returns `{ url, headers, body }`. Builds the provider-specific HTTP request from the recommendation context.
+- `parseLine(line, state)` — parses one line and returns a `ParsedLine` discriminated union (`TEXT | TOOL_CALL | ERROR | done | null`). `null` means the line carries no output (skip silently). `state` is a plain object created once per `recommend()` call — use it for cross-chunk accumulation (e.g. stitching streamed tool-call argument fragments).
+
+**Minimal new provider skeleton:**
+
+```ts
+@Injectable()
+export class MyProvider extends BaseLLMProvider {
+  protected readonly lineMode = 'ndjson' as const;  // or 'sse'
+
+  constructor(private config: ConfigService) { super(); }
+
+  protected buildRequest(context: RecommendationContext): LLMRequest {
+    return {
+      url: this.config.get<string>('app.llm.myProviderUrl'),
+      headers: { Authorization: `Bearer ${this.config.get('app.llm.myApiKey')}` },
+      body: { model: 'my-model', messages: [...] },
+    };
+  }
+
+  protected parseLine(line: string, _state: Record<string, unknown>): ParsedLine {
+    try {
+      const parsed = JSON.parse(line);
+      if (parsed.done) return { type: 'done' };
+      const token = parsed.message?.content;
+      if (token) return { type: AI_RESPONSE_TYPE.TEXT, value: token };
+    } catch {}
+    return null;
+  }
+}
+```
+
+**Provider selection at service init — never hardcoded:**
 
 ```ts
 constructor(
   private config: ConfigService,
   private grokProvider: GrokProvider,
   private claudeProvider: ClaudeProvider,
+  private ollamaProvider: OllamaProvider,
 ) {
   const name = this.config.get<string>('app.llm.provider', 'grok')
-  this.provider = name === 'claude' ? this.claudeProvider : this.grokProvider
+  this.provider =
+    name === 'claude' ? this.claudeProvider :
+    name === 'ollama' ? this.ollamaProvider :
+    this.grokProvider
 }
 ```
 
-Adding a new provider: implement `LLMProvider`, register in `ai.module.ts`, add selection branch in constructor. Zero changes to controller or business logic.
+Adding a new provider: extend `BaseLLMProvider`, implement `buildRequest` and `parseLine`, register in `ai.module.ts`, add selection branch in constructor. Zero changes to controller or business logic.
 
 ---
 

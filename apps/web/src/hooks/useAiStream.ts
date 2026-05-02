@@ -1,12 +1,15 @@
-import { User } from '@grimoire/shared';
+import { AI_RESPONSE_TYPE, ToolName, User, parseRecommendationMessage } from '@grimoire/shared';
 import { useCallback } from 'react';
 
 import { appendToken, startStreaming, stopStreaming } from '@/store/aiSlice';
+import { resetFilters } from '@/store/filtersSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setHighlightedGameID } from '@/store/uiSlice';
 
 export function useAiStream(me?: User) {
   const dispatch = useAppDispatch();
   const { selectedMoods, sessionLengthMinutes, desiredPlatform } = useAppSelector((s) => s.ai);
+  const games = useAppSelector((s) => s.games.games);
 
   const streamRecommendation = useCallback(
     async function fetchRecommendationStream() {
@@ -37,7 +40,28 @@ export function useAiStream(me?: User) {
             try {
               const parsed = JSON.parse(line.slice(6));
               if (parsed?.token) {
-                dispatch(appendToken(parsed.token));
+                const recommendationMessage = parseRecommendationMessage(parsed.token);
+                switch (recommendationMessage.type) {
+                  case AI_RESPONSE_TYPE.TEXT:
+                    dispatch(appendToken(recommendationMessage.text));
+                    break;
+                  case AI_RESPONSE_TYPE.TOOL_CALL:
+                    switch (recommendationMessage.name) {
+                      case ToolName.HIGHLIGHT_GAME: {
+                        const gameID = recommendationMessage.arguments.gameID as string;
+                        if (!games.some((g) => g.id === gameID)) {
+                          dispatch(resetFilters());
+                        }
+                        dispatch(setHighlightedGameID(gameID));
+                        break;
+                      }
+                    }
+                    break;
+                  case AI_RESPONSE_TYPE.ERROR:
+                    throw new Error(recommendationMessage.error);
+                  default:
+                    console.error(`Unimplemented yet type has been passed in: ${parsed.token}`);
+                }
               }
             } catch {
               // malformed SSE line — skip
@@ -48,7 +72,7 @@ export function useAiStream(me?: User) {
         dispatch(stopStreaming());
       }
     },
-    [dispatch, selectedMoods, sessionLengthMinutes, desiredPlatform],
+    [dispatch, selectedMoods, sessionLengthMinutes, desiredPlatform, games],
   );
 
   return { streamRecommendation };

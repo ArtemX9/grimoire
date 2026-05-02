@@ -1,58 +1,77 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { Observable } from 'rxjs';
+import { AI_RESPONSE_TYPE, RecommendationContext, ToolName } from '@grimoire/shared';
 
-import { RecommendationContext } from '@grimoire/shared';
+import { BaseLLMProvider, LLMRequest, ParsedLine } from './base-llm.provider';
+import { buildPrompt } from './common/prompt';
+import { getEnrichedToolsWithUsersContext } from './common/tools';
 
-import { buildPrompt } from './common';
-import { LLMProvider } from './llm-provider.interface';
+type GrokState = {
+  toolCalls: Record<number, { name: string; arguments: string }>;
+};
 
 @Injectable()
-export class GrokProvider implements LLMProvider {
-  constructor(private config: ConfigService) {}
+export class GrokProvider extends BaseLLMProvider {
+  protected readonly lineMode = 'sse' as const;
 
-  recommend(context: RecommendationContext): Observable<string> {
-    return new Observable((subscriber) => {
-      const prompt = buildPrompt(context);
-      fetch('https://api.x.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.config.get('app.llm.grokApiKey')}`,
-        },
-        body: JSON.stringify({
-          model: 'grok-3',
-          stream: true,
-          messages: [{ role: 'user', content: prompt }],
-        }),
-      })
-        .then(async (res) => {
-          const reader = res.body!.getReader();
-          const decoder = new TextDecoder();
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-              subscriber.complete();
-              break;
-            }
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n').filter((l) => l.startsWith('data: '));
-            for (const line of lines) {
-              const data = line.replace('data: ', '');
-              if (data === '[DONE]') {
-                subscriber.complete();
-                return;
-              }
-              try {
-                const parsed = JSON.parse(data);
-                const token = parsed.choices?.[0]?.delta?.content;
-                if (token) subscriber.next(token);
-              } catch {}
+  constructor(private config: ConfigService) {
+    super();
+  }
+
+  protected buildRequest(context: RecommendationContext): LLMRequest {
+    const temperature = this.config.get<number>('app.llm.temperature', 0.7);
+
+    return {
+      url: 'https://api.x.ai/v1/chat/completions',
+      headers: {
+        Authorization: `Bearer ${this.config.get('app.llm.grokApiKey')}`,
+      },
+      body: {
+        model: 'grok-3',
+        stream: true,
+        messages: [{ role: 'user', content: buildPrompt(context) }],
+        tools: getEnrichedToolsWithUsersContext(context),
+        temperature,
+      },
+    };
+  }
+
+  protected parseLine(line: string, state: Record<string, unknown>): ParsedLine {
+    const data = line.replace('data: ', '');
+    if (data === '[DONE]') return { type: 'done' };
+
+    try {
+      const parsed = JSON.parse(data);
+      const delta = parsed.choices?.[0]?.delta;
+      const grokState = state as GrokState;
+
+      if (!grokState.toolCalls) grokState.toolCalls = {};
+
+      for (const tc of delta?.tool_calls ?? []) {
+        if (!grokState.toolCalls[tc.index]) {
+          grokState.toolCalls[tc.index] = { name: '', arguments: '' };
+        }
+        if (tc.function?.name) grokState.toolCalls[tc.index].name = tc.function.name;
+        if (tc.function?.arguments) grokState.toolCalls[tc.index].arguments += tc.function.arguments;
+      }
+
+      if (parsed.choices?.[0]?.finish_reason === 'tool_calls') {
+        for (const tc of Object.values(grokState.toolCalls)) {
+          if (tc.name === ToolName.HIGHLIGHT_GAME) {
+            try {
+              return { type: AI_RESPONSE_TYPE.TOOL_CALL, name: ToolName.HIGHLIGHT_GAME, args: JSON.parse(tc.arguments) };
+            } catch (e) {
+              return { type: AI_RESPONSE_TYPE.ERROR, message: `${e}` };
             }
           }
-        })
-        .catch((err) => subscriber.error(err));
-    });
+        }
+      }
+
+      const token = delta?.content;
+      if (token) return { type: AI_RESPONSE_TYPE.TEXT, value: token };
+    } catch {}
+
+    return null;
   }
 }

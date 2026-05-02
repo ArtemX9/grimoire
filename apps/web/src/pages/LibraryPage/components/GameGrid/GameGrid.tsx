@@ -6,9 +6,10 @@ import GameCard from '@/pages/LibraryPage/components/GameCard/GameCard';
 interface IGameGrid {
   games: UserGame[];
   isLoading: boolean;
+  highlightedGameID?: string | null;
 }
 
-function GameGrid({ games, isLoading }: IGameGrid) {
+function GameGrid({ games, isLoading, highlightedGameID }: IGameGrid) {
   if (isLoading) {
     return renderSkeletons();
   }
@@ -20,7 +21,7 @@ function GameGrid({ games, isLoading }: IGameGrid) {
   return (
     <div className='grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'>
       {games.map((game) => (
-        <GameCard key={game.id} game={game} />
+        <GameCard key={game.id} game={game} isHighlighted={game.id === highlightedGameID} />
       ))}
     </div>
   );

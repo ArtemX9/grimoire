@@ -102,6 +102,7 @@ export class AiService {
       moods: request.moods,
       sessionLengthMinutes: request.sessionLengthMinutes,
       games: games.map((g) => ({
+        gameID: g.id,
         title: g.title,
         status: g.status as GameStatus,
         genres: g.genres as Genre[],

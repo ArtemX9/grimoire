@@ -1,6 +1,6 @@
 import { GameStatus, Genre, IgdbGame, Platform, SortableField } from '@grimoire/shared';
 import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigationType } from 'react-router-dom';
 
 let _savedScrollTop = 0;
@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import FilterBar from '@/pages/LibraryPage/components/FilterBar/FilterBar';
 import GameGridContainer from '@/pages/LibraryPage/components/GameGrid/GameGridContainer';
 import { FiltersState } from '@/store/filtersSlice';
+import { useAppSelector } from '@/store/hooks';
 
 interface ILibraryPage {
   addDialogOpen: boolean;
@@ -63,6 +64,8 @@ export function LibraryPage({
   const hasRestoredScroll = useRef(false);
   const navigationType = useNavigationType();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const highlightedGameID = useAppSelector((s) => s.ui.highlightedGameID);
+  const games = useAppSelector((s) => s.games.games);
 
   useEffect(
     function resetScrollOnFreshVisit() {
@@ -73,7 +76,7 @@ export function LibraryPage({
     [],
   );
 
-  useEffect(
+  useLayoutEffect(
     function restoreScrollAfterGamesLoad() {
       if (isGamesLoading) return;
       if (hasRestoredScroll.current) return;
@@ -81,14 +84,30 @@ export function LibraryPage({
 
       if (navigationType !== 'POP' || _savedScrollTop === 0) return;
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const viewport = scrollRootRef.current?.querySelector<HTMLElement>('[data-radix-scroll-area-viewport]');
-          if (viewport) viewport.scrollTop = _savedScrollTop;
-        });
+      const raf = requestAnimationFrame(() => {
+        const viewport = scrollRootRef.current?.querySelector<HTMLElement>('[data-radix-scroll-area-viewport]');
+        if (viewport) viewport.scrollTop = _savedScrollTop;
       });
+
+      return () => cancelAnimationFrame(raf);
     },
     [isGamesLoading, navigationType],
+  );
+
+  useLayoutEffect(
+    function scrollToHighlightedGame() {
+      if (!highlightedGameID) return;
+      if (!games.some((g) => g.id === highlightedGameID)) return;
+
+      const raf = requestAnimationFrame(() => {
+        const viewport = scrollRootRef.current?.querySelector<HTMLElement>('[data-radix-scroll-area-viewport]');
+        const card = viewport?.querySelector<HTMLElement>(`[data-game-id="${highlightedGameID}"]`);
+        card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+
+      return () => cancelAnimationFrame(raf);
+    },
+    [highlightedGameID, games],
   );
 
   function handleScroll(event: React.UIEvent<HTMLDivElement>) {

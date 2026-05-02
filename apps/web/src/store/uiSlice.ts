@@ -6,12 +6,14 @@ export interface UiState {
   sidebarOpen: boolean;
   selectedGameId: string | null;
   isAIDrawerOpen: boolean;
+  highlightedGameID: string | null;
 }
 
 const initialState: UiState = {
   sidebarOpen: true,
   selectedGameId: null,
   isAIDrawerOpen: false,
+  highlightedGameID: null,
 };
 
 const uiSlice = createSlice({
@@ -27,8 +29,11 @@ const uiSlice = createSlice({
     toggleAIDrawer: (state) => {
       state.isAIDrawerOpen = !state.isAIDrawerOpen;
     },
+    setHighlightedGameID: (state, action: PayloadAction<string | null>) => {
+      state.highlightedGameID = action.payload;
+    },
   },
 });
 
-export const { toggleSidebar, setSelectedGame, toggleAIDrawer } = uiSlice.actions;
+export const { toggleSidebar, setSelectedGame, toggleAIDrawer, setHighlightedGameID } = uiSlice.actions;
 export default uiSlice.reducer;

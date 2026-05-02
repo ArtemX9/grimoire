@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="DataSourcePerFileMappings">
-    <file url="file://$PROJECT_DIR$/apps/api/prisma/migrations/20260415014220_migrate_data_to_new_tables/migration.sql" value="12c95517-f356-4d7a-98eb-c1a74899835a" />
-  </component>
-</project>

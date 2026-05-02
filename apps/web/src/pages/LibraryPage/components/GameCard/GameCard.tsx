@@ -16,13 +16,20 @@ const STATUS_STYLES: Record<GameStatus, string> = {
 
 interface IGameCard {
   game: UserGame;
+  isHighlighted?: boolean;
 }
 
-function GameCard({ game }: IGameCard) {
+function GameCard({ game, isHighlighted }: IGameCard) {
   return (
     <Link
       to={getGameDetailsURL(game.id)}
-      className='group flex flex-col overflow-hidden rounded-lg border border-grimoire-border bg-grimoire-card transition-colors hover:border-grimoire-border-lg hover:bg-grimoire-hover'
+      data-game-id={game.id}
+      className={cn(
+        'group flex flex-col overflow-hidden rounded-lg border bg-grimoire-card',
+        isHighlighted
+          ? 'animate-border-pulse border-grimoire-gold-dim'
+          : 'transition-colors border-grimoire-border hover:border-grimoire-border-lg hover:bg-grimoire-hover',
+      )}
     >
       {renderCover()}
       {renderInfo()}

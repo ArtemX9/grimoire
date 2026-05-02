@@ -1,12 +1,12 @@
 import { GameStatus, Genre, IgdbGame, Platform, SortableField } from '@grimoire/shared';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useCreateGameMutation, useGetGameStatsQuery } from '@/api/gamesApi';
 import { toast } from '@/components/ui/use-toast';
 import { LibraryPage } from '@/pages/LibraryPage/LibraryPage';
 import { setGenreFilter, setOrder, setPlatformFilter, setSearch, setSortBy, setStatusFilter } from '@/store/filtersSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { toggleAIDrawer } from '@/store/uiSlice';
+import { setHighlightedGameID, toggleAIDrawer } from '@/store/uiSlice';
 
 export function LibraryPageContainer() {
   const dispatch = useAppDispatch();
@@ -31,6 +31,10 @@ export function LibraryPageContainer() {
 
   // Trigger the RTK Query fetch so onQueryStarted populates the slice.
   useGetGameStatsQuery();
+
+  useEffect(() => {
+    return () => { dispatch(setHighlightedGameID(null)); };
+  }, []);
 
   async function handleAddGame(game: IgdbGame, status: GameStatus, onSuccessCallback: () => void, onErrorCallback: () => void) {
     try {

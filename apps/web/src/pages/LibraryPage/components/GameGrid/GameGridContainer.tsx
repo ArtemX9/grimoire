@@ -10,6 +10,7 @@ function GameGridContainer() {
   const filters = useAppSelector((s) => s.filters);
   const games = useAppSelector((s) => s.games.games);
   const isLoading = useAppSelector((s) => s.games.isGamesLoading);
+  const highlightedGameID = useAppSelector((s) => s.ui.highlightedGameID);
   const debouncedSearch = useDebounce(filters.search, 300);
 
   const args = {
@@ -23,7 +24,7 @@ function GameGridContainer() {
 
   useSliceSync(useGetGamesQuery, args, gamesLoaded);
 
-  return <GameGrid games={games} isLoading={isLoading} />;
+  return <GameGrid games={games} isLoading={isLoading} highlightedGameID={highlightedGameID} />;
 }
 
 export default GameGridContainer;
