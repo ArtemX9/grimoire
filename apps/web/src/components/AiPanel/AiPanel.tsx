@@ -1,8 +1,10 @@
 import { Mood, PLATFORM_LABELS, Platform } from '@grimoire/shared';
-import { Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
+import { Collapsible, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/utils/cn';
 
 const SESSION_OPTIONS = [60, 120, 240, 480, 720] as const;
@@ -11,10 +13,12 @@ interface IAiPanel {
   selectedMoods: string[];
   sessionLengthMinutes: number;
   streamedTokens: string;
+  streamedThoughts: string;
   isStreaming: boolean;
   aiEnabled: boolean;
   availablePlatforms: Platform[];
   selectedPlatform: Platform | undefined;
+  hideHeader?: boolean;
   onMoodToggle: (mood: string) => void;
   onSessionLengthChange: (minutes: number) => void;
   onPlatformChange: (platform: Platform | undefined) => void;
@@ -25,23 +29,47 @@ function AiPanel({
   selectedMoods,
   sessionLengthMinutes,
   streamedTokens,
+  streamedThoughts,
   isStreaming,
   aiEnabled,
   availablePlatforms,
   selectedPlatform,
+  hideHeader = false,
   onMoodToggle,
   onSessionLengthChange,
   onPlatformChange,
   onRequest,
 }: IAiPanel) {
+  const thoughtsRef = useRef<HTMLDivElement>(null);
+
+  const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
+
   const showPlatformPicker = availablePlatforms.length > 1;
 
+  useEffect(
+    function scrollThoughtsToBottom() {
+      if (!thoughtsRef.current) return;
+      thoughtsRef.current.scrollTop = thoughtsRef.current.scrollHeight;
+    },
+    [streamedThoughts],
+  );
+
+  useEffect(
+    function collapseThinkingOnNewRequest() {
+      if (isStreaming) {
+        setIsThinkingExpanded(false);
+      }
+    },
+    [isStreaming],
+  );
+
   return (
-    <aside className='flex flex-col gap-4 border-l border-grimoire-border bg-grimoire-card p-4 w-full'>
-      {renderHeader()}
+    <aside className='flex flex-col gap-4 lg:border-l border-grimoire-border bg-grimoire-card p-4 w-full'>
+      {!hideHeader && renderHeader()}
       {renderMoods()}
       {renderSessionLength()}
       {showPlatformPicker && renderPlatformPicker()}
+      {renderThinking()}
       {renderRecommendation()}
       {renderButton()}
     </aside>
@@ -152,6 +180,54 @@ function AiPanel({
     );
   }
 
+  function renderThinking() {
+    if (!streamedThoughts) return null;
+
+    return (
+      <Collapsible open={isThinkingExpanded} onOpenChange={setIsThinkingExpanded}>
+        <div className='rounded border border-grimoire-border bg-grimoire-deep p-3'>
+          {renderThinkingHeader()}
+          {renderThinkingBody()}
+        </div>
+      </Collapsible>
+    );
+  }
+
+  function renderThinkingHeader() {
+    return (
+      <div className='mb-1.5 flex items-center justify-between'>
+        <p className='font-sans text-xs text-grimoire-faint'>Reasoning…</p>
+        <CollapsibleTrigger asChild>
+          <button className='flex items-center gap-0.5 font-sans text-xs text-grimoire-faint transition-colors hover:text-grimoire-muted'>
+            {isThinkingExpanded ? (
+              <>
+                <span>Show less</span>
+                <ChevronUp className='h-3 w-3' />
+              </>
+            ) : (
+              <>
+                <span>Show more</span>
+                <ChevronDown className='h-3 w-3' />
+              </>
+            )}
+          </button>
+        </CollapsibleTrigger>
+      </div>
+    );
+  }
+
+  function renderThinkingBody() {
+    return (
+      <>
+        <div ref={thoughtsRef} className={cn('overflow-y-auto', isThinkingExpanded ? 'max-h-48' : 'h-20')}>
+          <p className='font-sans text-xs italic leading-relaxed text-grimoire-muted'>
+            {streamedThoughts}
+          </p>
+        </div>
+      </>
+    );
+  }
+
   function renderRecommendation() {
     if (!streamedTokens && !isStreaming) {
       return (
@@ -187,7 +263,7 @@ function AiPanel({
 
   function renderButton() {
     return (
-      <div className='flex flex-col gap-2'>
+      <div className='sticky bottom-0 bg-grimoire-card pt-2 flex flex-col gap-2'>
         {!aiEnabled && (
           <p className='font-sans text-xs text-grimoire-muted text-center'>AI features are currently disabled for your account.</p>
         )}

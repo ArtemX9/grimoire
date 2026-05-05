@@ -56,7 +56,15 @@ describe('GamesController', () => {
 
       await controller.findAll(user, GameStatus.COMPLETED);
 
-      expect(gamesService.findAll).toHaveBeenCalledWith('user-1', GameStatus.COMPLETED, undefined, undefined, undefined, undefined, undefined);
+      expect(gamesService.findAll).toHaveBeenCalledWith(
+        'user-1',
+        GameStatus.COMPLETED,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+      );
     });
 
     it('forwards the optional platform query param to the service', async () => {
@@ -74,7 +82,15 @@ describe('GamesController', () => {
 
       await controller.findAll(user, undefined, undefined, undefined, undefined, SortableField.playtimeHours, 'desc');
 
-      expect(gamesService.findAll).toHaveBeenCalledWith('user-1', undefined, undefined, undefined, undefined, SortableField.playtimeHours, 'desc');
+      expect(gamesService.findAll).toHaveBeenCalledWith(
+        'user-1',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        SortableField.playtimeHours,
+        'desc',
+      );
     });
 
     it('returns the service result directly', async () => {

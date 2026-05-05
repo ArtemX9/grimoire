@@ -24,11 +24,15 @@ export type RecommendationContext = {
 }
 
 export enum AI_RESPONSE_TYPE {
-  TOOL_CALL = 'toolCall', TEXT = 'text', ERROR = 'error',
+  TOOL_CALL = 'toolCall', TEXT = 'text', ERROR = 'error', THINK = 'think'
 }
 
 export type RecommendationResponseText = {
   text: string;
+}
+
+export type RecommendationResponseThink = {
+  thoughts: string;
 }
 
 export type RecommendationResponseToolCall = {
@@ -46,4 +50,6 @@ export type RecommendationMessage = | ({
   type: AI_RESPONSE_TYPE.TEXT
 } & RecommendationResponseText) | ({
   type: AI_RESPONSE_TYPE.ERROR
-} & RecommendationResponseError);
+} & RecommendationResponseError) | ({
+  type: AI_RESPONSE_TYPE.THINK
+} & RecommendationResponseThink);

@@ -14,6 +14,7 @@ interface PanelProps {
   selectedMoods: string[];
   sessionLengthMinutes: number;
   streamedTokens: string;
+  streamedThoughts: string;
   isStreaming: boolean;
   aiEnabled: boolean;
   availablePlatforms: Platform[];
@@ -28,6 +29,7 @@ const defaultProps: PanelProps = {
   selectedMoods: [],
   sessionLengthMinutes: 60,
   streamedTokens: '',
+  streamedThoughts: '',
   isStreaming: false,
   aiEnabled: true,
   availablePlatforms: [],

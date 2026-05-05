@@ -1,7 +1,8 @@
-import { PrismaPg } from '@prisma/adapter-pg';
-import 'dotenv/config';
 import * as fs from 'fs';
 import * as path from 'path';
+
+import { PrismaPg } from '@prisma/adapter-pg';
+import 'dotenv/config';
 import * as pg from 'pg';
 
 import { PrismaClient } from '../src/generated/prisma/client';
@@ -39,10 +40,7 @@ async function main() {
   // Find all non-demo, non-test users with game counts
   const users = await prisma.user.findMany({
     where: {
-      AND: [
-        { email: { notIn: EXCLUDE_EMAILS } },
-        { email: { not: { endsWith: EXCLUDE_SUFFIX } } },
-      ],
+      AND: [{ email: { notIn: EXCLUDE_EMAILS } }, { email: { not: { endsWith: EXCLUDE_SUFFIX } } }],
     },
     select: {
       id: true,

@@ -43,7 +43,7 @@ export class IgdbService implements OnModuleInit {
     });
     const data: IgdbGameRaw[] = await res.json();
     if (!Array.isArray(data) || !data[0]) return undefined;
-    if (!!data[0]) {
+    if (data[0]) {
       return {
         ...data[0],
         themes: data[0].themes?.map((theme) => theme.name),

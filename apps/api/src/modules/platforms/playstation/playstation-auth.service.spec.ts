@@ -152,10 +152,7 @@ describe('PlaystationAuthService', () => {
       const configMock = { get: configGetMock };
 
       const localModule = await Test.createTestingModule({
-        providers: [
-          PlaystationAuthService,
-          { provide: ConfigService, useValue: configMock },
-        ],
+        providers: [PlaystationAuthService, { provide: ConfigService, useValue: configMock }],
       }).compile();
       const localService = localModule.get<PlaystationAuthService>(PlaystationAuthService);
 

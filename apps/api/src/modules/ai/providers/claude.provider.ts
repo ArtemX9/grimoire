@@ -8,7 +8,7 @@ import { buildPrompt } from './common/prompt';
 import { getAnthropicTools } from './common/tools';
 
 type ClaudeState = {
-  currentBlockType: 'text' | 'tool_use' | null;
+  currentBlockType: 'text' | 'tool_use' | 'thinking' | null;
   currentToolName: string;
   currentToolJSON: string;
 };
@@ -22,8 +22,6 @@ export class ClaudeProvider extends BaseLLMProvider {
   }
 
   protected buildRequest(context: RecommendationContext): LLMRequest {
-    const temperature = this.config.get<number>('app.llm.temperature', 0.7);
-
     return {
       url: 'https://api.anthropic.com/v1/messages',
       headers: {
@@ -32,9 +30,11 @@ export class ClaudeProvider extends BaseLLMProvider {
       },
       body: {
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 512,
+        max_tokens: 16000,
         stream: true,
-        temperature,
+        // Extended thinking requires temperature=1 (Anthropic constraint)
+        temperature: 1,
+        thinking: { type: 'enabled', budget_tokens: 10000 },
         tools: getAnthropicTools(),
         messages: [{ role: 'user', content: buildPrompt(context) }],
       },
@@ -64,6 +64,9 @@ export class ClaudeProvider extends BaseLLMProvider {
       if (parsed.type === 'content_block_delta') {
         if (parsed.delta.type === 'text_delta' && parsed.delta.text) {
           return { type: AI_RESPONSE_TYPE.TEXT, value: parsed.delta.text };
+        }
+        if (parsed.delta.type === 'thinking_delta' && parsed.delta.thinking) {
+          return { type: AI_RESPONSE_TYPE.THINK, value: parsed.delta.thinking };
         }
         if (parsed.delta.type === 'input_json_delta') {
           claudeState.currentToolJSON += parsed.delta.partial_json;

@@ -33,6 +33,7 @@ export class GrokProvider extends BaseLLMProvider {
         messages: [{ role: 'user', content: buildPrompt(context) }],
         tools: getEnrichedToolsWithUsersContext(context),
         temperature,
+        reasoning: { effort: 'high' },
       },
     };
   }
@@ -70,6 +71,9 @@ export class GrokProvider extends BaseLLMProvider {
 
       const token = delta?.content;
       if (token) return { type: AI_RESPONSE_TYPE.TEXT, value: token };
+
+      const thoughts = delta?.reasoning_content;
+      if (thoughts) return { type: AI_RESPONSE_TYPE.THINK, value: thoughts };
     } catch {}
 
     return null;

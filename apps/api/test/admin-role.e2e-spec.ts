@@ -4,13 +4,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import * as request from 'supertest';
 
-import {Plan, Role} from '@grimoire/shared';
+import { Plan, Role } from '@grimoire/shared';
 
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 import { ZodValidationPipe } from '../src/common/pipes/zod-validation.pipe';
-import { AdminController } from '../src/modules/admin/admin.controller';
 import { AdminAiService } from '../src/modules/admin/admin-ai.service';
+import { AdminController } from '../src/modules/admin/admin.controller';
 import { AdminService } from '../src/modules/admin/admin.service';
 
 // ---------------------------------------------------------------------------
@@ -121,9 +121,7 @@ describe('PATCH /api/v1/admin/users/:id/role (e2e)', () => {
     const updated = makeAdminUserResponse({ role: Role.ADMIN });
     (adminService.updateUserRole as jest.Mock).mockResolvedValue(updated);
 
-    const res = await request(app.getHttpServer())
-      .patch('/api/v1/admin/users/user-2/role')
-      .send({ role: Role.ADMIN });
+    const res = await request(app.getHttpServer()).patch('/api/v1/admin/users/user-2/role').send({ role: Role.ADMIN });
 
     expect(res.status).toBe(200);
     expect(res.body.role).toBe(Role.ADMIN);
@@ -134,9 +132,7 @@ describe('PATCH /api/v1/admin/users/:id/role (e2e)', () => {
     const updated = makeAdminUserResponse({ role: Role.USER });
     (adminService.updateUserRole as jest.Mock).mockResolvedValue(updated);
 
-    const res = await request(app.getHttpServer())
-      .patch('/api/v1/admin/users/user-2/role')
-      .send({ role: Role.USER });
+    const res = await request(app.getHttpServer()).patch('/api/v1/admin/users/user-2/role').send({ role: Role.USER });
 
     expect(res.status).toBe(200);
     expect(res.body.role).toBe(Role.USER);
@@ -147,27 +143,21 @@ describe('PATCH /api/v1/admin/users/:id/role (e2e)', () => {
   // -------------------------------------------------------------------------
 
   it('returns 400 when role is not a valid Role enum value', async () => {
-    const res = await request(app.getHttpServer())
-      .patch('/api/v1/admin/users/user-2/role')
-      .send({ role: 'SUPERADMIN' });
+    const res = await request(app.getHttpServer()).patch('/api/v1/admin/users/user-2/role').send({ role: 'SUPERADMIN' });
 
     expect(res.status).toBe(400);
     expect(adminService.updateUserRole).not.toHaveBeenCalled();
   });
 
   it('returns 400 when role field is missing from the body', async () => {
-    const res = await request(app.getHttpServer())
-      .patch('/api/v1/admin/users/user-2/role')
-      .send({});
+    const res = await request(app.getHttpServer()).patch('/api/v1/admin/users/user-2/role').send({});
 
     expect(res.status).toBe(400);
     expect(adminService.updateUserRole).not.toHaveBeenCalled();
   });
 
   it('returns 400 when role is an empty string', async () => {
-    const res = await request(app.getHttpServer())
-      .patch('/api/v1/admin/users/user-2/role')
-      .send({ role: '' });
+    const res = await request(app.getHttpServer()).patch('/api/v1/admin/users/user-2/role').send({ role: '' });
 
     expect(res.status).toBe(400);
   });
@@ -177,13 +167,9 @@ describe('PATCH /api/v1/admin/users/:id/role (e2e)', () => {
   // -------------------------------------------------------------------------
 
   it('returns 400 when admin tries to change their own role', async () => {
-    (adminService.updateUserRole as jest.Mock).mockRejectedValue(
-      new BadRequestException('Cannot change your own role'),
-    );
+    (adminService.updateUserRole as jest.Mock).mockRejectedValue(new BadRequestException('Cannot change your own role'));
 
-    const res = await request(app.getHttpServer())
-      .patch('/api/v1/admin/users/admin-1/role')
-      .send({ role: Role.USER });
+    const res = await request(app.getHttpServer()).patch('/api/v1/admin/users/admin-1/role').send({ role: Role.USER });
 
     expect(res.status).toBe(400);
     expect(res.body.error.message).toBe('Cannot change your own role');
@@ -196,9 +182,7 @@ describe('PATCH /api/v1/admin/users/:id/role (e2e)', () => {
   it('returns 404 when the target user does not exist', async () => {
     (adminService.updateUserRole as jest.Mock).mockRejectedValue(new NotFoundException('User not found'));
 
-    const res = await request(app.getHttpServer())
-      .patch('/api/v1/admin/users/ghost-id/role')
-      .send({ role: Role.USER });
+    const res = await request(app.getHttpServer()).patch('/api/v1/admin/users/ghost-id/role').send({ role: Role.USER });
 
     expect(res.status).toBe(404);
     expect(res.body.error.message).toBe('User not found');
@@ -218,9 +202,7 @@ describe('PATCH /api/v1/admin/users/:id/role (e2e)', () => {
       mustChangePassword: false,
     };
 
-    const res = await request(app.getHttpServer())
-      .patch('/api/v1/admin/users/user-2/role')
-      .send({ role: Role.USER });
+    const res = await request(app.getHttpServer()).patch('/api/v1/admin/users/user-2/role').send({ role: Role.USER });
 
     expect(res.status).toBe(403);
     expect(adminService.updateUserRole).not.toHaveBeenCalled();
@@ -229,9 +211,7 @@ describe('PATCH /api/v1/admin/users/:id/role (e2e)', () => {
   it('returns 403 when the request is made without any authentication', async () => {
     activeUser.value = null;
 
-    const res = await request(app.getHttpServer())
-      .patch('/api/v1/admin/users/user-2/role')
-      .send({ role: Role.USER });
+    const res = await request(app.getHttpServer()).patch('/api/v1/admin/users/user-2/role').send({ role: Role.USER });
 
     // FakeAuthGuard returns false when activeUser is null → NestJS sends 403
     expect(res.status).toBe(403);

@@ -46,9 +46,11 @@ export class OllamaProvider extends BaseLLMProvider {
         }
       }
 
-      const token = parsed.message?.content;
+      const content = parsed.message?.content;
+      if (content) return { type: AI_RESPONSE_TYPE.TEXT, value: content };
 
-      if (token) return { type: AI_RESPONSE_TYPE.TEXT, value: token };
+      const thoughts = parsed.message?.thinking;
+      if (thoughts) return { type: AI_RESPONSE_TYPE.THINK, value: thoughts };
 
       if (parsed.done) return { type: 'done' };
     } catch {}

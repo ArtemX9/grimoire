@@ -7,7 +7,7 @@ User mood: ${ctx.moods.join(', ')};
 Available time: ${ctx.sessionLengthMinutes} minutes;
 
 Their library (status / gameID / title / (genres) / hours played by user / user rating / game summary):
-${ctx.games.map((g) => `- [${g.status}] ${g.gameID} | ${g.title} | (${g.genres.join(', ')}) | ${Math.round(g.playtimeHours * 10) / 10}h | Rating: ${!!g.rating ? `${g.rating} / 10` : 'Not rated yet'} |\n  ${g.summary ? g.summary.replaceAll('\n', ' ').slice(0, 200) + '...' : ''}`).join('\n')}
+${ctx.games.map((g) => `- [${g.status}] ${g.gameID} | ${g.title} | (${g.genres.join(', ')}) | ${Math.round(g.playtimeHours * 10) / 10}h | Rating: ${g.rating ? `${g.rating} / 10` : 'Not rated yet'} |\n  ${g.summary ? g.summary.replaceAll('\n', ' ').slice(0, 200) + '...' : ''}`).join('\n')}
 
 ${ctx.recentSessions.length ? 'Recent sessions:' : ''}
 ${ctx.recentSessions.map((s) => `- ${s.gameTitle}: ${s.durationMin}min, mood: ${s.mood.join(', ')}, user notes: \n"${s.notes}"\n`).join('\n')}

@@ -7,6 +7,7 @@ import { AI_RESPONSE_TYPE, RecommendationContext, ToolName, createRecommendation
 import { LLMProvider } from './llm-provider.interface';
 
 export type ParsedLine =
+  | { type: AI_RESPONSE_TYPE.THINK; value: string }
   | { type: AI_RESPONSE_TYPE.TEXT; value: string }
   | { type: AI_RESPONSE_TYPE.TOOL_CALL; name: ToolName; args: unknown }
   | { type: AI_RESPONSE_TYPE.ERROR; message: string }
@@ -48,9 +49,7 @@ export abstract class BaseLLMProvider implements LLMProvider {
             const errorBody = await res.text().catch(() => '');
             const message = `LLM HTTP error ${res.status}: ${errorBody}`.trimEnd();
             this.logger.error(message);
-            subscriber.next(
-              JSON.stringify(createRecommendationMessage(AI_RESPONSE_TYPE.ERROR, { error: message })),
-            );
+            subscriber.next(JSON.stringify(createRecommendationMessage(AI_RESPONSE_TYPE.ERROR, { error: message })));
             subscriber.complete();
             return;
           }
@@ -110,6 +109,9 @@ export abstract class BaseLLMProvider implements LLMProvider {
     switch (parsed.type) {
       case 'done':
         return 'done';
+
+      case AI_RESPONSE_TYPE.THINK:
+        return JSON.stringify(createRecommendationMessage(AI_RESPONSE_TYPE.THINK, { thoughts: parsed.value }));
 
       case AI_RESPONSE_TYPE.TEXT:
         return JSON.stringify(createRecommendationMessage(AI_RESPONSE_TYPE.TEXT, { text: parsed.value }));

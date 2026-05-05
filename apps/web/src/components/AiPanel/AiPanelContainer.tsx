@@ -10,10 +10,14 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 
 import AiPanel from './AiPanel';
 
-function AiPanelContainer() {
+interface IAiPanelContainer {
+  hideHeader?: boolean;
+}
+
+function AiPanelContainer({ hideHeader }: IAiPanelContainer) {
   const { data: me } = useGetMeQuery();
   const dispatch = useAppDispatch();
-  const { selectedMoods, sessionLengthMinutes, streamedTokens, isStreaming, desiredPlatform } = useAppSelector((s) => s.ai);
+  const { selectedMoods, sessionLengthMinutes, streamedTokens, streamedThoughts, isStreaming, desiredPlatform } = useAppSelector((s) => s.ai);
   const games = useAppSelector((s) => s.games.games);
   const { streamRecommendation } = useAiStream(me);
 
@@ -60,10 +64,12 @@ function AiPanelContainer() {
       selectedMoods={selectedMoods}
       sessionLengthMinutes={sessionLengthMinutes}
       streamedTokens={streamedTokens}
+      streamedThoughts={streamedThoughts}
       isStreaming={isStreaming}
       aiEnabled={aiEnabled}
       availablePlatforms={availablePlatforms}
       selectedPlatform={desiredPlatform}
+      hideHeader={hideHeader}
       onMoodToggle={handleMoodToggle}
       onSessionLengthChange={handleSessionLengthChange}
       onPlatformChange={handlePlatformChange}

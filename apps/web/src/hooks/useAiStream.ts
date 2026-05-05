@@ -1,7 +1,7 @@
 import { AI_RESPONSE_TYPE, ToolName, User, parseRecommendationMessage } from '@grimoire/shared';
 import { useCallback } from 'react';
 
-import { appendToken, startStreaming, stopStreaming } from '@/store/aiSlice';
+import { appendThought, appendToken, startStreaming, stopStreaming } from '@/store/aiSlice';
 import { resetFilters } from '@/store/filtersSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setHighlightedGameID } from '@/store/uiSlice';
@@ -57,10 +57,11 @@ export function useAiStream(me?: User) {
                       }
                     }
                     break;
+                  case AI_RESPONSE_TYPE.THINK:
+                    dispatch(appendThought(recommendationMessage.thoughts));
+                    break;
                   case AI_RESPONSE_TYPE.ERROR:
                     throw new Error(recommendationMessage.error);
-                  default:
-                    console.error(`Unimplemented yet type has been passed in: ${parsed.token}`);
                 }
               }
             } catch {

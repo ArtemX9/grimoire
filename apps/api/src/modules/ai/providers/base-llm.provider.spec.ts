@@ -94,16 +94,12 @@ describe('BaseLLMProvider', () => {
 
       const results = await collect(makeProvider('sse'));
 
-      const expected = JSON.stringify(
-        createRecommendationMessage(AI_RESPONSE_TYPE.ERROR, { error: 'something went wrong' }),
-      );
+      const expected = JSON.stringify(createRecommendationMessage(AI_RESPONSE_TYPE.ERROR, { error: 'something went wrong' }));
       expect(results).toEqual([expected]);
     });
 
     it('completes the observable when parseLine returns { type: "done" }', async () => {
-      parseLineMock
-        .mockReturnValueOnce({ type: AI_RESPONSE_TYPE.TEXT, value: 'word' })
-        .mockReturnValueOnce({ type: 'done' });
+      parseLineMock.mockReturnValueOnce({ type: AI_RESPONSE_TYPE.TEXT, value: 'word' }).mockReturnValueOnce({ type: 'done' });
       const stream = makeStream([enc.encode('data: first\ndata: [DONE]\n')]);
       (global.fetch as jest.Mock).mockResolvedValue(makeFetchResponse(stream));
 
@@ -151,9 +147,7 @@ describe('BaseLLMProvider', () => {
       const chunk1 = enc.encode(fullLine.slice(0, mid));
       const chunk2 = enc.encode(fullLine.slice(mid));
 
-      parseLineMock
-        .mockReturnValueOnce({ type: AI_RESPONSE_TYPE.TEXT, value: 'hi' })
-        .mockReturnValue(null);
+      parseLineMock.mockReturnValueOnce({ type: AI_RESPONSE_TYPE.TEXT, value: 'hi' }).mockReturnValue(null);
 
       const stream = makeStream([chunk1, chunk2]);
       (global.fetch as jest.Mock).mockResolvedValue(makeFetchResponse(stream));

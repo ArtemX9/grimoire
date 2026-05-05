@@ -1,8 +1,9 @@
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcryptjs from 'bcryptjs';
 import 'dotenv/config';
-import * as fs from 'fs';
-import * as path from 'path';
 import * as pg from 'pg';
 
 import { GameStatus, Plan, Role } from '@grimoire/shared';

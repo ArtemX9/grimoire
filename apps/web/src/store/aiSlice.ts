@@ -9,6 +9,7 @@ export interface AiState {
   selectedMoods: Mood[];
   sessionLengthMinutes: number;
   streamedTokens: string;
+  streamedThoughts: string;
   isStreaming: boolean;
   desiredPlatform: Platform | undefined;
 }
@@ -17,6 +18,7 @@ const initialState: AiState = {
   selectedMoods: [],
   sessionLengthMinutes: 120,
   streamedTokens: '',
+  streamedThoughts: '',
   isStreaming: false,
   desiredPlatform: undefined,
 };
@@ -39,8 +41,12 @@ const aiSlice = createSlice({
     appendToken: (state, action: PayloadAction<string>) => {
       state.streamedTokens += action.payload;
     },
+    appendThought: (state, action: PayloadAction<string>) => {
+      state.streamedThoughts += action.payload;
+    },
     startStreaming: (state) => {
       state.streamedTokens = '';
+      state.streamedThoughts = '';
       state.isStreaming = true;
     },
     stopStreaming: (state) => {
@@ -55,6 +61,6 @@ const aiSlice = createSlice({
   },
 });
 
-export const { toggleMood, setSessionLength, appendToken, startStreaming, stopStreaming, loadRecommendation, setDesiredPlatform } = aiSlice.actions;
+export const { toggleMood, setSessionLength, appendToken, appendThought, startStreaming, stopStreaming, loadRecommendation, setDesiredPlatform } = aiSlice.actions;
 
 export default aiSlice.reducer;

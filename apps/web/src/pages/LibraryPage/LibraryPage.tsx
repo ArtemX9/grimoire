@@ -3,8 +3,6 @@ import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigationType } from 'react-router-dom';
 
-let _savedScrollTop = 0;
-
 import { GameStats } from '@/api/gamesApi';
 import AiPanelContainer from '@/components/AiPanel/AiPanelContainer';
 import IGDBGameSearchDialogContainer from '@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer';
@@ -22,6 +20,8 @@ import FilterBar from '@/pages/LibraryPage/components/FilterBar/FilterBar';
 import GameGridContainer from '@/pages/LibraryPage/components/GameGrid/GameGridContainer';
 import { FiltersState } from '@/store/filtersSlice';
 import { useAppSelector } from '@/store/hooks';
+
+let _savedScrollTop = 0;
 
 interface ILibraryPage {
   addDialogOpen: boolean;
@@ -67,14 +67,11 @@ export function LibraryPage({
   const highlightedGameID = useAppSelector((s) => s.ui.highlightedGameID);
   const games = useAppSelector((s) => s.games.games);
 
-  useEffect(
-    function resetScrollOnFreshVisit() {
-      if (navigationType !== 'POP') {
-        _savedScrollTop = 0;
-      }
-    },
-    [],
-  );
+  useEffect(function resetScrollOnFreshVisit() {
+    if (navigationType !== 'POP') {
+      _savedScrollTop = 0;
+    }
+  }, []);
 
   useLayoutEffect(
     function restoreScrollAfterGamesLoad() {
@@ -157,7 +154,7 @@ export function LibraryPage({
         <BottomDrawerPortal>
           <BottomDrawerOverlay />
           <BottomDrawerContent>
-            <div className='rounded-t-xl border-t border-grimoire-border bg-grimoire-card'>
+            <div className='rounded-t-xl border-t border-grimoire-border bg-grimoire-card pb-[env(safe-area-inset-bottom)]'>
               <div className='flex items-center justify-between border-b border-grimoire-border px-4 py-3'>
                 <span className='font-grimoire text-sm text-grimoire-ink'>Tonight&apos;s pick</span>
                 <BottomDrawerClose className='rounded p-1 text-grimoire-muted transition-colors hover:text-grimoire-ink'>
@@ -165,9 +162,9 @@ export function LibraryPage({
                   <span className='sr-only'>Close</span>
                 </BottomDrawerClose>
               </div>
-              <ScrollArea className='max-h-[70svh]'>
-                <AiPanelContainer />
-              </ScrollArea>
+              <div className='overflow-y-auto max-h-[80svh]'>
+                <AiPanelContainer hideHeader={true} />
+              </div>
             </div>
           </BottomDrawerContent>
         </BottomDrawerPortal>
