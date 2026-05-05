@@ -1,6 +1,6 @@
 import { faker } from '@faker-js/faker';
 
-import { CreateGameDto, GameStatus, Genre, Mood, RemapGameDto } from '@grimoire/shared';
+import { CreateGameDto, GameStatus, Genre, Mood, RemapGameDto, Theme } from '@grimoire/shared';
 
 import { GameResponse } from '../modules/games/games.types';
 
@@ -20,6 +20,7 @@ export interface IGenerateGameResponse {
   releaseDate?: Date | null;
   updatedAt?: Date;
   isMappedManually?: boolean;
+  themes?: Theme[];
   platforms?: GameResponse['platforms'];
 }
 
@@ -40,6 +41,7 @@ export function generateGameResponse(params: IGenerateGameResponse = {}): GameRe
     releaseDate: params.releaseDate !== undefined ? params.releaseDate : null,
     updatedAt: params.updatedAt ?? faker.date.recent(),
     isMappedManually: params.isMappedManually ?? false,
+    themes: params.themes ?? [Theme.Action],
     platforms: params.platforms ?? [],
   };
 }
@@ -56,6 +58,7 @@ export interface IGenerateCreateGameDto {
   coverUrl?: string;
   genres?: Genre[];
   status?: GameStatus;
+  themes?: Theme[];
   moods?: Mood[];
   notes?: string;
 }
@@ -73,6 +76,7 @@ export function generateCreateGameDto(params: IGenerateCreateGameDto = {}): Crea
     coverUrl: params.coverUrl,
     genres: params.genres ?? [Genre.Action],
     status: params.status ?? GameStatus.BACKLOG,
+    themes: params.themes ?? [Theme.Action],
     moods: params.moods ?? [],
     notes: params.notes,
   };
@@ -84,6 +88,7 @@ export interface IGenerateRemapGameDto {
   coverUrl?: string;
   genres?: Genre[];
   platformId?: number;
+  themes?: Theme[];
 }
 
 export function generateRemapGameDto(params: IGenerateRemapGameDto = {}): RemapGameDto {
@@ -93,5 +98,6 @@ export function generateRemapGameDto(params: IGenerateRemapGameDto = {}): RemapG
     coverUrl: params.coverUrl,
     genres: params.genres ?? [Genre.Action],
     platformId: params.platformId,
+    themes: params.themes ?? [Theme.Action],
   };
 }

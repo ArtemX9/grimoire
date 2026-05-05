@@ -60,6 +60,7 @@ export class UnmappedGamesService {
           summary: dto.igdbInfo.summary,
           storyLine: dto.igdbInfo.storyLine,
           releaseDate: dto.igdbInfo.releaseDate,
+          themes: dto.igdbInfo.themes,
         },
         tx,
       );

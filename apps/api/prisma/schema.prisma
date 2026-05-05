@@ -173,6 +173,7 @@ model IGDBGame {
   genres             String[]
   summary            String?
   storyLine          String?
+  themes             String[]
   releaseDate        DateTime?
   updatedAt          DateTime             @updatedAt
   userGames          UserGame[]

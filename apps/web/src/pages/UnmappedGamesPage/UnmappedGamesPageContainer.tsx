@@ -33,6 +33,7 @@ function UnmappedGamesPageContainer() {
             id: igdbGame.id,
             title: igdbGame.name,
             genres: igdbGame.genres ?? [],
+            themes: igdbGame.themes ?? [],
             releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : new Date(0),
             coverUrl: igdbGame.cover,
             summary: igdbGame.summary,

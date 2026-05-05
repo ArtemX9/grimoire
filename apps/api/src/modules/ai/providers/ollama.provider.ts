@@ -27,6 +27,7 @@ export class OllamaProvider extends BaseLLMProvider {
       body: {
         model,
         stream: true,
+        think: true,
         tools: getEnrichedToolsWithUsersContext(context),
         options: { temperature, num_ctx: numCtx },
         messages: [{ role: 'user', content: buildPrompt(context) }],
@@ -41,15 +42,12 @@ export class OllamaProvider extends BaseLLMProvider {
       if (parsed.message?.tool_calls?.length > 0) {
         const toolCall = parsed.message.tool_calls[0];
         if (toolCall.function?.name === ToolName.HIGHLIGHT_GAME) {
-          try {
-            return { type: AI_RESPONSE_TYPE.TOOL_CALL, name: ToolName.HIGHLIGHT_GAME, args: toolCall.function.arguments };
-          } catch (e) {
-            return { type: AI_RESPONSE_TYPE.ERROR, message: `${e}` };
-          }
+          return { type: AI_RESPONSE_TYPE.TOOL_CALL, name: ToolName.HIGHLIGHT_GAME, args: toolCall.function.arguments };
         }
       }
 
       const token = parsed.message?.content;
+
       if (token) return { type: AI_RESPONSE_TYPE.TEXT, value: token };
 
       if (parsed.done) return { type: 'done' };

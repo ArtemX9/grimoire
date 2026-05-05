@@ -563,6 +563,22 @@ return (
 
 A `{/* Section name */}` comment inside JSX is a signal that the block should be a `renderXxx()` function — extract it, remove the comment.
 
+### JSX Callback Syntax
+
+Always use `.bind(null, ...args)` when passing a callback with pre-bound arguments to a JSX prop. Never use inline arrow functions for this pattern.
+
+```tsx
+// Correct
+onClick={onPlatformChange.bind(null, platform)}
+onClick={onDelete.bind(null, item.id)}
+onClick={onPlatformChange.bind(null, undefined)}
+
+// Wrong
+onClick={() => onPlatformChange(platform)}
+onClick={() => onDelete(item.id)}
+onClick={() => onPlatformChange(undefined)}
+```
+
 ### Render Helper Rules
 
 | Rule                 | Detail                                                             |
@@ -988,6 +1004,7 @@ Before finalizing any component, verify all of the following:
 - [ ] Component body sections are in the correct order (1–11)
 - [ ] `return` is a lean table of contents — no inline JSX block longer than ~5–8 lines; each section delegated to a `renderXxx()` helper
 - [ ] All `useEffect` callbacks use named functions, not arrows
+- [ ] JSX callbacks with pre-bound args use `.bind(null, ...args)` — never inline arrow functions
 - [ ] Imports follow the 4-group order with blank lines between groups
 - [ ] Interface uses `I` prefix, props ordered correctly
 - [ ] Shadcn primitives imported from `@/components/ui/`

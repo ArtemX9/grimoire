@@ -1,4 +1,4 @@
-import { Genre, Mood } from '../constants';
+import { Genre, Mood, Theme } from '../constants';
 import { Platform } from './platform';
 
 export enum GameStatus {
@@ -13,49 +13,55 @@ export type GamePlatform = {
 }
 
 export type UserGame = {
-  id: string
-  userID: string
-  igdbID: number
-  title: string
-  coverURL?: string
-  genres: Genre[]
-  status: GameStatus
-  playtimeHours: number
-  userRating?: number
-  notes?: string
-  moods: Mood[]
-  addedAt: Date
-  releaseDate: Date | null
-  updatedAt: Date
-  isMappedManually: boolean
-  platforms: GamePlatform[]
-  summary?: string
-  storyLine?: string
+  id: string;
+  userID: string;
+  igdbID: number;
+  title: string;
+  coverURL?: string;
+  genres: Genre[];
+  status: GameStatus;
+  themes: Theme[];
+  playtimeHours: number;
+  userRating?: number;
+  notes?: string;
+  moods: Mood[];
+  addedAt: Date;
+  releaseDate: Date | null;
+  updatedAt: Date;
+  isMappedManually: boolean;
+  platforms: GamePlatform[];
+  summary?: string;
+  storyLine?: string;
 }
 
 export type IgdbGame = {
-  id: number
-  name: string
-  summary?: string
-  first_release_date?: number
-  cover?: string
-  genres?: Genre[]
+  id: number;
+  name: string;
+  summary?: string;
+  first_release_date?: number;
+  cover?: string;
+  genres?: Genre[];
+  themes?: Theme[];
   storyline?: string;
-  total_rating?: number
+  total_rating?: number;
 }
 
 export type IgdbGameRaw = {
-  id: number
-  name: string
+  id: number;
+  name: string;
   cover?: {
-    url: string
-  }
+    url: string;
+  };
   genres?: {
     id: number;
-    name: Genre
-  }[]
-  summary?: string
+    name: Genre;
+  }[];
+  themes: {
+    id: number;
+    name: Theme;
+  }[];
+  summary?: string;
   storyline?: string;
-  first_release_date?: number
-  total_rating?: number
+  first_release_date?: number;
+  total_rating?: number;
 }

@@ -1,10 +1,12 @@
 import { GameStatus, Genre, IgdbGame, Platform, SortableField } from '@grimoire/shared';
 import { useEffect, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
 
 import { useCreateGameMutation, useGetGameStatsQuery } from '@/api/gamesApi';
 import { toast } from '@/components/ui/use-toast';
 import { LibraryPage } from '@/pages/LibraryPage/LibraryPage';
 import { setGenreFilter, setOrder, setPlatformFilter, setSearch, setSortBy, setStatusFilter } from '@/store/filtersSlice';
+import { selectAvailablePlatforms } from '@/store/gamesSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setHighlightedGameID, toggleAIDrawer } from '@/store/uiSlice';
 
@@ -16,24 +18,15 @@ export function LibraryPageContainer() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [createGame] = useCreateGameMutation();
 
-  const availablePlatforms = useMemo(
-    function deriveAvailablePlatforms() {
-      const platformSet = new Set<Platform>();
-      for (const game of games) {
-        for (const gp of game.platforms) {
-          platformSet.add(gp.platformName);
-        }
-      }
-      return Array.from(platformSet);
-    },
-    [games],
-  );
+  const availablePlatforms = useSelector(selectAvailablePlatforms);
 
   // Trigger the RTK Query fetch so onQueryStarted populates the slice.
   useGetGameStatsQuery();
 
   useEffect(() => {
-    return () => { dispatch(setHighlightedGameID(null)); };
+    return () => {
+      dispatch(setHighlightedGameID(null));
+    };
   }, []);
 
   async function handleAddGame(game: IgdbGame, status: GameStatus, onSuccessCallback: () => void, onErrorCallback: () => void) {
@@ -47,6 +40,7 @@ export function LibraryPageContainer() {
         releaseDate: game.first_release_date ? new Date(game.first_release_date * 1000) : new Date(0),
         coverUrl: game.cover,
         genres: game.genres?.map((g) => g) ?? [],
+        themes: game.themes?.map((t) => t) ?? [],
         status,
         moods: [],
       }).unwrap();

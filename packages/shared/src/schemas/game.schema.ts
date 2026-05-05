@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { GameStatus } from '../types';
-import { Genre, Mood } from '../constants';
+import { Genre, Mood, Theme } from '../constants';
 
 export const CreateGameSchema = z.object({
   igdbId: z.number().int().positive(),
@@ -15,6 +15,7 @@ export const CreateGameSchema = z.object({
   genres: z.array(z.enum(Genre)).default([]),
   status: z.enum(GameStatus).default(GameStatus.BACKLOG),
   moods: z.array(z.enum(Mood)).default([]),
+  themes: z.array(z.enum(Theme)).default([]),
   notes: z.string().max(2000).optional()
 });
 
@@ -31,6 +32,7 @@ export const UpdateGameSchema = z.object({
   genres: z.array(z.enum(Genre)).optional(),
   status: z.enum(GameStatus).optional(),
   moods: z.array(z.enum(Mood)).optional(),
+  themes: z.array(z.enum(Theme)).default([]).optional(),
   notes: z.string().max(2000).optional(),
   playtimeHours: z.number().min(0).optional(),
   userRating: z.number().int().min(1).max(10).optional(),
@@ -41,6 +43,7 @@ export const RemapGameSchema = CreateGameSchema.partial().extend({
   title: z.string().min(1).max(255),
   coverUrl: z.string().url().optional(),
   genres: z.array(z.enum(Genre)).default([]),
+  themes: z.array(z.enum(Theme)).default([]),
   platformId: z.number().int().positive().optional(),
 });
 

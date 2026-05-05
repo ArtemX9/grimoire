@@ -1,3 +1,5 @@
+import { Logger } from '@nestjs/common';
+
 import { Observable } from 'rxjs';
 
 import { AI_RESPONSE_TYPE, RecommendationContext, ToolName, createRecommendationMessage } from '@grimoire/shared';
@@ -18,6 +20,8 @@ export type LLMRequest = {
 };
 
 export abstract class BaseLLMProvider implements LLMProvider {
+  private readonly logger = new Logger(BaseLLMProvider.name);
+
   protected abstract readonly lineMode: 'sse' | 'ndjson';
 
   protected abstract buildRequest(context: RecommendationContext): LLMRequest;
@@ -40,6 +44,17 @@ export abstract class BaseLLMProvider implements LLMProvider {
         body: JSON.stringify(body),
       })
         .then(async (res) => {
+          if (!res.ok) {
+            const errorBody = await res.text().catch(() => '');
+            const message = `LLM HTTP error ${res.status}: ${errorBody}`.trimEnd();
+            this.logger.error(message);
+            subscriber.next(
+              JSON.stringify(createRecommendationMessage(AI_RESPONSE_TYPE.ERROR, { error: message })),
+            );
+            subscriber.complete();
+            return;
+          }
+
           const reader = res.body!.getReader();
           const decoder = new TextDecoder();
           let buffer = '';

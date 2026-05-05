@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Genre } from '../constants';
+import { Genre, Theme } from '../constants';
 
 export const MapUnmappedGameSchema = z.object({
   syncedGameID: z.string(),
@@ -13,6 +13,7 @@ export const MapUnmappedGameSchema = z.object({
     coverUrl: z.string().url().optional(),
     summary: z.string().optional(),
     storyLine: z.string().optional(),
+    themes: z.array(z.enum(Theme)),
   }),
 })
 

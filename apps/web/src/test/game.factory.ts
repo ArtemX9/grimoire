@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { GameStatus, Genre, IgdbGame, Mood, Platform, PlatformType, UnmappedGame, UnmappedReasons, UserGame } from '@grimoire/shared';
+import { GameStatus, Genre, IgdbGame, Mood, Platform, PlatformType, Theme, UnmappedGame, UnmappedReasons, UserGame } from '@grimoire/shared';
 import type { GamePlatform } from '@grimoire/shared';
 
 // ---------------------------------------------------------------------------
@@ -13,6 +13,7 @@ export interface IGenerateUserGame {
   title?: string;
   coverURL?: string;
   genres?: Genre[];
+  themes?: Theme[];
   status?: GameStatus;
   playtimeHours?: number;
   userRating?: number;
@@ -35,6 +36,7 @@ export function generateUserGame(params: IGenerateUserGame = {}): UserGame {
     title: params.title ?? faker.commerce.productName(),
     coverURL: params.coverURL,
     genres: params.genres ?? [faker.helpers.enumValue(Genre)],
+    themes: params.themes ?? [],
     status: params.status ?? GameStatus.BACKLOG,
     playtimeHours: params.playtimeHours ?? faker.number.int({ min: 0, max: 500 }),
     userRating: params.userRating,

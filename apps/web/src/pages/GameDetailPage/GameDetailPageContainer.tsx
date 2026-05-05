@@ -92,6 +92,7 @@ function GameDetailPageContainer() {
           genres: igdbGame.genres ?? [],
           summary: igdbGame.summary,
           storyLine: igdbGame.storyline,
+          themes: igdbGame.themes ?? [],
           releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,
           ...(selectedPlatformForRemap
             ? { platformId: selectedPlatformForRemap.platformID, externalId: selectedPlatformForRemap.externalID }

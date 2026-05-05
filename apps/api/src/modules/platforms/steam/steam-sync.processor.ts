@@ -3,7 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 
 import { Job } from 'bullmq';
 
-import { Genre } from '@grimoire/shared';
+import { Genre, Theme } from '@grimoire/shared';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { GamesService } from '../../games/games.service';
@@ -47,6 +47,7 @@ export class SteamSyncProcessor extends WorkerHost {
                   title: igdbGame.name,
                   coverURL: igdbGame.cover || steamGame.img_icon_url,
                   genres: igdbGame.genres as Genre[],
+                  themes: igdbGame.themes as Theme[],
                   summary: igdbGame.summary,
                   storyLine: igdbGame.storyline,
                   releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,

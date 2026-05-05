@@ -1,7 +1,8 @@
-import { UserGame } from '@grimoire/shared';
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+import { Platform, UserGame } from '@grimoire/shared';
+import { PayloadAction, createSelector, createSlice } from '@reduxjs/toolkit';
 
 import type { GameStats } from '@/api/gamesApi';
+import { RootState } from '@/store/store';
 
 // String-based matchers for RTK Query lifecycle actions.
 // We cannot import gamesApi here (circular: gamesApi imports from gamesSlice),
@@ -140,5 +141,18 @@ export const {
   selectedGamePatched,
   selectedGameRemoved,
 } = gamesSlice.actions;
+
+export const selectAvailablePlatforms = createSelector(
+  (state: RootState) => state.games.games,
+  (games) => {
+    const platformSet = new Set<Platform>();
+    for (const game of games) {
+      for (const gp of game.platforms) {
+        platformSet.add(gp.platformName);
+      }
+    }
+    return Array.from(platformSet).sort((a, b) => (a > b ? 1 : a === b ? 0 : -1));
+  },
+);
 
 export default gamesSlice.reducer;

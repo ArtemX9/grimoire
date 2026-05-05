@@ -186,7 +186,7 @@ describe('AiPanel — platform picker', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Any' }));
 
-    expect(onPlatformChange).toHaveBeenCalledWith(undefined);
+    expect(onPlatformChange).toHaveBeenCalledWith(undefined, expect.anything());
   });
 
   it('calls onPlatformChange with the platform enum value when a platform tag is clicked', async () => {
@@ -195,7 +195,7 @@ describe('AiPanel — platform picker', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /steam/i }));
 
-    expect(onPlatformChange).toHaveBeenCalledWith(Platform.STEAM);
+    expect(onPlatformChange).toHaveBeenCalledWith(Platform.STEAM, expect.anything());
   });
 
   it('highlights the Any tag when selectedPlatform is undefined', () => {

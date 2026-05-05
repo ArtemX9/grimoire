@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { GameStatus, Genre, Mood, Platform, SortableField } from '@grimoire/shared';
+import { GameStatus, Genre, Mood, Platform, SortableField, Theme } from '@grimoire/shared';
 
 import { UnmappedReason } from '../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -425,6 +425,7 @@ describe('GamesService', () => {
       platformId: 1,
       externalId: undefined,
       externalTitle: undefined,
+      themes: [] as Theme[],
     };
 
     it('upserts IGDBGame by igdbId', async () => {
@@ -652,6 +653,7 @@ describe('GamesService', () => {
       title: 'CS:GO',
       coverURL: '',
       genres: [Genre.Shooter],
+      themes: [Theme.Action],
       summary: undefined,
       storyLine: undefined,
       releaseDate: undefined,

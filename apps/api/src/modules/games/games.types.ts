@@ -1,4 +1,4 @@
-import { GameStatus, Genre, Mood, Platform } from '@grimoire/shared';
+import { GameStatus, Genre, Mood, Platform, Theme } from '@grimoire/shared';
 
 import { Prisma } from '../../generated/prisma/client';
 
@@ -15,6 +15,7 @@ export type GameResponse = {
   addedAt: Date;
   releaseDate: Date | null;
   updatedAt: Date;
+  themes: Theme[];
   isMappedManually: boolean;
   platforms: {
     platformID: number;
@@ -71,4 +72,5 @@ export type IgdbSyncGameInfo = {
   summary?: string;
   storyLine?: string;
   releaseDate?: Date;
+  themes: Theme[];
 };

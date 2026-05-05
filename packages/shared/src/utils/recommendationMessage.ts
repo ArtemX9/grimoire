@@ -3,13 +3,13 @@ import {
   RecommendationMessage,
   RecommendationResponseText,
   RecommendationResponseToolCall,
-  RecommnedationResponseError,
+  RecommendationResponseError,
 } from '../types';
 
 type ArgsMap = {
   [AI_RESPONSE_TYPE.TOOL_CALL]: RecommendationResponseToolCall;
   [AI_RESPONSE_TYPE.TEXT]: RecommendationResponseText;
-  [AI_RESPONSE_TYPE.ERROR]: RecommnedationResponseError;
+  [AI_RESPONSE_TYPE.ERROR]: RecommendationResponseError;
 };
 
 export function parseRecommendationMessage(raw: string): RecommendationMessage {

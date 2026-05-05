@@ -1,4 +1,4 @@
-import { Mood, Platform, PLATFORM_LABELS } from '@grimoire/shared';
+import { Mood, PLATFORM_LABELS, Platform } from '@grimoire/shared';
 import { Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -117,7 +117,8 @@ function AiPanel({
         <p className='font-sans text-xs text-grimoire-muted'>Platform</p>
         <div className='flex flex-wrap gap-1.5'>
           <button
-            onClick={() => onPlatformChange(undefined)}
+            key='any'
+            onClick={onPlatformChange.bind(null, undefined)}
             disabled={!aiEnabled}
             className={cn(
               'rounded-full border px-2.5 py-1 font-sans text-xs transition-colors',
@@ -132,7 +133,7 @@ function AiPanel({
           {availablePlatforms.map((platform) => (
             <button
               key={platform}
-              onClick={() => onPlatformChange(platform)}
+              onClick={onPlatformChange.bind(null, platform)}
               disabled={!aiEnabled}
               className={cn(
                 'flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-sans text-xs transition-colors',

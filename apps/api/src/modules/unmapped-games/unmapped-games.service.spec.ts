@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { Genre, UnmappedReasons } from '@grimoire/shared';
+import { Genre, Theme, UnmappedReasons } from '@grimoire/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { generateUnmappedSyncedGame } from '../../test';
@@ -24,6 +24,7 @@ function makeMapDto(overrides: Partial<Record<string, unknown>> = {}) {
       coverUrl: 'https://example.com/cover.jpg',
       summary: 'A great game',
       storyLine: 'An epic story',
+      themes: [Theme.Action],
     },
     ...overrides,
   };

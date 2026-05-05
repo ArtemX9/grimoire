@@ -3,7 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 
 import { Job } from 'bullmq';
 
-import { Genre } from '@grimoire/shared';
+import { Genre, Theme } from '@grimoire/shared';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { GamesService } from '../../games/games.service';
@@ -52,6 +52,7 @@ export class PlaystationSyncProcessor extends WorkerHost {
                   genres: igdbGame.genres as Genre[],
                   summary: igdbGame.summary,
                   storyLine: igdbGame.storyline,
+                  themes: igdbGame.themes as Theme[],
                   releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,
                 }
               : undefined,

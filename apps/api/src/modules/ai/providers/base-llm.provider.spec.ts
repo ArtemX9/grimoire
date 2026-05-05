@@ -30,7 +30,7 @@ function makeStream(chunks: Uint8Array[]): ReadableStream {
 const enc = new TextEncoder();
 
 function makeFetchResponse(stream: ReadableStream): Response {
-  return { body: stream } as unknown as Response;
+  return { ok: true, body: stream } as unknown as Response;
 }
 
 function collect(provider: BaseLLMProvider): Promise<string[]> {

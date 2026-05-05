@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { Observable } from 'rxjs';
 
-import { GameStatus, Genre, Mood, RecommendationContext, RecommendationRequestDto } from '@grimoire/shared';
+import { GameStatus, Genre, Mood, RecommendationContext, RecommendationRequestDto, Theme } from '@grimoire/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { GamesService } from '../games/games.service';
@@ -94,7 +94,7 @@ export class AiService {
     await this._checkAndIncrementAiUsage(userId);
 
     const [games, recentSessions] = await Promise.all([
-      this.gamesService.findAll(userId, undefined, undefined, undefined, request.desiredPlatform),
+      this.gamesService.findAll(userId, [GameStatus.PLAYING, GameStatus.BACKLOG], undefined, undefined, request.desiredPlatform),
       this.sessionsService.findRecent(userId, 5),
     ]);
 
@@ -109,6 +109,8 @@ export class AiService {
         playtimeHours: g.playtimeHours,
         moods: g.moods as Mood[],
         rating: g.userRating,
+        summary: g.summary,
+        themes: g.themes as Theme[],
       })),
       recentSessions: recentSessions.map((s) => ({
         gameTitle: s.game.title,

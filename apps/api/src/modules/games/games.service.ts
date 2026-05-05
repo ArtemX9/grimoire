@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 
 import { PrismaClient } from '@prisma/client/extension';
 
-import { CreateGameDto, GameStatus, Genre, Mood, Platform, RemapGameDto, SortableField, UpdateGameDto } from '@grimoire/shared';
+import { CreateGameDto, GameStatus, Genre, Mood, Platform, RemapGameDto, SortableField, Theme, UpdateGameDto } from '@grimoire/shared';
 
 import { UnmappedReason } from '../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -15,7 +15,7 @@ export class GamesService {
 
   async findAll(
     userId: string,
-    status?: GameStatus,
+    status?: GameStatus | GameStatus[],
     search?: string,
     genre?: Genre,
     platform?: Platform,
@@ -66,7 +66,7 @@ export class GamesService {
       const games = await this.prisma.userGame.findMany({
         where: {
           userId,
-          ...(status && { status }),
+          ...(status && { status: Array.isArray(status) ? { in: status } : status }),
           ...(search && {
             igdbGame: {
               title: {
@@ -158,6 +158,7 @@ export class GamesService {
         genres: dto.genres,
         summary: dto.summary,
         storyLine: dto.storyLine,
+        themes: dto.themes,
         releaseDate: dto.releaseDate,
       },
       create: {
@@ -166,6 +167,7 @@ export class GamesService {
         coverUrl: dto.coverUrl,
         genres: dto.genres,
         summary: dto.summary,
+        themes: dto.themes,
         storyLine: dto.storyLine,
         releaseDate: dto.releaseDate,
       },
@@ -197,6 +199,7 @@ export class GamesService {
         genres: dto.genres,
         summary: dto.summary,
         storyLine: dto.storyLine,
+        themes: dto.themes,
         releaseDate: dto.releaseDate,
       },
       create: {
@@ -206,6 +209,7 @@ export class GamesService {
         genres: dto.genres,
         summary: dto.summary,
         storyLine: dto.storyLine,
+        themes: dto.themes,
         releaseDate: dto.releaseDate,
       },
     });
@@ -441,6 +445,7 @@ export class GamesService {
           summary: syncedGameIGDBInfo.summary,
           storyLine: syncedGameIGDBInfo.storyLine,
           releaseDate: syncedGameIGDBInfo.releaseDate,
+          themes: syncedGameIGDBInfo.themes,
         },
         update: {
           title: syncedGameIGDBInfo.title,
@@ -449,6 +454,7 @@ export class GamesService {
           summary: syncedGameIGDBInfo.summary,
           storyLine: syncedGameIGDBInfo.storyLine,
           releaseDate: syncedGameIGDBInfo.releaseDate,
+          themes: syncedGameIGDBInfo.themes,
         },
       });
     }
@@ -633,6 +639,7 @@ export class GamesService {
       releaseDate: game.igdbGame.releaseDate,
       userRating: game.userRating ?? undefined,
       notes: game.notes ?? undefined,
+      themes: game.igdbGame.themes as Theme[],
       moods: game.moods as Mood[],
       addedAt: game.addedAt,
       updatedAt: game.updatedAt,

@@ -285,7 +285,7 @@ describe('SessionsService', () => {
         id: 'sess-tx',
         durationMin: 60,
         notes: 'txn note',
-        mood: [Mood.CALM],
+        mood: [Mood.CHILL],
       });
       (prisma.$transaction as jest.Mock).mockResolvedValue([created, {}]);
 
@@ -294,7 +294,7 @@ describe('SessionsService', () => {
       expect(result.id).toBe('sess-tx');
       expect(result.durationMin).toBe(60);
       expect(result.notes).toBe('txn note');
-      expect(result.mood).toEqual([Mood.CALM]);
+      expect(result.mood).toEqual([Mood.CHILL]);
     });
   });
 });

@@ -1,9 +1,11 @@
 import { Mood, Platform } from '@grimoire/shared';
 import { useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
 
 import { useGetMeQuery } from '@/api/usersApi';
 import { useAiStream } from '@/hooks/useAiStream';
 import { AI_LAST_RECOMMENDATION_KEY, loadRecommendation, setDesiredPlatform, setSessionLength, toggleMood } from '@/store/aiSlice';
+import { selectAvailablePlatforms } from '@/store/gamesSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 
 import AiPanel from './AiPanel';
@@ -17,18 +19,7 @@ function AiPanelContainer() {
 
   const aiEnabled = me?.aiEnabled ?? true;
 
-  const availablePlatforms = useMemo(
-    function deriveAvailablePlatforms() {
-      const platformSet = new Set<Platform>();
-      for (const game of games) {
-        for (const gp of game.platforms) {
-          platformSet.add(gp.platformName);
-        }
-      }
-      return Array.from(platformSet);
-    },
-    [games],
-  );
+  const availablePlatforms = useSelector(selectAvailablePlatforms);
 
   useEffect(function rehydrateFromLocalStorage() {
     if (streamedTokens) return;
