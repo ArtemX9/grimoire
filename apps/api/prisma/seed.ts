@@ -137,7 +137,7 @@ async function main() {
         gameId: celeste.id,
         startedAt: new Date('2024-02-20T18:00:00Z'),
         durationMin: 90,
-        mood: [Mood.Relaxed],
+        mood: [Mood.RELAXED],
       },
     });
   }
