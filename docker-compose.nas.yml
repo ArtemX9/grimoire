@@ -51,6 +51,8 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.6}
+      LLM_NUM_CTX: ${LLM_NUM_CTX:-65536}
     depends_on:
       postgres:
         condition: service_healthy
