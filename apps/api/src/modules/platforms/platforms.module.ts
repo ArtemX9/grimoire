@@ -14,6 +14,9 @@ import { STEAM_QUEUE_TITLE } from './steam/constants';
 import { SteamSyncProcessor } from './steam/steam-sync.processor';
 import { SteamController } from './steam/steam.controller';
 import { SteamService } from './steam/steam.service';
+import { XboxAuthService } from './xbox/xbox-auth.service';
+import { XboxController } from './xbox/xbox.controller';
+import { XboxService } from './xbox/xbox.service';
 
 @Module({
   imports: [
@@ -24,7 +27,15 @@ import { SteamService } from './steam/steam.service';
     GamesModule,
     IgdbModule,
   ],
-  controllers: [SteamController, PlaystationController],
-  providers: [SteamService, SteamSyncProcessor, PlaystationAuthService, PlaystationService, PlaystationSyncProcessor],
+  controllers: [SteamController, PlaystationController, XboxController],
+  providers: [
+    SteamService,
+    SteamSyncProcessor,
+    PlaystationAuthService,
+    PlaystationService,
+    PlaystationSyncProcessor,
+    XboxService,
+    XboxAuthService,
+  ],
 })
 export class PlatformsModule {}

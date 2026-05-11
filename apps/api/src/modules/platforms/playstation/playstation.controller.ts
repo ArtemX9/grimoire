@@ -1,7 +1,5 @@
 import { Controller, Get, Post, Query } from '@nestjs/common';
 
-import { User } from '@grimoire/shared';
-
 import { CurrentUser, RequestUser } from '../../../common/decorators/current-user.decorator';
 import { NotDemo } from '../../../common/decorators/not-demo.decorator';
 import { PlaystationService } from './playstation.service';

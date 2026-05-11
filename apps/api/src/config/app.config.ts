@@ -5,6 +5,12 @@ export default registerAs('app', () => ({
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
   steam: { apiKey: process.env.STEAM_API_KEY },
   playstation: { npsso: process.env.PSN_NPSSO },
+  xbox: {
+    clientID: process.env.XBOX_CLIENT_ID,
+    clientSecret: process.env.XBOX_CLIENT_SECRET,
+    redirectURI: process.env.XBOX_REDIRECT_URI,
+    frontendRedirectURI: process.env.XBOX_FRONTEND_REDIRECT_URI,
+  },
   igdb: {
     clientId: process.env.TWITCH_CLIENT_ID,
     clientSecret: process.env.TWITCH_CLIENT_SECRET,

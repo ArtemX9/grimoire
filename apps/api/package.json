@@ -34,6 +34,7 @@
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "@prisma/config": "^7.7.0",
+    "@xboxreplay/xboxlive-auth": "^5.1.0",
     "bcryptjs": "^3.0.3",
     "better-auth": "^1.6.2",
     "bullmq": "^5.73.3",
