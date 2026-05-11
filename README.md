@@ -64,6 +64,9 @@ docker compose up postgres redis -d
 # Run migrations
 pnpm db:migrate
 
+# Generate prisma client
+pnpm --filter api prisma generate
+
 # Start dev servers (api :3000, web :5173)
 pnpm dev
 ```
