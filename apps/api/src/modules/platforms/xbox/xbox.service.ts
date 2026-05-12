@@ -27,9 +27,19 @@ export class XboxService implements iPlatformService {
 
     return this._toResponse(platform);
   }
-  getSyncStatus(userID: string): Promise<SyncStatusResponse> {
-    throw new Error('Method not implemented.');
+  async getSyncStatus(userID: string): Promise<SyncStatusResponse> {
+    const platform = await this.prisma.userPlatform.findUnique({
+      where: {
+        userId_platformId: {
+          userId: userID,
+          platformId: PLATFORM_ID_XBOX,
+        },
+      },
+    });
+
+    return { connected: !!platform, lastSyncAt: platform?.lastSyncAt ?? undefined };
   }
+
   enqueueSync(userID: string): Promise<EnqueueResult> {
     throw new Error('Method not implemented.');
   }

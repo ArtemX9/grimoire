@@ -31,7 +31,15 @@ export class XboxController {
   @Get('connect/callback')
   @Public()
   @Redirect()
-  async connectCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+  async connectCallback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+    @Query('error') error?: string,
+    @Query('error_description') errorDescription?: string,
+  ) {
+    if (error) {
+      throw new BadRequestException(errorDescription);
+    }
     const userID = this.xboxAuthService.consumePendingState(state);
     if (!userID) {
       throw new BadRequestException('Invalid or expired OAuth state');

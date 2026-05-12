@@ -20,6 +20,7 @@ export class XboxAuthService {
     {
       // microsoft live
       refreshToken: string | null;
+      accessToken: string | null;
       userID: string;
       // microsoft xbox
       xboxUserID?: string;
@@ -52,12 +53,8 @@ export class XboxAuthService {
     const redirectURI = this.config.get<string>('app.xbox.redirectURI')!;
     const liveAuth = await live.exchangeCodeForAccessToken(code, clientID, XBOX_SCOPE, redirectURI, clientSecret);
 
-    await this.prisma.userPlatform.update({
-      where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_XBOX } },
-      data: { refreshToken: liveAuth.refresh_token },
-    });
-
     this.tokenCache.set(userID, {
+      accessToken: liveAuth.access_token,
       refreshToken: liveAuth.refresh_token,
       userID: liveAuth.user_id,
     });
@@ -68,25 +65,46 @@ export class XboxAuthService {
   // 3 step - Convert the access token to Xbox Network tokens
   async getXSTSTokenForUser(userID: string) {
     const userTokenCache = this.tokenCache.get(userID);
-    if (!userTokenCache?.refreshToken) {
+    if (!userTokenCache?.accessToken) {
       throw new UnauthorizedException('Xbox not connected');
     }
     try {
-      const userToken = await xnet.exchangeRpsTicketForUserToken(userTokenCache?.refreshToken, 'd');
+      const userToken = await xnet.exchangeRpsTicketForUserToken(userTokenCache.accessToken, 'd');
 
       const tokens = await xnet.exchangeTokensForXSTSToken({ userTokens: [userToken.Token] });
       const accessToken = tokens.Token;
 
-      await this.prisma.userPlatform.update({
+      if (!tokens.DisplayClaims.xui[0].xid) {
+        throw new UnauthorizedException('User does not have any id in Xbox system');
+      }
+      await this.prisma.userPlatform.upsert({
         where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_XBOX } },
-        data: { accessToken: accessToken },
+        create: {
+          userId: userID,
+          platformId: PLATFORM_ID_XBOX,
+          refreshToken: userTokenCache.refreshToken,
+          // We try to get the Game Tag, if not present - use Xbox ID
+          // @ts-ignore
+          externalId: tokens.DisplayClaims.xui[0].gtg ?? tokens.DisplayClaims.xui[0].xid,
+          accessToken,
+        },
+        update: {
+          refreshToken: userTokenCache.refreshToken,
+          // We try to get the Game Tag, if not present - use Xbox ID
+          // @ts-ignore
+          externalId: tokens.DisplayClaims.xui[0].gtg ?? tokens.DisplayClaims.xui[0].xid,
+          accessToken,
+        },
+        include: {
+          platform: true,
+        },
       });
 
       this.tokenCache.set(userID, {
         ...userTokenCache,
         xboxUserID: tokens.DisplayClaims.xui[0]?.xid,
         userHash: tokens.DisplayClaims.xui[0]?.uhs,
-        XSTSToken: tokens.Token,
+        XSTSToken: accessToken,
         expiresAt: tokens.NotAfter,
       });
     } catch (e) {
@@ -144,18 +162,13 @@ export class XboxAuthService {
       throw new UnauthorizedException("Couldn't obtain access token from Microsoft Live service");
     }
 
-    this.tokenCache.set(userID, { refreshToken: liveAuth.refresh_token, userID: liveAuth.user_id });
+    this.tokenCache.set(userID, { accessToken: liveAuth.access_token, refreshToken: liveAuth.refresh_token, userID: liveAuth.user_id });
 
     try {
-      const userToken = await xnet.exchangeRpsTicketForUserToken(liveAuth.refresh_token, 'd');
+      const userToken = await xnet.exchangeRpsTicketForUserToken(liveAuth.access_token, 'd');
 
       const tokens = await xnet.exchangeTokensForXSTSToken({ userTokens: [userToken.Token] });
       const accessToken = tokens.Token;
-
-      await this.prisma.userPlatform.update({
-        where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_XBOX } },
-        data: { accessToken: accessToken },
-      });
 
       const userTokenCache = this.tokenCache.get(userID);
 
@@ -172,7 +185,7 @@ export class XboxAuthService {
       // Persist the rotated refresh token
       await this.prisma.userPlatform.update({
         where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_XBOX } },
-        data: { refreshToken: liveAuth.refresh_token },
+        data: { refreshToken: liveAuth.refresh_token, accessToken },
       });
 
       if (!tokens.DisplayClaims.xui[0]?.xid || !tokens.Token || !tokens.DisplayClaims.xui[0]?.uhs) {
