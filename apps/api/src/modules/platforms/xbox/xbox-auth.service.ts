@@ -1,14 +1,35 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { XNETExchangeTokensResponse, live, xnet } from '@xboxreplay/xboxlive-auth';
+import { live, xnet } from '@xboxreplay/xboxlive-auth';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { PLATFORM_ID_XBOX, XBOX_RESPONSE_TYPE, XBOX_SCOPE } from './constants';
 
+export type TokensInfo = {
+  xboxUserID: string;
+  token: string;
+  userHash: string;
+};
+
 @Injectable()
 export class XboxAuthService {
-  private readonly tokenCache = new Map<string, { accessToken: string; expiresAt: number }>();
+  // XSTS Tokens per user
+  private readonly tokenCache = new Map<
+    string,
+    {
+      // microsoft live
+      refreshToken: string | null;
+      userID: string;
+      // microsoft xbox
+      xboxUserID?: string;
+      expiresAt?: string;
+      userHash?: string;
+      XSTSToken?: string;
+    }
+  >();
+
+  // Unique Connect Request ID - to particular user info
   private readonly pendingStates = new Map<string, { userID: string; expiresAt: number }>();
 
   constructor(
@@ -16,6 +37,7 @@ export class XboxAuthService {
     private prisma: PrismaService,
   ) {}
 
+  // 1 step - Generate the URL where users will authenticate
   getAuthorizationURL(state: string) {
     const clientID = this.config.get<string>('app.xbox.clientID')!;
     const redirectURI = this.config.get<string>('app.xbox.redirectURI')!;
@@ -23,29 +45,57 @@ export class XboxAuthService {
     return `${base}&state=${state}`;
   }
 
-  async exchangeCodeForLiveTokens(code: string) {
+  // 2 step -Exchange the authorization code for access and refresh tokens
+  async exchangeCodeForLiveTokens(code: string, userID: string) {
     const clientID = this.config.get<string>('app.xbox.clientID')!;
     const clientSecret = this.config.get<string>('app.xbox.clientSecret')!;
     const redirectURI = this.config.get<string>('app.xbox.redirectURI')!;
-    return live.exchangeCodeForAccessToken(code, clientID, XBOX_SCOPE, redirectURI, clientSecret);
+    const liveAuth = await live.exchangeCodeForAccessToken(code, clientID, XBOX_SCOPE, redirectURI, clientSecret);
+
+    await this.prisma.userPlatform.update({
+      where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_XBOX } },
+      data: { refreshToken: liveAuth.refresh_token },
+    });
+
+    this.tokenCache.set(userID, {
+      refreshToken: liveAuth.refresh_token,
+      userID: liveAuth.user_id,
+    });
+
+    return;
   }
 
-  async getXSTSTokenForUser(userID: string): Promise<XNETExchangeTokensResponse> {
-    const platform = await this.prisma.userPlatform.findUnique({
-      where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_XBOX } },
-    });
-    if (!platform?.refreshToken) {
+  // 3 step - Convert the access token to Xbox Network tokens
+  async getXSTSTokenForUser(userID: string) {
+    const userTokenCache = this.tokenCache.get(userID);
+    if (!userTokenCache?.refreshToken) {
       throw new UnauthorizedException('Xbox not connected');
     }
+    try {
+      const userToken = await xnet.exchangeRpsTicketForUserToken(userTokenCache?.refreshToken, 'd');
 
-    const accessToken = await this._getOrRefreshAccessToken(userID, platform.refreshToken);
-    const userToken = await xnet.exchangeRpsTicketForUserToken(`d=${accessToken}`);
+      const tokens = await xnet.exchangeTokensForXSTSToken({ userTokens: [userToken.Token] });
+      const accessToken = tokens.Token;
 
-    return xnet.exchangeTokensForXSTSToken({ userTokens: [userToken.Token] });
+      await this.prisma.userPlatform.update({
+        where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_XBOX } },
+        data: { accessToken: accessToken },
+      });
+
+      this.tokenCache.set(userID, {
+        ...userTokenCache,
+        xboxUserID: tokens.DisplayClaims.xui[0]?.xid,
+        userHash: tokens.DisplayClaims.xui[0]?.uhs,
+        XSTSToken: tokens.Token,
+        expiresAt: tokens.NotAfter,
+      });
+    } catch (e) {
+      throw new UnprocessableEntityException(e);
+    }
   }
 
-  setPendingState(state: string, userID: string) {
-    this.pendingStates.set(state, { userID, expiresAt: Date.now() + 10 * 60 * 1000 });
+  setPendingState(uniqueConnectRequestID: string, userID: string) {
+    this.pendingStates.set(uniqueConnectRequestID, { userID, expiresAt: Date.now() + 10 * 60 * 1000 });
   }
 
   consumePendingState(state: string): string | undefined {
@@ -57,28 +107,85 @@ export class XboxAuthService {
     return entry.userID;
   }
 
-  private async _getOrRefreshAccessToken(userID: string, storedRefreshToken: string): Promise<string> {
+  async getValidToken(userID: string): Promise<TokensInfo> {
     const cached = this.tokenCache.get(userID);
-    if (cached && Date.now() < cached.expiresAt) {
-      return cached.accessToken;
+    if (cached?.expiresAt && new Date() < new Date(cached.expiresAt) && cached.xboxUserID && cached.XSTSToken && cached.userHash) {
+      return {
+        xboxUserID: cached.xboxUserID,
+        token: cached.XSTSToken,
+        userHash: cached.userHash,
+      };
     }
 
+    let refreshToken = cached?.refreshToken;
+    if (!refreshToken) {
+      const userPlatformInfo = await this.prisma.userPlatform.findUniqueOrThrow({
+        where: {
+          userId_platformId: {
+            userId: userID,
+            platformId: PLATFORM_ID_XBOX,
+          },
+        },
+      });
+
+      refreshToken = userPlatformInfo.refreshToken as string;
+    }
+
+    return this.refreshTokens(userID, refreshToken);
+  }
+
+  private async refreshTokens(userID: string, refreshToken: string): Promise<TokensInfo> {
     const clientID = this.config.get<string>('app.xbox.clientID')!;
     const clientSecret = this.config.get<string>('app.xbox.clientSecret')!;
-    const liveAuth = await live.refreshAccessToken(storedRefreshToken, clientID, XBOX_SCOPE, clientSecret);
 
-    // Persist the rotated refresh token
-    await this.prisma.userPlatform.update({
-      where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_XBOX } },
-      data: { refreshToken: liveAuth.refresh_token },
-    });
+    const liveAuth = await live.refreshAccessToken(refreshToken, clientID, XBOX_SCOPE, clientSecret);
 
-    // Cache the access token with a 5-minute safety margin
-    this.tokenCache.set(userID, {
-      accessToken: liveAuth.access_token,
-      expiresAt: Date.now() + (liveAuth.expires_in - 300) * 1000,
-    });
+    if (!liveAuth.refresh_token) {
+      throw new UnauthorizedException("Couldn't obtain access token from Microsoft Live service");
+    }
 
-    return liveAuth.access_token;
+    this.tokenCache.set(userID, { refreshToken: liveAuth.refresh_token, userID: liveAuth.user_id });
+
+    try {
+      const userToken = await xnet.exchangeRpsTicketForUserToken(liveAuth.refresh_token, 'd');
+
+      const tokens = await xnet.exchangeTokensForXSTSToken({ userTokens: [userToken.Token] });
+      const accessToken = tokens.Token;
+
+      await this.prisma.userPlatform.update({
+        where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_XBOX } },
+        data: { accessToken: accessToken },
+      });
+
+      const userTokenCache = this.tokenCache.get(userID);
+
+      if (userTokenCache) {
+        this.tokenCache.set(userID, {
+          ...userTokenCache,
+          xboxUserID: tokens.DisplayClaims.xui[0]?.xid,
+          userHash: tokens.DisplayClaims.xui[0]?.uhs,
+          XSTSToken: tokens.Token,
+          expiresAt: tokens.NotAfter,
+        });
+      }
+
+      // Persist the rotated refresh token
+      await this.prisma.userPlatform.update({
+        where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_XBOX } },
+        data: { refreshToken: liveAuth.refresh_token },
+      });
+
+      if (!tokens.DisplayClaims.xui[0]?.xid || !tokens.Token || !tokens.DisplayClaims.xui[0]?.uhs) {
+        throw new UnauthorizedException("Couldn't authorize in Xbox service");
+      }
+
+      return {
+        xboxUserID: tokens.DisplayClaims.xui[0]?.xid,
+        token: tokens.Token,
+        userHash: tokens.DisplayClaims.xui[0]?.uhs,
+      };
+    } catch (e) {
+      throw new UnprocessableEntityException(e);
+    }
   }
 }
