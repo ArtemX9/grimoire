@@ -16,6 +16,7 @@ import { ROUTES } from '@/constants/routes';
 import { cn } from '@/utils/cn';
 
 import PSNRow from './components/PSNRow';
+import XboxRow from './components/XboxRow';
 
 const steamIDRegex = /^\d{17}$/;
 
@@ -168,7 +169,7 @@ function PlatformsSection() {
       <div className='flex flex-col divide-y divide-grimoire-border rounded-lg border border-grimoire-border bg-grimoire-card'>
         <SteamRow />
         <PSNRow />
-        <InactivePlatformRow label='Xbox' platform={Platform.Xbox} />
+        <XboxRow />
         <InactivePlatformRow label='Epic Games' />
       </div>
     </section>
