@@ -1,9 +1,9 @@
-import { GameStatus, Genre, IgdbGame, Platform, SortableField } from '@grimoire/shared';
+import { GameStatus, Genre, IgdbGame, Platform, SortableField, UserGame } from '@grimoire/shared';
 import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigationType } from 'react-router-dom';
 
-import { GameStats } from '@/api/gamesApi';
+import { GameStats } from '@/api/games';
 import AiPanelContainer from '@/components/AiPanel/AiPanelContainer';
 import IGDBGameSearchDialogContainer from '@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer';
 import UnresolvedGamesBannerContainer from '@/components/UnresolvedGamesBanner/UnresolvedGamesBannerContainer';
@@ -21,6 +21,7 @@ import GameGridContainer from '@/pages/LibraryPage/components/GameGrid/GameGridC
 import { FiltersState } from '@/store/filtersSlice';
 import { useAppSelector } from '@/store/hooks';
 
+
 let _savedScrollTop = 0;
 
 interface ILibraryPage {
@@ -29,7 +30,8 @@ interface ILibraryPage {
   isStatsLoading: boolean;
   isGamesLoading: boolean;
   filters: FiltersState;
-  stats: GameStats | null;
+  stats: GameStats | null | undefined;
+  games: UserGame[];
   availablePlatforms: Platform[];
   onAddDialogOpen: (shouldOpen: boolean) => void;
   onAIDrawerOpen: () => void;
@@ -47,6 +49,7 @@ export function LibraryPage({
   aiDrawerOpen,
   filters,
   stats,
+  games,
   availablePlatforms,
   isStatsLoading,
   isGamesLoading,
@@ -65,7 +68,6 @@ export function LibraryPage({
   const navigationType = useNavigationType();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const highlightedGameID = useAppSelector((s) => s.ui.highlightedGameID);
-  const games = useAppSelector((s) => s.games.games);
 
   useEffect(function resetScrollOnFreshVisit() {
     if (navigationType !== 'POP') {

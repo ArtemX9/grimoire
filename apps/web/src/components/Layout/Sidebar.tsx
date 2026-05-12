@@ -1,7 +1,8 @@
 import { AlertTriangle, BookOpen, Library, Settings, Sparkles } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 
-import { useGetUnmappedGamesQuery } from '@/api/unmappedGamesApi';
+import { useSession } from '@/api/auth';
+import { useGetUnmappedGames } from '@/api/unmappedGames';
 import { ROUTES } from '@/constants/routes';
 import { useIsMobile } from '@/hooks/useMobile';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -18,11 +19,12 @@ function Sidebar() {
   const isMobile = useIsMobile();
   const dispatch = useAppDispatch();
   const isAIDrawerOpen = useAppSelector((s) => s.ui.isAIDrawerOpen);
-  const aiEnabled = useAppSelector((s) => s.auth.session?.user.aiEnabled ?? false);
+  const sessionQuery = useSession();
+  const aiEnabled = sessionQuery.data?.user.aiEnabled ?? false;
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { data: unmappedGames } = useGetUnmappedGamesQuery({});
+  const { data: unmappedGames } = useGetUnmappedGames({});
   const unresolvedCount = unmappedGames?.length ?? 0;
   const unresolvedBadgeLabel = unresolvedCount > 99 ? '99+' : String(unresolvedCount);
 

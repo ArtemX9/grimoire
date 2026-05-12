@@ -2,7 +2,7 @@ import { BadRequestException, CanActivate, ExecutionContext, INestApplication, N
 import { APP_GUARD } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import * as request from 'supertest';
+import request from 'supertest';
 
 import { Plan, Role } from '@grimoire/shared';
 

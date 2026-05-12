@@ -2,7 +2,7 @@ import { Plan, Role } from '@grimoire/shared';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { AdminUserRow } from '@/api/adminApi';
+import { AdminUserRow } from '@/api/admin';
 import {
   AlertDialog,
   AlertDialogAction,

@@ -1,29 +1,30 @@
 import { GameStatus, Genre, IgdbGame, Platform, SortableField } from '@grimoire/shared';
 import { useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 
-import { useCreateGameMutation, useGetGameStatsQuery } from '@/api/gamesApi';
+import { useCreateGame, useGetGameStats, useGetGames } from '@/api/games';
 import { toast } from '@/components/ui/use-toast';
 import { LibraryPage } from '@/pages/LibraryPage/LibraryPage';
 import { setGenreFilter, setOrder, setPlatformFilter, setSearch, setSortBy, setStatusFilter } from '@/store/filtersSlice';
-import { selectAvailablePlatforms } from '@/store/gamesSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setHighlightedGameID, toggleAIDrawer } from '@/store/uiSlice';
 
 export function LibraryPageContainer() {
   const dispatch = useAppDispatch();
   const filters = useAppSelector((s) => s.filters);
-  const { games, stats, isStatsLoading, isGamesLoading } = useAppSelector((s) => s.games);
   const isAIDrawerOpen = useAppSelector((s) => s.ui.isAIDrawerOpen);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [createGame] = useCreateGameMutation();
 
-  const availablePlatforms = useSelector(selectAvailablePlatforms);
+  const { data: games = [], isLoading: isGamesLoading } = useGetGames();
+  const { data: stats, isLoading: isStatsLoading } = useGetGameStats();
+  const createGameMutation = useCreateGame();
 
-  // Trigger the RTK Query fetch so onQueryStarted populates the slice.
-  useGetGameStatsQuery();
+  const availablePlatforms = useMemo(
+    () =>
+      [...new Set(games.flatMap((g) => g.platforms.map((p) => p.platformName)))].sort((a, b) => (a > b ? 1 : a === b ? 0 : -1)),
+    [games],
+  );
 
-  useEffect(() => {
+  useEffect(function clearHighlightOnUnmount() {
     return () => {
       dispatch(setHighlightedGameID(null));
     };
@@ -31,7 +32,7 @@ export function LibraryPageContainer() {
 
   async function handleAddGame(game: IgdbGame, status: GameStatus, onSuccessCallback: () => void, onErrorCallback: () => void) {
     try {
-      await createGame({
+      await createGameMutation.mutateAsync({
         igdbId: game.id,
         platformId: 1,
         title: game.name,
@@ -43,7 +44,7 @@ export function LibraryPageContainer() {
         themes: game.themes?.map((t) => t) ?? [],
         status,
         moods: [],
-      }).unwrap();
+      });
       toast({ title: `${game.name} added to your library` });
       onSuccessCallback();
     } catch {
@@ -80,7 +81,8 @@ export function LibraryPageContainer() {
     <LibraryPage
       addDialogOpen={addDialogOpen}
       aiDrawerOpen={isAIDrawerOpen}
-      stats={stats}
+      stats={stats ?? null}
+      games={games}
       filters={filters}
       availablePlatforms={availablePlatforms}
       isStatsLoading={isStatsLoading}

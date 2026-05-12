@@ -1,11 +1,10 @@
 import { Mood, Platform } from '@grimoire/shared';
 import { useEffect, useMemo } from 'react';
-import { useSelector } from 'react-redux';
 
-import { useGetMeQuery } from '@/api/usersApi';
+import { useGetGames } from '@/api/games';
+import { useGetMe } from '@/api/users';
 import { useAiStream } from '@/hooks/useAiStream';
 import { AI_LAST_RECOMMENDATION_KEY, loadRecommendation, setDesiredPlatform, setSessionLength, toggleMood } from '@/store/aiSlice';
-import { selectAvailablePlatforms } from '@/store/gamesSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 
 import AiPanel from './AiPanel';
@@ -15,15 +14,19 @@ interface IAiPanelContainer {
 }
 
 function AiPanelContainer({ hideHeader }: IAiPanelContainer) {
-  const { data: me } = useGetMeQuery();
+  const { data: me } = useGetMe();
+  const { data: games = [] } = useGetGames();
   const dispatch = useAppDispatch();
   const { selectedMoods, sessionLengthMinutes, streamedTokens, streamedThoughts, isStreaming, desiredPlatform } = useAppSelector((s) => s.ai);
-  const games = useAppSelector((s) => s.games.games);
   const { streamRecommendation } = useAiStream(me);
 
   const aiEnabled = me?.aiEnabled ?? true;
 
-  const availablePlatforms = useSelector(selectAvailablePlatforms);
+  const availablePlatforms = useMemo(
+    () =>
+      [...new Set(games.flatMap((g) => g.platforms.map((p) => p.platformName)))].sort((a, b) => (a > b ? 1 : a === b ? 0 : -1)),
+    [games],
+  );
 
   useEffect(function rehydrateFromLocalStorage() {
     if (streamedTokens) return;

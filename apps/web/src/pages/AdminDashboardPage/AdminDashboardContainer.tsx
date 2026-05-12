@@ -2,65 +2,63 @@ import { Role } from '@grimoire/shared';
 import { useState } from 'react';
 
 import {
-  useDeleteAdminUserMutation,
-  useGetAiGlobalSettingsQuery,
-  useListAdminUsersQuery,
-  useUpdateAiGlobalSettingsMutation,
-  useUpdateUserAiSettingsMutation,
-  useUpdateUserPlanMutation,
-  useUpdateUserRoleMutation,
-} from '@/api/adminApi';
-import { useAppSelector } from '@/store/hooks';
+  useDeleteAdminUser,
+  useGetAiGlobalSettings,
+  useListAdminUsers,
+  useUpdateAiGlobalSettings,
+  useUpdateUserAiSettings,
+  useUpdateUserPlan,
+  useUpdateUserRole,
+} from '@/api/admin';
+import { useSession } from '@/api/auth';
 
 import { AdminDashboard } from './AdminDashboard';
 
 export function AdminDashboardContainer() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  useListAdminUsersQuery();
-  useGetAiGlobalSettingsQuery();
+  const { data: usersResponse, isLoading: isUsersLoading } = useListAdminUsers();
+  const { data: aiSettings, isLoading: isAiSettingsLoading } = useGetAiGlobalSettings();
+  const sessionQuery = useSession();
+  const currentUserID = sessionQuery.data?.user.id ?? null;
 
-  const users = useAppSelector((s) => s.admin.users);
-  const isUsersLoading = useAppSelector((s) => s.admin.isUsersLoading);
-  const aiSettings = useAppSelector((s) => s.admin.aiSettings);
-  const isAiSettingsLoading = useAppSelector((s) => s.admin.isAiSettingsLoading);
-  const currentUserID = useAppSelector((s) => s.auth.session?.user.id ?? null);
+  const users = usersResponse?.data ?? [];
 
-  const [deleteUser] = useDeleteAdminUserMutation();
-  const [updateAiGlobal] = useUpdateAiGlobalSettingsMutation();
-  const [updateUserAi] = useUpdateUserAiSettingsMutation();
-  const [updateUserPlan] = useUpdateUserPlanMutation();
-  const [updateUserRole] = useUpdateUserRoleMutation();
+  const deleteUserMutation = useDeleteAdminUser();
+  const updateAiGlobalMutation = useUpdateAiGlobalSettings();
+  const updateUserAiMutation = useUpdateUserAiSettings();
+  const updateUserPlanMutation = useUpdateUserPlan();
+  const updateUserRoleMutation = useUpdateUserRole();
 
   const globalAiEnabled = aiSettings?.aiEnabled ?? true;
   const isLoading = isUsersLoading || isAiSettingsLoading;
 
   async function handleDeleteUser(id: string) {
-    await deleteUser(id);
+    await deleteUserMutation.mutateAsync(id);
   }
 
   async function handleToggleGlobalAi(enabled: boolean) {
-    await updateAiGlobal({ aiEnabled: enabled });
+    await updateAiGlobalMutation.mutateAsync({ aiEnabled: enabled });
   }
 
   async function handleAiEnabledChange(id: string, enabled: boolean) {
     const user = users.find((u) => u.id === id);
     if (!user) return;
-    await updateUserAi({ id, aiEnabled: enabled, aiRequestsLimit: user.aiRequestsLimit });
+    await updateUserAiMutation.mutateAsync({ id, aiEnabled: enabled, aiRequestsLimit: user.aiRequestsLimit });
   }
 
   async function handleAiLimitChange(id: string, limit: number | null) {
     const user = users.find((u) => u.id === id);
     if (!user) return;
-    await updateUserAi({ id, aiEnabled: user.aiEnabled, aiRequestsLimit: limit });
+    await updateUserAiMutation.mutateAsync({ id, aiEnabled: user.aiEnabled, aiRequestsLimit: limit });
   }
 
   async function handlePlanChange(id: string, plan: string) {
-    await updateUserPlan({ id, plan });
+    await updateUserPlanMutation.mutateAsync({ id, plan });
   }
 
   async function handleRoleChange(userID: string, role: Role) {
-    await updateUserRole({ userID, role });
+    await updateUserRoleMutation.mutateAsync({ userID, role });
   }
 
   return (

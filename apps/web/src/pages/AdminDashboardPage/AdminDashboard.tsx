@@ -1,6 +1,6 @@
 import { Role } from '@grimoire/shared';
 
-import { AdminUserRow } from '@/api/adminApi';
+import { AdminUserRow } from '@/api/admin';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';

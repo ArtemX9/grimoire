@@ -1,19 +1,22 @@
 import { Role } from '@grimoire/shared';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
-import { useSignInMutation } from '@/api/authApi';
+import { useSession, useSignIn } from '@/api/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ROUTES } from '@/constants/routes';
-import { useAppSelector } from '@/store/hooks';
 
 export function LoginPage() {
   const navigate = useNavigate();
 
-  const { session, isBootstrapped } = useAppSelector((s) => s.auth);
-  const [signIn, { isLoading: isSigningIn }] = useSignInMutation();
+  const sessionQuery = useSession();
+  const isBootstrapped = sessionQuery.status !== 'pending';
+  const session = sessionQuery.data;
+
+  const signInMutation = useSignIn();
+  const isNavigatingAfterSignIn = useRef(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,7 +26,7 @@ export function LoginPage() {
     return null;
   }
 
-  if (session) {
+  if (session && !isNavigatingAfterSignIn.current) {
     return <Navigate to={ROUTES.DEFAULT} replace />;
   }
 
@@ -31,7 +34,8 @@ export function LoginPage() {
     e.preventDefault();
     setError('');
     try {
-      const result = await signIn({ email, password }).unwrap();
+      isNavigatingAfterSignIn.current = true;
+      const result = await signInMutation.mutateAsync({ email, password });
       if (result.user.mustChangePassword) {
         navigate(ROUTES.CHANGE_PASSWORD, { replace: true });
       } else if (result.user.role === Role.ADMIN) {
@@ -40,6 +44,7 @@ export function LoginPage() {
         navigate(ROUTES.DEFAULT, { replace: true });
       }
     } catch {
+      isNavigatingAfterSignIn.current = false;
       setError('Invalid email or password. Please try again.');
     }
   }
@@ -75,8 +80,8 @@ export function LoginPage() {
             {renderEmailField()}
             {renderPasswordField()}
             {error && <p className='font-sans text-xs text-grimoire-status-dropped-text'>{error}</p>}
-            <Button type='submit' className='mt-1 w-full' disabled={isSigningIn}>
-              {isSigningIn ? 'Signing in…' : 'Sign In'}
+            <Button type='submit' className='mt-1 w-full' disabled={signInMutation.isPending}>
+              {signInMutation.isPending ? 'Signing in…' : 'Sign In'}
             </Button>
           </form>
         </CardContent>

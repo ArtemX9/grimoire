@@ -3,9 +3,9 @@ import { AlertCircle, CheckCircle2, LogOut, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useSignOutMutation } from '@/api/authApi';
-import { useConnectSteamMutation, useGetSteamStatusQuery, useSyncSteamMutation } from '@/api/steamApi';
-import { useGetMeQuery, useUpdateMeMutation } from '@/api/usersApi';
+import { useSignOut } from '@/api/auth';
+import { useConnectSteam, useGetSteamStatus, useSyncSteam } from '@/api/steam';
+import { useGetMe, useUpdateMe } from '@/api/users';
 import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,9 +38,11 @@ export function SettingsPage() {
 function ProfileSection() {
   const navigate = useNavigate();
 
-  const { data: user, isLoading } = useGetMeQuery();
-  const [updateMe, { isLoading: isUpdating }] = useUpdateMeMutation();
-  const [signOut, { isLoading: isSigningOut }] = useSignOutMutation();
+  const { data: user, isLoading } = useGetMe();
+  const updateMeMutation = useUpdateMe();
+  const isUpdating = updateMeMutation.isPending;
+  const signOutMutation = useSignOut();
+  const isSigningOut = signOutMutation.isPending;
 
   const [nameValue, setNameValue] = useState('');
   const [editing, setEditing] = useState(false);
@@ -52,7 +54,7 @@ function ProfileSection() {
 
   async function handleSave() {
     try {
-      await updateMe({ name: nameValue }).unwrap();
+      await updateMeMutation.mutateAsync({ name: nameValue });
       toast({ title: 'Profile updated' });
       setEditing(false);
     } catch {
@@ -62,7 +64,7 @@ function ProfileSection() {
 
   async function handleSignOut() {
     try {
-      await signOut().unwrap();
+      await signOutMutation.mutateAsync();
     } catch {
       // session may already be gone — proceed regardless
     }
@@ -174,9 +176,11 @@ function PlatformsSection() {
 }
 
 function SteamRow() {
-  const { data: status, isLoading } = useGetSteamStatusQuery();
-  const [connectSteam, { isLoading: isConnecting }] = useConnectSteamMutation();
-  const [syncSteam, { isLoading: isSyncing }] = useSyncSteamMutation();
+  const { data: status, isLoading } = useGetSteamStatus();
+  const connectSteamMutation = useConnectSteam();
+  const isConnecting = connectSteamMutation.isPending;
+  const syncSteamMutation = useSyncSteam();
+  const isSyncing = syncSteamMutation.isPending;
   const [steamIdInput, setSteamIdInput] = useState('');
   const [showInput, setShowInput] = useState(false);
 
@@ -190,7 +194,7 @@ function SteamRow() {
     }
 
     try {
-      await connectSteam({ steamId: steamIdInput.trim() }).unwrap();
+      await connectSteamMutation.mutateAsync({ steamId: steamIdInput.trim() });
       toast({ title: 'Steam account connected' });
       setShowInput(false);
       setSteamIdInput('');
@@ -201,7 +205,7 @@ function SteamRow() {
 
   async function handleSync() {
     try {
-      await syncSteam().unwrap();
+      await syncSteamMutation.mutateAsync();
       toast({ title: 'Steam sync started — this may take a moment' });
     } catch {
       toast({ title: 'Failed to start sync', variant: 'destructive' });

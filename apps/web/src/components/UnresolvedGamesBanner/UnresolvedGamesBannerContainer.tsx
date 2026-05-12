@@ -1,9 +1,9 @@
-import { useGetUnmappedGamesQuery } from '@/api/unmappedGamesApi';
+import { useGetUnmappedGames } from '@/api/unmappedGames';
 
 import UnresolvedGamesBanner from './UnresolvedGamesBanner';
 
 function UnresolvedGamesBannerContainer() {
-  const { data = [] } = useGetUnmappedGamesQuery({});
+  const { data = [] } = useGetUnmappedGames({});
 
   return <UnresolvedGamesBanner count={data.length} />;
 }

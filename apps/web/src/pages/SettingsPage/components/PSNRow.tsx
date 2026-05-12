@@ -2,7 +2,7 @@ import { Platform } from '@grimoire/shared';
 import { AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
-import { useConnectPSNMutation, useGetPSNStatusQuery, useSyncPSNMutation } from '@/api/playstationApi';
+import { useConnectPSN, useGetPSNStatus, useSyncPSN } from '@/api/playstation';
 import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +11,11 @@ import { toast } from '@/components/ui/use-toast';
 import { cn } from '@/utils/cn';
 
 export function PSNRow() {
-  const { data: status, isLoading: isStatusLoading } = useGetPSNStatusQuery();
-  const [connectPSN, { isLoading: isConnecting }] = useConnectPSNMutation();
-  const [syncPSN, { isLoading: isSyncing }] = useSyncPSNMutation();
+  const { data: status, isLoading: isStatusLoading } = useGetPSNStatus();
+  const connectPSNMutation = useConnectPSN();
+  const isConnecting = connectPSNMutation.isPending;
+  const syncPSNMutation = useSyncPSN();
+  const isSyncing = syncPSNMutation.isPending;
   const [usernameInput, setUsernameInput] = useState('');
   const [showInput, setShowInput] = useState(false);
 
@@ -22,7 +24,7 @@ export function PSNRow() {
   async function handleConnect() {
     if (!usernameInput.trim()) return;
     try {
-      await connectPSN({ username: usernameInput.trim() }).unwrap();
+      await connectPSNMutation.mutateAsync({ username: usernameInput.trim() });
       toast({ title: 'PlayStation Network account connected' });
       setShowInput(false);
       setUsernameInput('');
@@ -38,7 +40,7 @@ export function PSNRow() {
 
   async function handleSync() {
     try {
-      await syncPSN().unwrap();
+      await syncPSNMutation.mutateAsync();
       toast({ title: 'PlayStation sync started — this may take a moment' });
     } catch {
       toast({ title: 'Failed to start sync', variant: 'destructive' });

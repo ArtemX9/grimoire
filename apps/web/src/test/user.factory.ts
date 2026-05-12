@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { Plan, Role, User } from '@grimoire/shared';
 
-import type { AdminUserRow } from '@/api/adminApi';
-import type { Session } from '@/api/authApi';
+import type { AdminUserRow } from '@/api/admin';
+import type { Session } from '@/api/auth';
 
 // ---------------------------------------------------------------------------
 // User (shared type)
