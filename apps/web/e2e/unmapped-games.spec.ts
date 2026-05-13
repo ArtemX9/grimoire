@@ -288,21 +288,18 @@ test.describe('Unmapped games — mapping onto an existing library entry', () =>
       // -----------------------------------------------------------------------
       // 2. Register all mocks BEFORE navigating to /unmapped-games.
       //
-      //    The games list mock uses a fetch counter: the first call (triggered
-      //    on initial library load or the re-fetch after mapping) returns the
-      //    PSN-only entry; subsequent calls (after cache invalidation) return
-      //    the merged game with both platform icons.
+      //    The games list mock flips after the map POST succeeds: before mapping
+      //    it returns the PSN-only entry; after mapping it returns the merged
+      //    game with both platform icons.
       // -----------------------------------------------------------------------
-      let gamesListFetchCount = 0;
+      let isMapped = false;
       await page.route('**/api/v1/games**', (route) => {
         const url = new URL(route.request().url());
         if (route.request().method() === 'GET' && isGamesListUrl(url)) {
-          gamesListFetchCount += 1;
-          const games = gamesListFetchCount === 1 ? [existingPsnGame] : [mergedGame];
           route.fulfill({
             status: 200,
             contentType: 'application/json',
-            body: JSON.stringify(games),
+            body: JSON.stringify(isMapped ? [mergedGame] : [existingPsnGame]),
           });
         } else {
           route.continue();
@@ -330,6 +327,7 @@ test.describe('Unmapped games — mapping onto an existing library entry', () =>
       // Map endpoint — registered last for highest priority.
       await page.route(`**/api/v1/unmapped-games/map/${UNMAPPED_GAME_ID}`, (route) => {
         if (route.request().method() === 'POST') {
+          isMapped = true;
           route.fulfill({ status: 200, contentType: 'application/json', body: 'null' });
         } else {
           route.continue();
