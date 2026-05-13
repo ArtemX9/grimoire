@@ -1,1 +1,1 @@
-INSERT INTO "Platforms" VALUES (3, 'Xbox');
+INSERT INTO "Platforms" VALUES (3, 'Xbox') ON CONFLICT DO NOTHING;
