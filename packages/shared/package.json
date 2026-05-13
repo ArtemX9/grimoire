@@ -3,15 +3,9 @@
   "version": "0.0.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/esm/index.js",
-      "require": "./dist/index.js"
-    }
-  },
   "scripts": {
     "dev": "tsc --watch",
-    "build": "tsc && tsc -p tsconfig.esm.json",
+    "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

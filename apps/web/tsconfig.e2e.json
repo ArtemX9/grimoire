@@ -1,7 +1,11 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["@playwright/test", "node"]
+    "types": ["@playwright/test", "node"],
+    "paths": {
+      "@grimoire/shared": ["../../packages/shared/src/index.ts"],
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["e2e", "playwright.config.ts"]
 }
