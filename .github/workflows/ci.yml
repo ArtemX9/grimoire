@@ -67,11 +67,18 @@ jobs:
       DATABASE_URL: postgresql://user:password@localhost:5432/tests
       REDIS_URL: redis://localhost:6379
       BETTER_AUTH_SECRET: e2e-secret
+      BETTER_AUTH_URL: http://localhost:5173
+      ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
       STEAM_API_KEY: stub
+      PSN_NPSSO: stub
       TWITCH_CLIENT_ID: stub
       TWITCH_CLIENT_SECRET: stub
       GROK_API_KEY: stub
       LLM_PROVIDER: grok
+      XBOX_CLIENT_ID: stub
+      XBOX_CLIENT_SECRET: stub
+      XBOX_REDIRECT_URI: stub
+      XBOX_FRONTEND_REDIRECT_URI: stub
 
     steps:
       - uses: actions/checkout@v4
