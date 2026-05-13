@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import {
@@ -10,23 +10,34 @@ import {
 
 @Injectable()
 export class PlaystationAuthService implements OnModuleInit {
+  private readonly logger = new Logger(PlaystationAuthService.name);
+
   private accessCode?: string;
   private authorization?: AuthTokensResponse;
   private tokenExpiry: number = 0;
+  private initialized = false;
 
   constructor(private config: ConfigService) {}
 
   async onModuleInit() {
     const npsso = this.config.get<string>('app.playstation.npsso');
     if (!npsso) return;
-    this.accessCode = await this._getAccessCode();
-    console.debug('PlaystationService: Successfully exchanged NPSSO to Access Code');
-    await this._getAuthorization();
+    try {
+      this.accessCode = await this._getAccessCode();
+      this.logger.debug('Successfully exchanged NPSSO to Access Code');
+      await this._getAuthorization();
+      this.initialized = true;
+    } catch (err) {
+      this.logger.warn(
+        `PSN credentials are invalid or the PSN API is unreachable — PlayStation features will be unavailable. ` +
+          `Error: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 
   async getAuthorization(): Promise<AuthTokensResponse> {
     if (!this.authorization) {
-      throw new Error('PSN is not configured — set PSN_NPSSO to use PlayStation features');
+      throw new ServiceUnavailableException('PSN credentials not configured or invalid — set PSN_NPSSO to use PlayStation features');
     }
     if (Date.now() >= this.tokenExpiry) await this.refreshToken();
     return this.authorization;

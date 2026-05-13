@@ -6,10 +6,9 @@ import { resetFilters } from '@/store/filtersSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setHighlightedGameID } from '@/store/uiSlice';
 
-export function useAiStream(me?: User) {
+export function useAiStream(me: User | undefined) {
   const dispatch = useAppDispatch();
   const { selectedMoods, sessionLengthMinutes, desiredPlatform } = useAppSelector((s) => s.ai);
-  const games = useAppSelector((s) => s.games.games);
 
   const streamRecommendation = useCallback(
     async function fetchRecommendationStream() {
@@ -49,9 +48,7 @@ export function useAiStream(me?: User) {
                     switch (recommendationMessage.name) {
                       case ToolName.HIGHLIGHT_GAME: {
                         const gameID = recommendationMessage.arguments.gameID as string;
-                        if (!games.some((g) => g.id === gameID)) {
-                          dispatch(resetFilters());
-                        }
+                        dispatch(resetFilters());
                         dispatch(setHighlightedGameID(gameID));
                         break;
                       }
@@ -73,7 +70,7 @@ export function useAiStream(me?: User) {
         dispatch(stopStreaming());
       }
     },
-    [dispatch, selectedMoods, sessionLengthMinutes, desiredPlatform, games],
+    [dispatch, selectedMoods, sessionLengthMinutes, desiredPlatform],
   );
 
   return { streamRecommendation };

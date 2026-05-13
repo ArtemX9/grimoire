@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { CreateUserArgs, useCreateAdminUserMutation } from '@/api/adminApi';
+import { CreateUserArgs, useCreateAdminUser } from '@/api/admin';
 
 import { CreateUserDialog } from './CreateUserDialog';
 
@@ -10,13 +10,14 @@ interface ICreateUserDialogContainer {
 }
 
 export function CreateUserDialogContainer({ open, onClose }: ICreateUserDialogContainer) {
-  const [createUser, { isLoading }] = useCreateAdminUserMutation();
+  const createUserMutation = useCreateAdminUser();
+  const isLoading = createUserMutation.isPending;
   const [error, setError] = useState('');
 
   async function handleSubmit(args: CreateUserArgs) {
     setError('');
     try {
-      await createUser(args).unwrap();
+      await createUserMutation.mutateAsync(args);
       onClose();
     } catch (err: unknown) {
       const status = (err as { status?: number })?.status;

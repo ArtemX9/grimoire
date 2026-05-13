@@ -1,3 +1,4 @@
+import { ServiceUnavailableException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import * as psnApi from 'psn-api';
@@ -163,21 +164,23 @@ describe('PlaystationAuthService', () => {
       await localModule.close();
     });
 
-    it('propagates PSN API errors that occur during the access-code exchange', async () => {
+    it('swallows PSN API errors during access-code exchange and leaves the service unavailable', async () => {
       (psnApi.exchangeNpssoForAccessCode as jest.Mock).mockRejectedValue(new Error('PSN 401'));
 
       service = await createService();
 
-      await expect(service.onModuleInit()).rejects.toThrow('PSN 401');
+      await expect(service.onModuleInit()).resolves.toBeUndefined();
+      await expect(service.getAuthorization()).rejects.toThrow(ServiceUnavailableException);
     });
 
-    it('propagates PSN API errors that occur during the auth-token exchange', async () => {
+    it('swallows PSN API errors during auth-token exchange and leaves the service unavailable', async () => {
       (psnApi.exchangeNpssoForAccessCode as jest.Mock).mockResolvedValue(ACCESS_CODE);
       (psnApi.exchangeAccessCodeForAuthTokens as jest.Mock).mockRejectedValue(new Error('Token exchange failed'));
 
       service = await createService();
 
-      await expect(service.onModuleInit()).rejects.toThrow('Token exchange failed');
+      await expect(service.onModuleInit()).resolves.toBeUndefined();
+      await expect(service.getAuthorization()).rejects.toThrow(ServiceUnavailableException);
     });
   });
 
@@ -228,14 +231,11 @@ describe('PlaystationAuthService', () => {
       expect(result.accessToken).toBe('refreshed-token');
     });
 
-    it('throws when authorization is absent (never initialised)', async () => {
+    it('throws ServiceUnavailableException when authorization is absent (never initialised)', async () => {
       // Build a fresh service that skips onModuleInit so authorization is never set
       service = await createService();
-      // Force the token to appear expired so the refresh path runs
-      jest.advanceTimersByTime(1);
-      (psnApi.exchangeRefreshTokenForAuthTokens as jest.Mock).mockRejectedValue(new Error('authorization data is missing'));
 
-      await expect(service.getAuthorization()).rejects.toThrow();
+      await expect(service.getAuthorization()).rejects.toThrow(ServiceUnavailableException);
     });
   });
 

@@ -5,6 +5,7 @@ import { GameStatus, Genre, Mood, Platform, SortableField, Theme } from '@grimoi
 
 import { UnmappedReason } from '../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
+import { generateRemapGameDto } from '../../test';
 import { GamesService } from './games.service';
 import { GameResponse, GameStatsResponse, IgdbSyncGameInfo, IngestedSyncGameInfo } from './games.types';
 
@@ -108,6 +109,7 @@ describe('GamesService', () => {
             },
             userGamePlatform: {
               findFirst: jest.fn(),
+              findMany: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
               count: jest.fn(),
@@ -542,6 +544,11 @@ describe('GamesService', () => {
   // ---------------------------------------------------------------------------
 
   describe('remove', () => {
+    beforeEach(() => {
+      (prisma.userGamePlatform.findMany as jest.Mock).mockResolvedValue([]);
+      (prisma.unmappedSyncedGame.upsert as jest.Mock).mockResolvedValue({});
+    });
+
     it('deletes game when it belongs to the requesting user', async () => {
       (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
       (prisma.userGame.delete as jest.Mock).mockResolvedValue({});
@@ -719,6 +726,30 @@ describe('GamesService', () => {
       expect(prisma.userGame.update).not.toHaveBeenCalled();
     });
 
+    it('does not replace existing playtime with a smaller synced value', async () => {
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(
+        makeUserGamePlatformRecord({ userGame: { isMappedManually: false, playtimeHours: 2 } }),
+      );
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame({ playtimeHours: 2 }));
+
+      const result = await service.ingestFromSync('user-1', { ...syncedGameInfo, playtimeHours: 0.5 }, igdbInfo);
+
+      expect(prisma.userGame.update).not.toHaveBeenCalled();
+      expect(result!.playtimeHours).toBe(2);
+    });
+
+    it('updates playtime when synced value is greater than existing', async () => {
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(
+        makeUserGamePlatformRecord({ userGame: { isMappedManually: false, playtimeHours: 2 } }),
+      );
+      (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame({ playtimeHours: 4 }));
+
+      const result = await service.ingestFromSync('user-1', { ...syncedGameInfo, playtimeHours: 4 }, igdbInfo);
+
+      expect(prisma.userGame.update).toHaveBeenCalledWith(expect.objectContaining({ data: { playtimeHours: 4 } }));
+      expect(result!.playtimeHours).toBe(4);
+    });
+
     it('creates UserGame and UserGamePlatform when game is not yet linked', async () => {
       (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(null);
       (prisma.userGame.create as jest.Mock).mockResolvedValue({ id: 'game-new', userId: 'user-1', igdbGameId: 'igdb-cs' });
@@ -876,6 +907,105 @@ describe('GamesService', () => {
       expect(result).not.toBeNull();
     });
 
+    it('does not overwrite existing rating, notes, or moods when mapping to a game already in the library', async () => {
+      // The existing library entry has user-curated data. The incoming sync carries only
+      // platform playtime — it must never clobber rating, notes, or moods.
+      const igdbRow = makeIgdbGame({ id: 'igdb-cs', igdbId: 12345, title: 'CS:GO' });
+      const existingGame = makePrismaGame({
+        id: 'game-existing',
+        igdbGame: igdbRow,
+        playtimeHours: 10,
+        userRating: 9,
+        notes: 'Great competitive shooter',
+        moods: ['focused', 'excited'],
+        userGamePlatforms: [
+          {
+            id: 'ugp-2',
+            userGameId: 'game-existing',
+            syncedGameId: 'synced-2',
+            syncedGame: makeSyncedGame({ externalTitle: 'CS:GO' }),
+          },
+        ],
+      });
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(igdbRow);
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.userGame.findUnique as jest.Mock)
+        .mockResolvedValueOnce(existingGame)
+        .mockResolvedValueOnce(makePrismaGame({ id: 'game-existing', igdbGame: igdbRow }));
+      (prisma.userGamePlatform.create as jest.Mock).mockResolvedValue({});
+
+      // Incoming sync has lower playtime — no update should fire at all
+      await service.ingestFromSync('user-1', { ...syncedGameInfo, playtimeHours: 4 }, igdbInfo);
+
+      expect(prisma.userGame.update).not.toHaveBeenCalled();
+    });
+
+    it('keeps higher playtime of existing game when mapped game has fewer hours (existing 6h, unmapped 4h → 6h)', async () => {
+      const igdbRow = makeIgdbGame({ id: 'igdb-cs', igdbId: 12345, title: 'CS:GO' });
+      const existingGame = makePrismaGame({
+        id: 'game-existing',
+        igdbGame: igdbRow,
+        playtimeHours: 6,
+        userRating: 8,
+        notes: 'Solid FPS',
+        moods: ['focused'],
+        userGamePlatforms: [
+          {
+            id: 'ugp-2',
+            userGameId: 'game-existing',
+            syncedGameId: 'synced-2',
+            syncedGame: makeSyncedGame({ externalTitle: 'CS:GO' }),
+          },
+        ],
+      });
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(igdbRow);
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.userGame.findUnique as jest.Mock)
+        .mockResolvedValueOnce(existingGame)
+        .mockResolvedValueOnce(makePrismaGame({ id: 'game-existing', playtimeHours: 6, igdbGame: igdbRow }));
+      (prisma.userGamePlatform.create as jest.Mock).mockResolvedValue({});
+
+      const result = await service.ingestFromSync('user-1', { ...syncedGameInfo, playtimeHours: 4 }, igdbInfo);
+
+      // playtime must not be overwritten with the lower incoming value
+      expect(prisma.userGame.update).not.toHaveBeenCalled();
+      expect(result!.playtimeHours).toBe(6);
+    });
+
+    it('keeps higher playtime of unmapped game when it has more hours (existing 4h, unmapped 6h → 6h)', async () => {
+      const igdbRow = makeIgdbGame({ id: 'igdb-cs', igdbId: 12345, title: 'CS:GO' });
+      const existingGame = makePrismaGame({
+        id: 'game-existing',
+        igdbGame: igdbRow,
+        playtimeHours: 4,
+        userGamePlatforms: [
+          {
+            id: 'ugp-2',
+            userGameId: 'game-existing',
+            syncedGameId: 'synced-2',
+            syncedGame: makeSyncedGame({ externalTitle: 'CS:GO' }),
+          },
+        ],
+      });
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(igdbRow);
+      (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(null);
+      (prisma.userGame.findUnique as jest.Mock)
+        .mockResolvedValueOnce(existingGame)
+        .mockResolvedValueOnce(makePrismaGame({ id: 'game-existing', playtimeHours: 6, igdbGame: igdbRow }));
+      (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame({ id: 'game-existing', playtimeHours: 6, igdbGame: igdbRow }));
+      (prisma.userGamePlatform.create as jest.Mock).mockResolvedValue({});
+
+      const result = await service.ingestFromSync('user-1', { ...syncedGameInfo, playtimeHours: 6 }, igdbInfo);
+
+      expect(prisma.userGame.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'game-existing' },
+          data: { playtimeHours: 6 },
+        }),
+      );
+      expect(result!.playtimeHours).toBe(6);
+    });
+
     it('returns existing game without update when playtime is equal', async () => {
       (prisma.userGamePlatform.findFirst as jest.Mock).mockResolvedValue(
         makeUserGamePlatformRecord({ userGame: { isMappedManually: false, playtimeHours: 100 } }),
@@ -886,6 +1016,286 @@ describe('GamesService', () => {
 
       expect(prisma.userGame.update).not.toHaveBeenCalled();
       expect(prisma.userGame.findUnique).toHaveBeenCalled();
+    });
+
+    it('returns null and does not create a UserGame when the user previously deleted the game', async () => {
+      (prisma.unmappedSyncedGame.findUnique as jest.Mock).mockResolvedValue({
+        reason: UnmappedReason.USER_DELETED,
+      });
+
+      const result = await service.ingestFromSync('user-1', syncedGameInfo, igdbInfo);
+
+      expect(result).toBeNull();
+      expect(prisma.userGame.create).not.toHaveBeenCalled();
+      expect(prisma.userGamePlatform.create).not.toHaveBeenCalled();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // remap — playtime merging
+  // ---------------------------------------------------------------------------
+
+  describe('remap — playtime merging when target already exists in library', () => {
+    const PLATFORM_ID = 1;
+    const EXTERNAL_ID = 'xbox-app-123';
+    const ORIGINAL_GAME_ID = 'game-original';
+    const TARGET_GAME_ID = 'game-target';
+    const IGDB_GAME_ID = 'igdb-target';
+    const SYNCED_GAME_ID = 'synced-xbox';
+
+    const igdbGame = makeIgdbGame({ id: IGDB_GAME_ID, igdbId: 99999, title: 'Halo Infinite' });
+
+    const remapDto = generateRemapGameDto({
+      igdbId: 99999,
+      title: 'Halo Infinite',
+      platformId: PLATFORM_ID,
+    });
+    const remapDtoWithExternalId = { ...remapDto, externalId: EXTERNAL_ID };
+
+    function buildTx(params: {
+      originalPlaytime: number;
+      targetPlaytime: number;
+      originalOverrides?: Record<string, unknown>;
+      targetOverrides?: Record<string, unknown>;
+      updatedTargetGame?: Record<string, unknown>;
+    }) {
+      const syncedGame = makeSyncedGame({ id: SYNCED_GAME_ID, platformId: PLATFORM_ID, externalId: EXTERNAL_ID });
+      const originalGame = makePrismaGame({ id: ORIGINAL_GAME_ID, playtimeHours: params.originalPlaytime, isMappedManually: false, ...(params.originalOverrides ?? {}) });
+      const targetGame = makePrismaGame({ id: TARGET_GAME_ID, igdbGameId: IGDB_GAME_ID, playtimeHours: params.targetPlaytime, isMappedManually: true, ...(params.targetOverrides ?? {}) });
+      const targetGameAfterPlaytimeUpdate = makePrismaGame({
+        ...targetGame,
+        ...(params.updatedTargetGame ?? {}),
+      });
+
+      return {
+        syncedGame: {
+          findUnique: jest.fn().mockResolvedValue(syncedGame),
+        },
+        userGame: {
+          findUnique: jest
+            .fn()
+            .mockResolvedValueOnce(targetGame) // find-or-create: target exists
+            .mockResolvedValueOnce(originalGame), // delete check: original is not manually mapped
+          findUniqueOrThrow: jest.fn().mockResolvedValue(originalGame), // merge: load original
+          update: jest
+            .fn()
+            .mockResolvedValueOnce(targetGameAfterPlaytimeUpdate) // playtime merge update (only called when source > target)
+            .mockResolvedValueOnce(targetGameAfterPlaytimeUpdate), // isMappedManually update
+          delete: jest.fn().mockResolvedValue({}),
+        },
+        userGamePlatform: {
+          update: jest.fn().mockResolvedValue({}), // move platform link
+          count: jest.fn().mockResolvedValue(0), // no remaining links → original gets cleaned up
+        },
+      };
+    }
+
+    beforeEach(() => {
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(igdbGame);
+    });
+
+    it('keeps higher playtime of target game when remapping source to a game with more hours', async () => {
+      // Source (Xbox): 1h. Target (PSN): 3h. Expected result: 3h (target wins).
+      const tx = buildTx({ originalPlaytime: 1, targetPlaytime: 3 });
+      (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(tx));
+
+      // findOne after transaction
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
+        makePrismaGame({ id: TARGET_GAME_ID, playtimeHours: 3, igdbGame }),
+      );
+
+      const result = await service.remap('user-1', ORIGINAL_GAME_ID, remapDtoWithExternalId);
+
+      // playtime update must NOT have been called — target already has the higher value
+      const updateCalls: Array<Record<string, unknown>> = (tx.userGame.update as jest.Mock).mock.calls.map(
+        (c: [Record<string, unknown>]) => c[0],
+      );
+      const playtimeUpdateCall = updateCalls.find((c) => c.data && (c.data as Record<string, unknown>).playtimeHours !== undefined);
+      expect(playtimeUpdateCall).toBeUndefined();
+
+      expect(result.playtimeHours).toBe(3);
+    });
+
+    it('keeps higher playtime of source game when remapping to a game with fewer hours', async () => {
+      // Source (Xbox): 5h. Target (PSN): 3h. Expected result: 5h (source wins).
+      const tx = buildTx({
+        originalPlaytime: 5,
+        targetPlaytime: 3,
+        updatedTargetGame: { playtimeHours: 5 },
+      });
+      (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(tx));
+
+      // findOne after transaction
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
+        makePrismaGame({ id: TARGET_GAME_ID, playtimeHours: 5, igdbGame }),
+      );
+
+      const result = await service.remap('user-1', ORIGINAL_GAME_ID, remapDtoWithExternalId);
+
+      // playtime update MUST have been called with the source's higher value
+      const updateCalls: Array<Record<string, unknown>> = (tx.userGame.update as jest.Mock).mock.calls.map(
+        (c: [Record<string, unknown>]) => c[0],
+      );
+      const playtimeUpdateCall = updateCalls.find((c) => c.data && (c.data as Record<string, unknown>).playtimeHours !== undefined);
+      expect(playtimeUpdateCall).toBeDefined();
+      expect((playtimeUpdateCall!.data as Record<string, unknown>).playtimeHours).toBe(5);
+
+      expect(result.playtimeHours).toBe(5);
+    });
+
+    it('keeps target rating if set, falls back to source rating if target has none', async () => {
+      // Target has a rating set — it must be preserved.
+      const txWithTargetRating = buildTx({
+        originalPlaytime: 1,
+        targetPlaytime: 1,
+        originalOverrides: { userRating: 7 },
+        targetOverrides: { userRating: 9 },
+      });
+      (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(txWithTargetRating));
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
+        makePrismaGame({ id: TARGET_GAME_ID, userRating: 9, igdbGame }),
+      );
+
+      const resultWithTargetRating = await service.remap('user-1', ORIGINAL_GAME_ID, remapDtoWithExternalId);
+      expect(resultWithTargetRating.userRating).toBe(9);
+
+      jest.clearAllMocks();
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(igdbGame);
+
+      // Target has no rating — source rating must be adopted.
+      const txWithSourceRating = buildTx({
+        originalPlaytime: 1,
+        targetPlaytime: 1,
+        originalOverrides: { userRating: 6 },
+        targetOverrides: { userRating: null, updatedTargetGame: { userRating: 6 } },
+      });
+      (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(txWithSourceRating));
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
+        makePrismaGame({ id: TARGET_GAME_ID, userRating: 6, igdbGame }),
+      );
+
+      const resultWithSourceRating = await service.remap('user-1', ORIGINAL_GAME_ID, remapDtoWithExternalId);
+      const updateCalls: Array<Record<string, unknown>> = (txWithSourceRating.userGame.update as jest.Mock).mock.calls.map(
+        (c: [Record<string, unknown>]) => c[0],
+      );
+      const ratingUpdateCall = updateCalls.find((c) => c.data && (c.data as Record<string, unknown>).userRating !== undefined);
+      expect(ratingUpdateCall).toBeDefined();
+      expect((ratingUpdateCall!.data as Record<string, unknown>).userRating).toBe(6);
+      expect(resultWithSourceRating.userRating).toBe(6);
+    });
+
+    it('keeps target notes if set, falls back to source notes if target has none', async () => {
+      // Target has notes set — they must be preserved.
+      const txWithTargetNotes = buildTx({
+        originalPlaytime: 1,
+        targetPlaytime: 1,
+        originalOverrides: { notes: 'source notes' },
+        targetOverrides: { notes: 'target notes' },
+      });
+      (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(txWithTargetNotes));
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
+        makePrismaGame({ id: TARGET_GAME_ID, notes: 'target notes', igdbGame }),
+      );
+
+      const resultWithTargetNotes = await service.remap('user-1', ORIGINAL_GAME_ID, remapDtoWithExternalId);
+      expect(resultWithTargetNotes.notes).toBe('target notes');
+
+      jest.clearAllMocks();
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(igdbGame);
+
+      // Target has no notes — source notes must be adopted.
+      const txWithSourceNotes = buildTx({
+        originalPlaytime: 1,
+        targetPlaytime: 1,
+        originalOverrides: { notes: 'source notes' },
+        targetOverrides: { notes: null, updatedTargetGame: { notes: 'source notes' } },
+      });
+      (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(txWithSourceNotes));
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
+        makePrismaGame({ id: TARGET_GAME_ID, notes: 'source notes', igdbGame }),
+      );
+
+      const resultWithSourceNotes = await service.remap('user-1', ORIGINAL_GAME_ID, remapDtoWithExternalId);
+      const updateCalls: Array<Record<string, unknown>> = (txWithSourceNotes.userGame.update as jest.Mock).mock.calls.map(
+        (c: [Record<string, unknown>]) => c[0],
+      );
+      const notesUpdateCall = updateCalls.find((c) => c.data && (c.data as Record<string, unknown>).notes !== undefined);
+      expect(notesUpdateCall).toBeDefined();
+      expect((notesUpdateCall!.data as Record<string, unknown>).notes).toBe('source notes');
+      expect(resultWithSourceNotes.notes).toBe('source notes');
+    });
+
+    it('merges moods from both source and target', async () => {
+      const tx = buildTx({
+        originalPlaytime: 1,
+        targetPlaytime: 1,
+        originalOverrides: { moods: ['focused', 'excited'] },
+        targetOverrides: { moods: ['relaxed', 'focused'] },
+        updatedTargetGame: { moods: ['focused', 'excited', 'relaxed'] },
+      });
+      (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(tx));
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
+        makePrismaGame({ id: TARGET_GAME_ID, moods: ['focused', 'excited', 'relaxed'], igdbGame }),
+      );
+
+      const result = await service.remap('user-1', ORIGINAL_GAME_ID, remapDtoWithExternalId);
+
+      const updateCalls: Array<Record<string, unknown>> = (tx.userGame.update as jest.Mock).mock.calls.map(
+        (c: [Record<string, unknown>]) => c[0],
+      );
+      const moodsUpdateCall = updateCalls.find((c) => c.data && (c.data as Record<string, unknown>).moods !== undefined);
+      expect(moodsUpdateCall).toBeDefined();
+      const mergedMoods = (moodsUpdateCall!.data as Record<string, unknown>).moods as string[];
+      expect(mergedMoods).toHaveLength(3);
+      expect(mergedMoods).toEqual(expect.arrayContaining(['focused', 'excited', 'relaxed']));
+      expect(result.moods).toEqual(expect.arrayContaining(['focused', 'excited', 'relaxed']));
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // remove — tombstone creation
+  // ---------------------------------------------------------------------------
+
+  describe('remove — tombstone creation', () => {
+    beforeEach(() => {
+      (prisma.unmappedSyncedGame.upsert as jest.Mock).mockResolvedValue({});
+    });
+
+    it('writes a USER_DELETED tombstone for each platform link when game is deleted', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
+      (prisma.userGame.delete as jest.Mock).mockResolvedValue({});
+      (prisma.userGamePlatform.findMany as jest.Mock).mockResolvedValue([
+        { syncedGameId: 'synced-1' },
+        { syncedGameId: 'synced-2' },
+      ]);
+
+      await service.remove('user-1', 'game-1');
+
+      expect(prisma.unmappedSyncedGame.upsert).toHaveBeenCalledTimes(2);
+      expect(prisma.unmappedSyncedGame.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId_syncedGameId: { userId: 'user-1', syncedGameId: 'synced-1' } },
+          create: expect.objectContaining({ reason: UnmappedReason.USER_DELETED, userId: 'user-1', syncedGameId: 'synced-1' }),
+          update: { reason: UnmappedReason.USER_DELETED },
+        }),
+      );
+      expect(prisma.unmappedSyncedGame.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId_syncedGameId: { userId: 'user-1', syncedGameId: 'synced-2' } },
+          create: expect.objectContaining({ reason: UnmappedReason.USER_DELETED, userId: 'user-1', syncedGameId: 'synced-2' }),
+          update: { reason: UnmappedReason.USER_DELETED },
+        }),
+      );
+    });
+
+    it('does not write any tombstone when the deleted game has no platform links', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
+      (prisma.userGame.delete as jest.Mock).mockResolvedValue({});
+      (prisma.userGamePlatform.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.remove('user-1', 'game-1');
+
+      expect(prisma.unmappedSyncedGame.upsert).not.toHaveBeenCalled();
     });
   });
 });

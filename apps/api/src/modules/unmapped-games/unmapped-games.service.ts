@@ -18,6 +18,7 @@ export class UnmappedGamesService {
       where: {
         userId: userID,
         isMapped: false,
+        NOT: { reason: 'USER_DELETED' },
       },
       include: {
         syncedGame: {

@@ -1,11 +1,13 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useChangePasswordMutation } from '@/api/usersApi';
+import { useChangePassword } from '@/api/users';
 import { ChangePasswordPage } from '@/pages/ChangePasswordPage/ChangePasswordPage';
+import { makeQueryClient } from '@/test/renderWithQuery';
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -21,29 +23,37 @@ vi.mock('react-router-dom', async (importOriginal) => {
   };
 });
 
-const mockChangePasswordTrigger = vi.fn();
+const mockMutateAsync = vi.fn();
 
-vi.mock('@/api/usersApi', () => ({
-  useChangePasswordMutation: vi.fn(),
-}));
+vi.mock('@/api/users', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/users')>();
+  return {
+    ...actual,
+    useChangePassword: vi.fn(),
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function renderPage() {
+  const queryClient = makeQueryClient();
+
   return render(
-    <MemoryRouter>
-      <ChangePasswordPage />
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <ChangePasswordPage />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
 function setupIdleMock() {
-  vi.mocked(useChangePasswordMutation).mockReturnValue([
-    mockChangePasswordTrigger,
-    { isLoading: false } as unknown as ReturnType<typeof useChangePasswordMutation>[1],
-  ]);
+  vi.mocked(useChangePassword).mockReturnValue({
+    mutateAsync: mockMutateAsync,
+    isPending: false,
+  } as unknown as ReturnType<typeof useChangePassword>);
 }
 
 // ---------------------------------------------------------------------------
@@ -52,7 +62,7 @@ function setupIdleMock() {
 
 beforeEach(() => {
   mockNavigate.mockReset();
-  mockChangePasswordTrigger.mockReset();
+  mockMutateAsync.mockReset();
 });
 
 describe('ChangePasswordPage', () => {
@@ -76,14 +86,12 @@ describe('ChangePasswordPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /set password/i }));
 
     expect(screen.getByText(/do not match/i)).toBeInTheDocument();
-    expect(mockChangePasswordTrigger).not.toHaveBeenCalled();
+    expect(mockMutateAsync).not.toHaveBeenCalled();
   });
 
   it('navigates to / on successful password change', async () => {
     setupIdleMock();
-    mockChangePasswordTrigger.mockReturnValue({
-      unwrap: () => Promise.resolve(),
-    });
+    mockMutateAsync.mockResolvedValue(undefined);
     renderPage();
 
     await userEvent.type(screen.getByLabelText(/current \(temporary\) password/i), 'tempPass1');
@@ -98,9 +106,7 @@ describe('ChangePasswordPage', () => {
 
   it('shows an error message when the API call fails', async () => {
     setupIdleMock();
-    mockChangePasswordTrigger.mockReturnValue({
-      unwrap: () => Promise.reject(new Error('Forbidden')),
-    });
+    mockMutateAsync.mockRejectedValue(new Error('Forbidden'));
     renderPage();
 
     await userEvent.type(screen.getByLabelText(/current.*password/i), 'wrongTemp');
@@ -115,9 +121,7 @@ describe('ChangePasswordPage', () => {
 
   it('does not navigate when the API call fails', async () => {
     setupIdleMock();
-    mockChangePasswordTrigger.mockReturnValue({
-      unwrap: () => Promise.reject(new Error('Forbidden')),
-    });
+    mockMutateAsync.mockRejectedValue(new Error('Forbidden'));
     renderPage();
 
     await userEvent.type(screen.getByLabelText(/current.*password/i), 'wrongTemp');

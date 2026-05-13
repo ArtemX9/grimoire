@@ -110,6 +110,30 @@ describe('UnmappedGamesPage', () => {
     expect(screen.getByText('Hades')).toBeInTheDocument();
   });
 
+  it('renders UnmappedPSNGameRow for PlayStation games', () => {
+    const game = generateUnmappedGame({
+      syncedGameTitle: 'God of War',
+      platform: { id: 2, platform: Platform.PlayStation },
+    });
+
+    renderPage({ games: [game] });
+
+    expect(screen.getByText('God of War')).toBeInTheDocument();
+    expect(screen.getByText(Platform.PlayStation)).toBeInTheDocument();
+  });
+
+  it('renders UnmappedXboxGameRow for Xbox games', () => {
+    const game = generateUnmappedGame({
+      syncedGameTitle: 'Halo Infinite',
+      platform: { id: 3, platform: Platform.Xbox },
+    });
+
+    renderPage({ games: [game] });
+
+    expect(screen.getByText('Halo Infinite')).toBeInTheDocument();
+    expect(screen.getByText(Platform.Xbox)).toBeInTheDocument();
+  });
+
   it('passes syncedGameTitle as initialSearchQuery to the map dialog', () => {
     const game = generateUnmappedGame({ syncedGameTitle: 'Celeste' });
 

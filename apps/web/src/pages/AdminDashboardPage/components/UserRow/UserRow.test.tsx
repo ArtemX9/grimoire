@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import type { AdminUserRow } from '@/api/adminApi';
+import type { AdminUserRow } from '@/api/admin';
 import { UserRow } from '@/pages/AdminDashboardPage/components/UserRow/UserRow';
 import { generateAdminUserRow } from '@/test';
 

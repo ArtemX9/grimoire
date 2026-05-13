@@ -1,5 +1,5 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { BadRequestException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 
 import { Job } from 'bullmq';
 
@@ -13,6 +13,8 @@ import { SteamService } from './steam.service';
 
 @Processor(STEAM_QUEUE_TITLE)
 export class SteamSyncProcessor extends WorkerHost {
+  private readonly logger = new Logger(SteamSyncProcessor.name);
+
   constructor(
     private steamService: SteamService,
     private gamesService: GamesService,
@@ -24,49 +26,50 @@ export class SteamSyncProcessor extends WorkerHost {
 
   async process(job: Job<{ userId: string; steamId: string }>) {
     const { userId, steamId } = job.data;
-    try {
-      const steamGames = await this.steamService.getOwnedGames(steamId);
 
-      for (const steamGame of steamGames) {
-        const igdbResults = await this.igdbService.search(steamGame.name, 1);
-        const igdbGame = igdbResults[0];
+    const steamGames = await this.steamService.getOwnedGames(steamId);
 
-        try {
-          await this.gamesService.ingestFromSync(
-            userId,
-            {
-              id: `${steamGame.appid}`,
-              platformID: PLATFORM_ID_STEAM,
-              externalTitle: steamGame.name,
-              coverURL: GET_STEAM_IMAGE_LINK(steamGame.appid, steamGame.img_icon_url),
-              playtimeHours: steamGame.playtime_forever / 60,
-            },
-            igdbGame
-              ? {
-                  id: igdbGame.id,
-                  title: igdbGame.name,
-                  coverURL: igdbGame.cover || steamGame.img_icon_url,
-                  genres: igdbGame.genres as Genre[],
-                  themes: igdbGame.themes as Theme[],
-                  summary: igdbGame.summary,
-                  storyLine: igdbGame.storyline,
-                  releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,
-                }
-              : undefined,
-          );
-        } catch (e) {
-          console.error(e);
-          throw new BadRequestException(e);
-        }
+    await this.prisma.userPlatform.update({
+      where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
+      data: { isSyncing: true },
+    });
 
-        await this.prisma.userPlatform.update({
-          where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
-          data: { lastSyncAt: new Date() },
-        });
+    for (const steamGame of steamGames) {
+      const igdbResults = await this.igdbService.search(steamGame.name, 1);
+      const igdbGame = igdbResults[0];
+
+      try {
+        await this.gamesService.ingestFromSync(
+          userId,
+          {
+            id: `${steamGame.appid}`,
+            platformID: PLATFORM_ID_STEAM,
+            externalTitle: steamGame.name,
+            coverURL: GET_STEAM_IMAGE_LINK(steamGame.appid, steamGame.img_icon_url),
+            playtimeHours: steamGame.playtime_forever / 60,
+          },
+          igdbGame
+            ? {
+                id: igdbGame.id,
+                title: igdbGame.name,
+                coverURL: igdbGame.cover || steamGame.img_icon_url,
+                genres: igdbGame.genres as Genre[],
+                themes: igdbGame.themes as Theme[],
+                summary: igdbGame.summary,
+                storyLine: igdbGame.storyline,
+                releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,
+              }
+            : undefined,
+        );
+      } catch (e) {
+        this.logger.warn(`Skipping "${steamGame.name}" for user ${userId}: ${e instanceof Error ? e.message : String(e)}`);
+        continue;
       }
-    } catch (e) {
-      console.error(e);
-      throw new BadRequestException(e);
+
+      await this.prisma.userPlatform.update({
+        where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
+        data: { lastSyncAt: new Date(), isSyncing: false },
+      });
     }
   }
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useChangePasswordMutation } from '@/api/usersApi';
+import { useChangePassword } from '@/api/users';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,8 @@ import { ROUTES } from '@/constants/routes';
 
 export function ChangePasswordPage() {
   const navigate = useNavigate();
-  const [changePassword, { isLoading }] = useChangePasswordMutation();
+  const changePasswordMutation = useChangePassword();
+  const isLoading = changePasswordMutation.isPending;
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -26,7 +27,7 @@ export function ChangePasswordPage() {
     }
 
     try {
-      await changePassword({ currentPassword, newPassword }).unwrap();
+      await changePasswordMutation.mutateAsync({ currentPassword, newPassword });
       navigate(ROUTES.DEFAULT, { replace: true });
     } catch {
       setError('Could not change password. Please check your current password and try again.');

@@ -247,6 +247,34 @@ export class GamesService {
               isMappedManually: true,
             },
           });
+        } else {
+          // Target already exists — merge fields from both entries
+          const existingTarget = targetGame;
+          const original = await tx.userGame.findUniqueOrThrow({ where: { id: originalGameID } });
+          const mergedPlaytime = Math.max(existingTarget.playtimeHours, original.playtimeHours);
+          // Rating: keep target's if set; fall back to source's
+          const mergedRating = existingTarget.userRating ?? original.userRating;
+          // Notes: keep target's if set; fall back to source's
+          const mergedNotes = existingTarget.notes ?? original.notes;
+          // Moods: union of both sets (moods from both platforms are meaningful)
+          const mergedMoods = [...new Set([...existingTarget.moods, ...original.moods])];
+
+          const playtimeChanged = mergedPlaytime > existingTarget.playtimeHours;
+          const ratingChanged = mergedRating !== existingTarget.userRating;
+          const notesChanged = mergedNotes !== existingTarget.notes;
+          const moodsChanged = mergedMoods.length !== existingTarget.moods.length || mergedMoods.some((m) => !existingTarget.moods.includes(m));
+
+          if (playtimeChanged || ratingChanged || notesChanged || moodsChanged) {
+            targetGame = await tx.userGame.update({
+              where: { id: existingTarget.id },
+              data: {
+                playtimeHours: mergedPlaytime,
+                userRating: mergedRating,
+                notes: mergedNotes,
+                moods: mergedMoods,
+              },
+            });
+          }
         }
 
         // Move the platform link from original → target
@@ -335,7 +363,27 @@ export class GamesService {
 
   async remove(userId: string, id: string): Promise<void> {
     await this._findOwned(userId, id);
+
+    const platformLinks = await this.prisma.userGamePlatform.findMany({
+      where: { userGameId: id },
+      select: { syncedGameId: true },
+    });
+
     await this.prisma.userGame.delete({ where: { id } });
+
+    for (const link of platformLinks) {
+      await this.prisma.unmappedSyncedGame.upsert({
+        where: { userId_syncedGameId: { userId, syncedGameId: link.syncedGameId } },
+        create: {
+          userId,
+          syncedGameId: link.syncedGameId,
+          reason: UnmappedReason.USER_DELETED,
+          isMapped: false,
+          playtimeHours: 0,
+        },
+        update: { reason: UnmappedReason.USER_DELETED },
+      });
+    }
   }
 
   async getStats(userId: string): Promise<GameStatsResponse> {
@@ -386,6 +434,15 @@ export class GamesService {
         summary: syncedGameInfo.summary,
       },
     });
+    // If the user previously deleted this game, do not re-add it
+    const deletionTombstone = await prismaInstance.unmappedSyncedGame.findUnique({
+      where: { userId_syncedGameId: { userId: userID, syncedGameId: syncedGameRow.id } },
+      select: { reason: true },
+    });
+    if (deletionTombstone?.reason === UnmappedReason.USER_DELETED) {
+      return null;
+    }
+
     let previouslyMappedIGDBGameID;
 
     // If game does not have any IGDB info we check for
@@ -573,6 +630,17 @@ export class GamesService {
         });
         return null;
       } else {
+        // Merge playtime: keep the higher value from either source
+        const incomingPlaytime = syncedGameInfo.playtimeHours ?? 0;
+        if (incomingPlaytime > existingUserGame.playtimeHours) {
+          await prismaInstance.userGame.update({
+            where: { id: existingUserGame.id },
+            data: { playtimeHours: incomingPlaytime },
+          });
+        }
+        // userRating, notes, and moods on the existing entry are preserved — sync source
+        // carries no values for these fields, so no update is needed.
+
         await prismaInstance.userGamePlatform.create({
           data: { userGameId: existingUserGame.id, syncedGameId: syncedGameRow.id },
         });

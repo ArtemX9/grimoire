@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { Genre } from '@grimoire/shared';
@@ -236,22 +235,29 @@ describe('PlaystationSyncProcessor', () => {
       expect(gamesService.ingestFromSync).toHaveBeenCalledTimes(2);
     });
 
-    it('throws BadRequestException when ingestFromSync fails for a game', async () => {
-      playstationService.getOwnedGames.mockResolvedValue([generatePsnGame()]);
+    it('skips a game and continues when ingestFromSync fails for that game', async () => {
+      const games = [generatePsnGame({ name: 'Bad Game', conceptID: 1 }), generatePsnGame({ name: 'Good Game', conceptID: 2 })];
+      playstationService.getOwnedGames.mockResolvedValue(games);
       igdbService.search.mockResolvedValue([generateIgdbSearchResult()]);
-      gamesService.ingestFromSync.mockRejectedValue(new Error('DB error'));
+      gamesService.ingestFromSync
+        .mockRejectedValueOnce(new Error('DB error'))
+        .mockResolvedValueOnce({});
+      (prisma.userPlatform.update as jest.Mock).mockResolvedValue({});
+
+      // Should not throw — per-game errors are caught and logged
+      await expect(
+        processor.process(generatePsnSyncJob({ userID: 'user-1', psnAccountID: 'psn-account-id' })),
+      ).resolves.not.toThrow();
+      // The good game is still processed
+      expect(gamesService.ingestFromSync).toHaveBeenCalledTimes(2);
+    });
+
+    it('propagates errors thrown by getOwnedGames (outer failure)', async () => {
+      playstationService.getOwnedGames.mockRejectedValue(new Error('PSN API error'));
       (prisma.userPlatform.update as jest.Mock).mockResolvedValue({});
 
       await expect(processor.process(generatePsnSyncJob({ userID: 'user-1', psnAccountID: 'psn-account-id' }))).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-
-    it('throws BadRequestException when getOwnedGames fails', async () => {
-      playstationService.getOwnedGames.mockRejectedValue(new Error('PSN API error'));
-
-      await expect(processor.process(generatePsnSyncJob({ userID: 'user-1', psnAccountID: 'psn-account-id' }))).rejects.toThrow(
-        BadRequestException,
+        'PSN API error',
       );
     });
   });
@@ -277,7 +283,7 @@ describe('PlaystationSyncProcessor', () => {
       );
     });
 
-    it('updates lastSyncAt once per game processed', async () => {
+    it('updates lastSyncAt once per game processed (plus one isSyncing:true update at start)', async () => {
       playstationService.getOwnedGames.mockResolvedValue([generatePsnGame()]);
       igdbService.search.mockResolvedValue([generateIgdbSearchResult()]);
       gamesService.ingestFromSync.mockResolvedValue({});
@@ -285,16 +291,26 @@ describe('PlaystationSyncProcessor', () => {
 
       await processor.process(generatePsnSyncJob({ userID: 'user-1', psnAccountID: 'psn-account-id' }));
 
-      expect(prisma.userPlatform.update).toHaveBeenCalledTimes(1);
+      // 1 call to set isSyncing:true + 1 call per game to set lastSyncAt
+      expect(prisma.userPlatform.update).toHaveBeenCalledTimes(2);
+      expect(prisma.userPlatform.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { isSyncing: true } }),
+      );
+      expect(prisma.userPlatform.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ lastSyncAt: expect.any(Date) }) }),
+      );
     });
 
-    it('does not call userPlatform.update when the owned games list is empty', async () => {
+    it('sets isSyncing:true even when the owned games list is empty', async () => {
       playstationService.getOwnedGames.mockResolvedValue([]);
       (prisma.userPlatform.update as jest.Mock).mockResolvedValue({});
 
       await processor.process(generatePsnSyncJob({ userID: 'user-1', psnAccountID: 'psn-account-id' }));
 
-      expect(prisma.userPlatform.update).not.toHaveBeenCalled();
+      expect(prisma.userPlatform.update).toHaveBeenCalledTimes(1);
+      expect(prisma.userPlatform.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { isSyncing: true } }),
+      );
     });
   });
 

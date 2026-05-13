@@ -118,7 +118,7 @@ describe('UnmappedGamesService', () => {
 
       expect(prisma.unmappedSyncedGame.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { userId: 'user-42', isMapped: false },
+          where: { userId: 'user-42', isMapped: false, NOT: { reason: 'USER_DELETED' } },
         }),
       );
     });

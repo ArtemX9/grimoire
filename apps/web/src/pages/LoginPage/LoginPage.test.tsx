@@ -1,5 +1,5 @@
 import { Role } from '@grimoire/shared';
-import { configureStore } from '@reduxjs/toolkit';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -7,10 +7,10 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { api } from '@/api/api';
-import { useSignInMutation } from '@/api/authApi';
+import { authKeys } from '@/api/auth';
+import { useSignIn } from '@/api/auth';
 import { LoginPage } from '@/pages/LoginPage/LoginPage';
-import authReducer, { AuthState } from '@/store/authSlice';
+import { makeQueryClient, makeStore } from '@/test/renderWithQuery';
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -26,42 +26,48 @@ vi.mock('react-router-dom', async (importOriginal) => {
   };
 });
 
-const mockSignInTrigger = vi.fn();
+const mockMutateAsync = vi.fn();
 
-vi.mock('@/api/authApi', () => ({
-  useSignInMutation: vi.fn(),
-}));
+vi.mock('@/api/auth', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/auth')>();
+  return {
+    ...actual,
+    useSignIn: vi.fn(),
+  };
+});
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeStore(auth: AuthState) {
-  return configureStore({
-    reducer: {
-      [api.reducerPath]: api.reducer,
-      auth: authReducer,
-    },
-    preloadedState: { auth },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
-  });
-}
+type SessionShape = {
+  session: { user: { id: string; email: string; name: string; role: Role; mustChangePassword: boolean; aiEnabled: boolean; aiRequestsLimit: number | null } } | null;
+  isBootstrapped: boolean;
+};
 
-function renderLoginPage(auth: AuthState) {
-  const store = makeStore(auth);
+function renderLoginPage({ session, isBootstrapped }: SessionShape) {
+  const queryClient = makeQueryClient();
+  const store = makeStore();
+
+  if (isBootstrapped) {
+    queryClient.setQueryData(authKeys.session(), session);
+  }
+
   return render(
-    <Provider store={store}>
-      <MemoryRouter>
-        <LoginPage />
-      </MemoryRouter>
-    </Provider>,
+    <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>
+      </Provider>
+    </QueryClientProvider>,
   );
 }
 
-const NOT_BOOTSTRAPPED: AuthState = { session: null, isBootstrapped: false };
-const NO_SESSION: AuthState = { session: null, isBootstrapped: true };
+const NOT_BOOTSTRAPPED: SessionShape = { session: null, isBootstrapped: false };
+const NO_SESSION: SessionShape = { session: null, isBootstrapped: true };
 
-function withSession(overrides: { role?: Role; mustChangePassword?: boolean } = {}): AuthState {
+function withSession(overrides: { role?: Role; mustChangePassword?: boolean } = {}): SessionShape {
   return {
     isBootstrapped: true,
     session: {
@@ -85,12 +91,12 @@ function withSession(overrides: { role?: Role; mustChangePassword?: boolean } = 
 
 beforeEach(() => {
   mockNavigate.mockReset();
-  mockSignInTrigger.mockReset();
+  mockMutateAsync.mockReset();
 
-  vi.mocked(useSignInMutation).mockReturnValue([
-    mockSignInTrigger,
-    { isLoading: false } as unknown as ReturnType<typeof useSignInMutation>[1],
-  ]);
+  vi.mocked(useSignIn).mockReturnValue({
+    mutateAsync: mockMutateAsync,
+    isPending: false,
+  } as unknown as ReturnType<typeof useSignIn>);
 });
 
 describe('LoginPage', () => {
@@ -124,9 +130,7 @@ describe('LoginPage', () => {
 
   it('navigates to / after successful sign-in as a regular user', async () => {
     renderLoginPage(NO_SESSION);
-    mockSignInTrigger.mockReturnValue({
-      unwrap: () => Promise.resolve({ user: { role: Role.USER, mustChangePassword: false } }),
-    });
+    mockMutateAsync.mockResolvedValue({ user: { role: Role.USER, mustChangePassword: false } });
 
     await userEvent.type(screen.getByLabelText(/email/i), 'user@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'password123');
@@ -139,9 +143,7 @@ describe('LoginPage', () => {
 
   it('navigates to /change-password when mustChangePassword is true', async () => {
     renderLoginPage(NO_SESSION);
-    mockSignInTrigger.mockReturnValue({
-      unwrap: () => Promise.resolve({ user: { role: Role.USER, mustChangePassword: true } }),
-    });
+    mockMutateAsync.mockResolvedValue({ user: { role: Role.USER, mustChangePassword: true } });
 
     await userEvent.type(screen.getByLabelText(/email/i), 'user@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'password123');
@@ -154,9 +156,7 @@ describe('LoginPage', () => {
 
   it('navigates to /admin/dashboard when role is ADMIN', async () => {
     renderLoginPage(NO_SESSION);
-    mockSignInTrigger.mockReturnValue({
-      unwrap: () => Promise.resolve({ user: { role: Role.ADMIN, mustChangePassword: false } }),
-    });
+    mockMutateAsync.mockResolvedValue({ user: { role: Role.ADMIN, mustChangePassword: false } });
 
     await userEvent.type(screen.getByLabelText(/email/i), 'admin@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'password123');
@@ -169,9 +169,7 @@ describe('LoginPage', () => {
 
   it('shows an error message when the API returns an error', async () => {
     renderLoginPage(NO_SESSION);
-    mockSignInTrigger.mockReturnValue({
-      unwrap: () => Promise.reject(new Error('Unauthorized')),
-    });
+    mockMutateAsync.mockRejectedValue(new Error('Unauthorized'));
 
     await userEvent.type(screen.getByLabelText(/email/i), 'bad@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'wrongpass');
@@ -184,9 +182,7 @@ describe('LoginPage', () => {
 
   it('does not navigate after an API error', async () => {
     renderLoginPage(NO_SESSION);
-    mockSignInTrigger.mockReturnValue({
-      unwrap: () => Promise.reject(new Error('Unauthorized')),
-    });
+    mockMutateAsync.mockRejectedValue(new Error('Unauthorized'));
 
     await userEvent.type(screen.getByLabelText(/email/i), 'bad@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'wrongpass');

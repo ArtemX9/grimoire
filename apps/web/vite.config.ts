@@ -26,5 +26,12 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       '@grimoire/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts'),
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json-summary', 'html'],
+      reportsDirectory: './coverage',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/test/**', 'src/main.tsx', 'src/components/ui/**', '**/*.d.ts'],
+    },
   },
 });

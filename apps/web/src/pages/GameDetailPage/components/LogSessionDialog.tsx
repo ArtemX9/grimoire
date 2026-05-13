@@ -1,7 +1,7 @@
 import { Mood } from '@grimoire/shared';
 import { useState } from 'react';
 
-import { useCreateSessionMutation } from '@/api/sessionsApi';
+import { useCreateSession } from '@/api/sessions';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,8 @@ function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
   const [selectedMoods, setSelectedMoods] = useState<Mood[]>([]);
   const [notes, setNotes] = useState('');
 
-  const [createSession, { isLoading }] = useCreateSessionMutation();
+  const createSessionMutation = useCreateSession();
+  const isLoading = createSessionMutation.isPending;
 
   function handleMoodToggle(mood: Mood) {
     setSelectedMoods((prev) => (prev.includes(mood) ? prev.filter((m) => m !== mood) : [...prev, mood]));
@@ -28,13 +29,13 @@ function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
 
   async function handleSubmit() {
     try {
-      await createSession({
+      await createSessionMutation.mutateAsync({
         gameID: gameId,
         startedAt: new Date(),
         durationMin: durationMin ? parseInt(durationMin, 10) : undefined,
         mood: selectedMoods,
         notes: notes || undefined,
-      }).unwrap();
+      });
       toast({ title: 'Session logged' });
       handleClose();
     } catch {

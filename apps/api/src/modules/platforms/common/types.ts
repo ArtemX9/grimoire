@@ -11,6 +11,8 @@ export type PlatformResponse = {
 export type SyncStatusResponse = {
   connected: boolean;
   lastSyncAt?: Date;
+  externalID?: string;
+  isSyncing?: boolean;
 };
 
 export type EnqueueResult = {

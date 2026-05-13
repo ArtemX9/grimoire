@@ -1,8 +1,10 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
 import { Queue } from 'bullmq';
 import { UserPlayedGamesResponse, getProfileFromUserName, getUserPlayedGames, makeUniversalSearch } from 'psn-api';
+
+import { PlatformSyncStatus } from '@grimoire/shared';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { iPlatformService } from '../common/sync-service';
@@ -12,6 +14,8 @@ import { PlaystationAuthService } from './playstation-auth.service';
 
 @Injectable()
 export class PlaystationService implements iPlatformService {
+  private readonly logger = new Logger(PlaystationService.name);
+
   constructor(
     @InjectQueue(PLAYSTATION_QUEUE_TITLE) private playstationQueue: Queue,
     private playstationAuth: PlaystationAuthService,
@@ -46,7 +50,7 @@ export class PlaystationService implements iPlatformService {
     return this._toResponse(platform);
   }
 
-  async getSyncStatus(userID: string): Promise<SyncStatusResponse> {
+  async getSyncStatus(userID: string): Promise<PlatformSyncStatus> {
     const platform = await this.prisma.userPlatform.findUnique({
       where: {
         userId_platformId: {
@@ -56,7 +60,12 @@ export class PlaystationService implements iPlatformService {
       },
     });
 
-    return { connected: !!platform, lastSyncAt: platform?.lastSyncAt ?? undefined };
+    return {
+      connected: !!platform,
+      lastSyncAt: platform?.lastSyncAt ?? undefined,
+      externalID: platform?.externalId,
+      isSyncing: platform?.isSyncing ?? undefined,
+    };
   }
 
   async getOwnedGames(playstationAccountID: string): Promise<UserPlayedGamesResponse['titles']> {
@@ -79,14 +88,18 @@ export class PlaystationService implements iPlatformService {
     });
 
     if (!platform) return { queued: false, reason: 'PlayStation platform not connected' };
+    try {
+      await this.playstationQueue.add(
+        'sync',
+        { userID, psnAccountID: platform.externalId },
+        { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
+      );
 
-    await this.playstationQueue.add(
-      'sync',
-      { userID, psnAccountID: platform.externalId },
-      { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
-    );
-
-    return { queued: true };
+      return { queued: true };
+    } catch (e) {
+      this.logger.error(`${e}`);
+      return { queued: false };
+    }
   }
 
   private _toResponse(platform: UserPlatformRelations): PlatformResponse {

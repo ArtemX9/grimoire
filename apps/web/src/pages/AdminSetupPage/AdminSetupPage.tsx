@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useSetupAdminMutation } from '@/api/adminApi';
+import { useSetupAdmin } from '@/api/admin';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,8 @@ import { ROUTES } from '@/constants/routes';
 
 export function AdminSetupPage() {
   const navigate = useNavigate();
-  const [setupAdmin, { isLoading }] = useSetupAdminMutation();
+  const setupAdminMutation = useSetupAdmin();
+  const isLoading = setupAdminMutation.isPending;
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -20,7 +21,7 @@ export function AdminSetupPage() {
     e.preventDefault();
     setError('');
     try {
-      await setupAdmin({ email, password, name: name || undefined }).unwrap();
+      await setupAdminMutation.mutateAsync({ email, password, name: name || undefined });
       navigate(ROUTES.LOGIN, { replace: true });
     } catch (err: unknown) {
       const status = (err as { status?: number })?.status;

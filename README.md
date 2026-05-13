@@ -145,12 +145,16 @@ pnpm --filter web e2e
 See `apps/api/.env.example` for full reference.
 
 Key vars:
-- `LLM_PROVIDER` — `grok` | `claude` | `openai` | `ollama`
-- `OLLAMA_BASE_URL` — Ollama server URL (default: `http://localhost:11434`)
-- `OLLAMA_MODEL` — model name to use, e.g. `llama3.2`, `mistral` (default: `llama3.2`)
+- `ENCRYPTION_KEY` — 32-byte hex key for AES-256-GCM encryption of stored OAuth tokens. Generate with `openssl rand -hex 32`. **Required** — the API will not start without it.
 - `STEAM_API_KEY` — from [Steam Web API](https://steamcommunity.com/dev/apikey)
 - `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET` — from [Twitch Dev Console](https://dev.twitch.tv/console) for IGDB
 - `PSN_NPSSO` — 64-character token for PlayStation Network sync. To obtain: log in to [account.sonyentertainment.com](https://account.sonyentertainment.com), then visit `https://ca.account.sony.com/api/v1/ssocookie` — the `npsso` field in the response is your token. Tokens expire; regenerate by repeating this step.
+- `XBOX_CLIENT_ID` / `XBOX_CLIENT_SECRET` — from an Azure app registration at [portal.azure.com](https://portal.azure.com). Supported account types must be set to **"Personal Microsoft accounts only"**. Add `XBOX_REDIRECT_URI` as an allowed redirect URI under Authentication.
+- `XBOX_REDIRECT_URI` — backend OAuth callback, e.g. `https://your-domain/api/v1/platforms/xbox/connect/callback`
+- `XBOX_FRONTEND_REDIRECT_URI` — where the user lands after auth completes, e.g. `https://your-domain/settings?tab=platforms`
+- `LLM_PROVIDER` — `grok` | `claude` | `openai` | `ollama`
+- `OLLAMA_BASE_URL` — Ollama server URL (default: `http://localhost:11434`)
+- `OLLAMA_MODEL` — model name to use, e.g. `llama3.2`, `mistral` (default: `llama3.2`)
 
 ## Architecture
 

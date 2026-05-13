@@ -1,14 +1,14 @@
 import { IgdbGame, UnmappedGame } from '@grimoire/shared';
 import { useState } from 'react';
 
-import { useGetUnmappedGamesQuery, useMapUnmappedGameMutation } from '@/api/unmappedGamesApi';
+import { useGetUnmappedGames, useMapUnmappedGame } from '@/api/unmappedGames';
 import { toast } from '@/components/ui/use-toast';
 
 import UnmappedGamesPage from './UnmappedGamesPage';
 
 function UnmappedGamesPageContainer() {
-  const { data: games = [], isLoading } = useGetUnmappedGamesQuery({});
-  const [mapUnmappedGame] = useMapUnmappedGameMutation();
+  const { data: games = [], isLoading } = useGetUnmappedGames({});
+  const mapUnmappedGameMutation = useMapUnmappedGame();
   const [mappingGame, setMappingGame] = useState<UnmappedGame | null>(null);
 
   function handleMapClick(game: UnmappedGame) {
@@ -23,7 +23,7 @@ function UnmappedGamesPageContainer() {
     if (!mappingGame) return;
 
     try {
-      await mapUnmappedGame({
+      await mapUnmappedGameMutation.mutateAsync({
         id: mappingGame.id,
         body: {
           syncedGameID: mappingGame.syncedGameID,
@@ -40,7 +40,7 @@ function UnmappedGamesPageContainer() {
             storyLine: igdbGame.storyline,
           },
         },
-      }).unwrap();
+      });
       toast({ title: 'Game mapped successfully' });
       setMappingGame(null);
       onSuccessCallback();

@@ -1,5 +1,5 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 
 import { Job } from 'bullmq';
 
@@ -13,6 +13,8 @@ import { PlaystationService } from './playstation.service';
 
 @Processor(PLAYSTATION_QUEUE_TITLE)
 export class PlaystationSyncProcessor extends WorkerHost {
+  private readonly logger = new Logger(PlaystationSyncProcessor.name);
+
   constructor(
     private playstationService: PlaystationService,
     private igdbService: IgdbService,
@@ -25,51 +27,52 @@ export class PlaystationSyncProcessor extends WorkerHost {
   async process(job: Job<{ userID: string; psnAccountID: string }>) {
     const { userID, psnAccountID } = job.data;
 
-    try {
-      const psnGames = await this.playstationService.getOwnedGames(psnAccountID);
-      for (const psnGame of psnGames) {
-        const igdbResults = await this.igdbService.search(psnGame.name, 1);
-        const igdbGame = igdbResults[0];
+    const psnGames = await this.playstationService.getOwnedGames(psnAccountID);
 
-        const match = psnGame.playDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-        const playtime = { h: Number(match?.[1] ?? 0), m: Number(match?.[2] ?? 0), s: Number(match?.[3] ?? 0) };
+    await this.prisma.userPlatform.update({
+      where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_PLAYSTATION } },
+      data: { isSyncing: true },
+    });
 
-        try {
-          await this.gamesService.ingestFromSync(
-            userID,
-            {
-              id: `${psnGame.concept.id}`,
-              platformID: PLATFORM_ID_PLAYSTATION,
-              externalTitle: psnGame.name,
-              coverURL: psnGame.imageUrl,
-              playtimeHours: playtime.h + playtime.m / 60,
-            },
-            igdbGame
-              ? {
-                  id: igdbGame.id,
-                  title: igdbGame.name,
-                  coverURL: igdbGame.cover || psnGame.imageUrl,
-                  genres: igdbGame.genres as Genre[],
-                  summary: igdbGame.summary,
-                  storyLine: igdbGame.storyline,
-                  themes: igdbGame.themes as Theme[],
-                  releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,
-                }
-              : undefined,
-          );
-        } catch (e) {
-          console.error(e);
-          throw new BadRequestException(e);
-        }
+    for (const psnGame of psnGames) {
+      const igdbResults = await this.igdbService.search(psnGame.name, 1);
+      const igdbGame = igdbResults[0];
 
-        await this.prisma.userPlatform.update({
-          where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_PLAYSTATION } },
-          data: { lastSyncAt: new Date() },
-        });
+      const match = psnGame.playDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+      const playtime = { h: Number(match?.[1] ?? 0), m: Number(match?.[2] ?? 0), s: Number(match?.[3] ?? 0) };
+
+      try {
+        await this.gamesService.ingestFromSync(
+          userID,
+          {
+            id: `${psnGame.concept.id}`,
+            platformID: PLATFORM_ID_PLAYSTATION,
+            externalTitle: psnGame.name,
+            coverURL: psnGame.imageUrl,
+            playtimeHours: playtime.h + playtime.m / 60,
+          },
+          igdbGame
+            ? {
+                id: igdbGame.id,
+                title: igdbGame.name,
+                coverURL: igdbGame.cover || psnGame.imageUrl,
+                genres: igdbGame.genres as Genre[],
+                summary: igdbGame.summary,
+                storyLine: igdbGame.storyline,
+                themes: igdbGame.themes as Theme[],
+                releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,
+              }
+            : undefined,
+        );
+      } catch (e) {
+        this.logger.warn(`Skipping "${psnGame.name}" for user ${userID}: ${e instanceof Error ? e.message : String(e)}`);
+        continue;
       }
-    } catch (e) {
-      console.error(e);
-      throw new BadRequestException(e);
+
+      await this.prisma.userPlatform.update({
+        where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_PLAYSTATION } },
+        data: { lastSyncAt: new Date(), isSyncing: false },
+      });
     }
   }
 }

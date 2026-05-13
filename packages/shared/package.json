@@ -2,13 +2,21 @@
   "name": "@grimoire/shared",
   "version": "0.0.1",
   "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
   "scripts": {
-    "dev": "tsc --watch",
-    "build": "tsc",
+    "dev": "tsup --watch",
+    "build": "tsup",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "tsup": "^8.5.1",
     "typescript": "^5.4.5"
   },
   "dependencies": {

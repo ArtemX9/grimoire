@@ -21,7 +21,7 @@ export default defineConfig({
     {
       command: 'pnpm --filter api dev',
       url: 'http://localhost:3000/health',
-      timeout: 60_000,
+      timeout: process.env.CI ? 120_000 : 60_000,
       reuseExistingServer: true,
       stdout: 'ignore',
       stderr: 'ignore',
@@ -29,7 +29,7 @@ export default defineConfig({
     {
       command: 'pnpm --filter web dev',
       url: 'http://localhost:5173',
-      timeout: 60_000,
+      timeout: process.env.CI ? 120_000 : 60_000,
       reuseExistingServer: true,
       stdout: 'ignore',
       stderr: 'ignore',

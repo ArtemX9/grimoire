@@ -1,17 +1,17 @@
 import { Role } from '@grimoire/shared';
-import { configureStore } from '@reduxjs/toolkit';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { Provider } from 'react-redux';
 import { describe, expect, it } from 'vitest';
 
-import { api } from '@/api/api';
+import { authKeys, Session } from '@/api/auth';
 import { AdminRoute } from '@/components/ProtectedRoute/AdminRoute';
 import { MustChangePasswordRoute } from '@/components/ProtectedRoute/MustChangePasswordRoute';
 import { ProtectedRoute } from '@/components/ProtectedRoute/ProtectedRoute';
 import { ROUTES } from '@/constants/routes';
-import authReducer, { AuthState } from '@/store/authSlice';
+import { makeStore, makeQueryClient } from '@/test/renderWithQuery';
 import { generateSession } from '@/test';
 
 // ---------------------------------------------------------------------------
@@ -32,34 +32,37 @@ function makeSessionUser(overrides: Partial<SessionUser> = {}): SessionUser {
   return generateSession({ id: '1', email: 'user@example.com', name: 'User', aiEnabled: true, aiRequestsLimit: null, ...overrides }).user;
 }
 
-function makeStore(auth: AuthState) {
-  return configureStore({
-    reducer: {
-      [api.reducerPath]: api.reducer,
-      auth: authReducer,
-    },
-    preloadedState: { auth },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
-  });
-}
+type RenderOptions = {
+  session: Session | null | undefined;
+  isBootstrapped: boolean;
+};
 
-function renderWithRoutes(guardElement: React.ReactElement, auth: AuthState, initialEntry = ROUTES.DEFAULT) {
-  const store = makeStore(auth);
+function renderWithRoutes(guardElement: React.ReactElement, { session, isBootstrapped }: RenderOptions, initialEntry = ROUTES.DEFAULT) {
+  const queryClient = makeQueryClient();
+  const store = makeStore();
+
+  if (isBootstrapped) {
+    queryClient.setQueryData(authKeys.session(), session ?? null);
+  }
+  // If not bootstrapped, leave the query in 'pending' state (no data set)
+
   return render(
-    <Provider store={store}>
-      <MemoryRouter initialEntries={[initialEntry]}>
-        <Routes>
-          <Route path={ROUTES.LOGIN} element={<div>Login Page</div>} />
-          <Route path={ROUTES.CHANGE_PASSWORD} element={<div>Change Password Page</div>} />
-          <Route path={ROUTES.DEFAULT} element={<div>Home Page</div>} />
-          <Route element={guardElement}>
-            <Route path='/protected' element={<div>Protected Content</div>} />
-            <Route path={ROUTES.ADMIN_DASHBOARD} element={<div>Admin Dashboard</div>} />
-            <Route path='/must-change' element={<div>Must Change Content</div>} />
-          </Route>
-        </Routes>
-      </MemoryRouter>
-    </Provider>,
+    <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <Routes>
+            <Route path={ROUTES.LOGIN} element={<div>Login Page</div>} />
+            <Route path={ROUTES.CHANGE_PASSWORD} element={<div>Change Password Page</div>} />
+            <Route path={ROUTES.DEFAULT} element={<div>Home Page</div>} />
+            <Route element={guardElement}>
+              <Route path='/protected' element={<div>Protected Content</div>} />
+              <Route path={ROUTES.ADMIN_DASHBOARD} element={<div>Admin Dashboard</div>} />
+              <Route path='/must-change' element={<div>Must Change Content</div>} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </Provider>
+    </QueryClientProvider>,
   );
 }
 

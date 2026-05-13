@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { CreateUserArgs } from '@/api/adminApi';
+import { CreateUserArgs } from '@/api/admin';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';

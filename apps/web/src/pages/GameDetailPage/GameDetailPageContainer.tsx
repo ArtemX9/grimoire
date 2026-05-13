@@ -2,11 +2,10 @@ import { GamePlatform, GameStatus, IgdbGame, Mood, UpdateGameDto } from '@grimoi
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { useDeleteGameMutation, useGetGameQuery, useRemapGameMutation, useUpdateGameMutation } from '@/api/gamesApi';
-import { useGetGameSessionsQuery } from '@/api/sessionsApi';
+import { useDeleteGame, useGetGame, useRemapGame, useUpdateGame } from '@/api/games';
+import { useGetGameSessions } from '@/api/sessions';
 import { toast } from '@/components/ui/use-toast';
 import { ROUTES, getGameDetailsURL } from '@/constants/routes';
-import { useAppSelector } from '@/store/hooks';
 
 import { GameDetailPage } from './GameDetailPage';
 
@@ -14,16 +13,15 @@ function GameDetailPageContainer() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const game = useAppSelector((s) => s.games.selectedGame);
-  const isLoading = useAppSelector((s) => s.games.isSelectedGameLoading);
+  const { data: game, isLoading } = useGetGame(id!);
+  const { data: sessions = [] } = useGetGameSessions(id!);
 
-  // Trigger the RTK Query fetch so onQueryStarted populates the slice.
-  useGetGameQuery(id!);
-
-  const { data: sessions = [] } = useGetGameSessionsQuery(id!);
-  const [updateGame, { isLoading: isUpdating }] = useUpdateGameMutation();
-  const [remapGame, { isLoading: isRemapping }] = useRemapGameMutation();
-  const [deleteGame, { isLoading: isDeleting }] = useDeleteGameMutation();
+  const updateGameMutation = useUpdateGame();
+  const isUpdating = updateGameMutation.isPending;
+  const remapGameMutation = useRemapGame();
+  const isRemapping = remapGameMutation.isPending;
+  const deleteGameMutation = useDeleteGame();
+  const isDeleting = deleteGameMutation.isPending;
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [logSessionOpen, setLogSessionOpen] = useState(false);
@@ -33,7 +31,7 @@ function GameDetailPageContainer() {
 
   async function handleStatusChange(status: GameStatus) {
     try {
-      await updateGame({ id: game!.id, data: { status } }).unwrap();
+      await updateGameMutation.mutateAsync({ id: game!.id, data: { status } });
     } catch {
       toast({ title: 'Failed to update status', variant: 'destructive' });
     }
@@ -41,7 +39,7 @@ function GameDetailPageContainer() {
 
   async function handleMoodsChange(moods: Mood[]) {
     try {
-      await updateGame({ id: game!.id, data: { moods } }).unwrap();
+      await updateGameMutation.mutateAsync({ id: game!.id, data: { moods } });
     } catch {
       toast({ title: 'Failed to update moods', variant: 'destructive' });
     }
@@ -50,7 +48,7 @@ function GameDetailPageContainer() {
   async function handleRatingChange(rating: number) {
     const next = game!.userRating === rating ? undefined : rating;
     try {
-      await updateGame({ id: game!.id, data: { userRating: next } as UpdateGameDto }).unwrap();
+      await updateGameMutation.mutateAsync({ id: game!.id, data: { userRating: next } as UpdateGameDto });
     } catch {
       toast({ title: 'Failed to update rating', variant: 'destructive' });
     }
@@ -58,7 +56,7 @@ function GameDetailPageContainer() {
 
   async function handleSaveNotes(notes: string) {
     try {
-      await updateGame({ id: game!.id, data: { notes } }).unwrap();
+      await updateGameMutation.mutateAsync({ id: game!.id, data: { notes } });
       toast({ title: 'Notes saved' });
     } catch {
       toast({ title: 'Failed to save notes', variant: 'destructive' });
@@ -67,7 +65,7 @@ function GameDetailPageContainer() {
 
   async function handleDelete() {
     try {
-      await deleteGame(game!.id).unwrap();
+      await deleteGameMutation.mutateAsync(game!.id);
       toast({ title: `${game!.title} removed from library` });
       navigate(ROUTES.LIBRARY);
     } catch {
@@ -83,7 +81,7 @@ function GameDetailPageContainer() {
 
   async function handleRemapGame(igdbGame: IgdbGame, _status: GameStatus, onSuccessCallback: () => void, onErrorCallback: () => void) {
     try {
-      const returnedGame = await remapGame({
+      const returnedGame = await remapGameMutation.mutateAsync({
         id: game!.id,
         data: {
           igdbId: igdbGame.id,
@@ -98,7 +96,7 @@ function GameDetailPageContainer() {
             ? { platformId: selectedPlatformForRemap.platformID, externalId: selectedPlatformForRemap.externalID }
             : {}),
         },
-      }).unwrap();
+      });
       setSelectedPlatformForRemap(null);
       if (returnedGame.id !== game!.id) {
         navigate(getGameDetailsURL(returnedGame.id), { replace: true });
@@ -113,7 +111,7 @@ function GameDetailPageContainer() {
 
   return (
     <GameDetailPage
-      game={game}
+      game={game ?? null}
       isLoading={isLoading || isRemapping}
       sessions={sessions}
       isUpdating={isUpdating}

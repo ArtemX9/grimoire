@@ -1,12 +1,15 @@
 import { Role } from '@grimoire/shared';
 import { Navigate, Outlet } from 'react-router-dom';
 
+import { useSession } from '@/api/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ROUTES } from '@/constants/routes';
-import { useAppSelector } from '@/store/hooks';
 
 export function AdminRoute() {
-  const { session, isBootstrapped } = useAppSelector((s) => s.auth);
+  const sessionQuery = useSession();
+
+  const isBootstrapped = sessionQuery.status !== 'pending';
+  const session = sessionQuery.data;
 
   if (!isBootstrapped) {
     return (
