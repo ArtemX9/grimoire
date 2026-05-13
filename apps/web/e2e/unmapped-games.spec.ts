@@ -376,9 +376,11 @@ test.describe('Unmapped games — mapping onto an existing library entry', () =>
       await confirmButton.click();
 
       // -----------------------------------------------------------------------
-      // 8. The unmapped row disappears.
+      // 8. The dialog closes and the unmapped row disappears.
       // -----------------------------------------------------------------------
-      await expect(page.getByText(UNMAPPED_GAME_TITLE)).not.toBeVisible({ timeout: 10_000 });
+      await expect(mapDialog).not.toBeVisible({ timeout: 10_000 });
+      const unmappedRow = page.locator('button').filter({ hasText: UNMAPPED_GAME_TITLE });
+      await expect(unmappedRow).not.toBeVisible({ timeout: 10_000 });
 
       // -----------------------------------------------------------------------
       // 9. Navigate to /library. The cache invalidation from onSuccess triggers
