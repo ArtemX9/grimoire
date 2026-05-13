@@ -36,7 +36,7 @@ jobs:
           DATABASE_URL: postgresql://user:password@localhost:5432/db
 
       - name: Run API tests
-        run: pnpm --filter api test -- --coverage
+        run: pnpm --filter api test:coverage
 
       - name: Upload API coverage artifact
         uses: actions/upload-artifact@v4
@@ -129,16 +129,21 @@ jobs:
       - name: Migrate and seed database
         run: pnpm --filter api e2e:setup
 
+      - name: Build API
+        run: pnpm --filter api build
+
       - name: Start API
-        run: pnpm --filter api dev &
+        run: node apps/api/dist/main &
 
       - name: Wait for API to be ready
         run: |
-          for i in $(seq 1 20); do
-            nc -z localhost 3000 && echo "API is up" && break
-            echo "Waiting for API... ($i/20)"
-            sleep 3
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/health && echo "API is up" && exit 0
+            echo "Waiting for API... ($i/30)"
+            sleep 2
           done
+          echo "API failed to start after 60s"
+          exit 1
 
       - name: Build and serve frontend
         run: |
@@ -183,7 +188,7 @@ jobs:
         run: pnpm --filter shared build
 
       - name: Run web tests with coverage
-        run: pnpm --filter web test:run --coverage
+        run: pnpm --filter web test:coverage
 
       - name: Post web coverage comment
         uses: davelosert/vitest-coverage-report-action@v2
