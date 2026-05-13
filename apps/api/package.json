@@ -92,9 +92,14 @@
       ]
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "**/*.(t|j)s",
+      "!**/*.spec.ts",
+      "!**/main.ts",
+      "!**/*.module.ts",
+      "!**/node_modules/**"
     ],
     "coverageDirectory": "../coverage",
+    "coverageReporters": ["lcov", "text-summary", "json-summary"],
     "testEnvironment": "node"
   }
 }

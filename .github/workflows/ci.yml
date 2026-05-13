@@ -36,7 +36,23 @@ jobs:
           DATABASE_URL: postgresql://user:password@localhost:5432/db
 
       - name: Run API tests
-        run: pnpm --filter api test
+        run: pnpm --filter api test -- --coverage
+
+      - name: Upload API coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: apps/api/coverage/
+          retention-days: 7
+
+      - name: Post API coverage comment
+        if: github.event_name == 'pull_request'
+        uses: MishaKav/jest-coverage-comment@main
+        with:
+          lcov-file: apps/api/coverage/lcov.info
+          coverage-summary-path: apps/api/coverage/coverage-summary.json
+          title: API Test Coverage
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   e2e:
     name: E2E tests
@@ -68,7 +84,7 @@ jobs:
       REDIS_URL: redis://localhost:6379
       BETTER_AUTH_SECRET: e2e-secret
       BETTER_AUTH_URL: http://localhost:5173
-      ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+      ENCRYPTION_KEY: fb5e6ea5523eb2d9e93863cba1b973e57c9c95ac0c22caadf7027a9596909118
       STEAM_API_KEY: stub
       PSN_NPSSO: stub
       TWITCH_CLIENT_ID: stub
@@ -145,6 +161,9 @@ jobs:
   test-web:
     name: Web tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -163,5 +182,10 @@ jobs:
       - name: Build shared package
         run: pnpm --filter shared build
 
-      - name: Run web tests
-        run: pnpm --filter web test:run
+      - name: Run web tests with coverage
+        run: pnpm --filter web test:run --coverage
+
+      - name: Post web coverage comment
+        uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          working-directory: apps/web
