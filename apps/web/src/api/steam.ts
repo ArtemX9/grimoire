@@ -1,17 +1,11 @@
+import { PlatformSyncStatus, UserPlatform } from '@grimoire/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { UserPlatform } from '@grimoire/shared';
 
 import { apiFetch } from '@/lib/apiFetch';
 import { queryClient } from '@/lib/queryClient';
 
-import { userKeys } from './users';
 import { gameKeys } from './games';
-
-export type SteamSyncStatus = {
-  connected: boolean;
-  lastSyncAt?: string;
-  platform?: UserPlatform;
-};
+import { userKeys } from './users';
 
 export type ConnectSteamArgs = {
   steamId: string;
@@ -21,8 +15,8 @@ export type SyncSteamResponse = {
   jobId: string;
 };
 
-async function fetchSteamStatus(): Promise<SteamSyncStatus> {
-  return apiFetch<SteamSyncStatus>('/platforms/steam/status');
+async function fetchSteamStatus(): Promise<PlatformSyncStatus> {
+  return apiFetch<PlatformSyncStatus>('/platforms/steam/status');
 }
 
 async function connectSteam(args: ConnectSteamArgs): Promise<UserPlatform> {

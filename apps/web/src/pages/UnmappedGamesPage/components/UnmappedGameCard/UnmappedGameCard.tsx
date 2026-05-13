@@ -14,12 +14,14 @@ const REASON_STYLES: Record<UnmappedReasons, string> = {
   [UnmappedReasons.NO_MATCH]: 'bg-grimoire-status-dropped-bg text-grimoire-status-dropped-text',
   [UnmappedReasons.LOW_CONFIDENCE]: 'bg-grimoire-status-wishlist-bg text-grimoire-status-wishlist-text',
   [UnmappedReasons.DUPLICATE_MATCH]: 'bg-grimoire-status-completed-bg text-grimoire-status-completed-text',
+  [UnmappedReasons.USER_DELETED]: 'bg-grimoire-status-backlog-bg text-grimoire-status-backlog-text',
 };
 
 const REASON_LABELS: Record<UnmappedReasons, string> = {
   [UnmappedReasons.NO_MATCH]: 'No match',
   [UnmappedReasons.LOW_CONFIDENCE]: 'Low confidence',
   [UnmappedReasons.DUPLICATE_MATCH]: 'Duplicate match',
+  [UnmappedReasons.USER_DELETED]: 'User deleted',
 };
 
 function UnmappedGameCard({ game, onMapClick }: IUnmappedGameCard) {

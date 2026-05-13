@@ -57,6 +57,11 @@ export class XboxController {
     return this.xboxService.getSyncStatus(user.id);
   }
 
+  @Get('ownedGames')
+  getOwnedGames(@CurrentUser() user: RequestUser) {
+    return this.xboxService.getOwnedGames(user.id);
+  }
+
   @Post('sync')
   @NotDemo()
   sync(@CurrentUser() user: RequestUser) {

@@ -1,10 +1,10 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { Queue } from 'bullmq';
 
-import { SteamGame } from '@grimoire/shared';
+import { PlatformSyncStatus, SteamGame } from '@grimoire/shared';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { iPlatformService } from '../common/sync-service';
@@ -13,6 +13,8 @@ import { PLATFORM_ID_STEAM, STEAM_QUEUE_TITLE } from './constants';
 
 @Injectable()
 export class SteamService implements iPlatformService {
+  private readonly logger = new Logger(SteamService.name);
+
   constructor(
     @InjectQueue(STEAM_QUEUE_TITLE) private steamQueue: Queue,
     private config: ConfigService,
@@ -45,19 +47,30 @@ export class SteamService implements iPlatformService {
       where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
     });
     if (!platform) return { queued: false, reason: 'Steam platform not connected' };
-    await this.steamQueue.add(
-      'sync',
-      { userId, steamId: platform.externalId },
-      { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
-    );
-    return { queued: true };
+
+    try {
+      await this.steamQueue.add(
+        'sync',
+        { userId, steamId: platform.externalId },
+        { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
+      );
+      return { queued: true };
+    } catch (e) {
+      this.logger.error(`${e}`);
+      return { queued: false };
+    }
   }
 
-  async getSyncStatus(userId: string): Promise<SyncStatusResponse> {
+  async getSyncStatus(userId: string): Promise<PlatformSyncStatus> {
     const platform = await this.prisma.userPlatform.findUnique({
       where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
     });
-    return { connected: !!platform, lastSyncAt: platform?.lastSyncAt ?? undefined };
+    return {
+      connected: !!platform,
+      lastSyncAt: platform?.lastSyncAt ?? undefined,
+      externalID: platform?.externalId,
+      isSyncing: platform?.isSyncing ?? undefined,
+    };
   }
 
   private _toResponse(platform: UserPlatformRelations): PlatformResponse {

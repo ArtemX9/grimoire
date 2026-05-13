@@ -3,6 +3,7 @@ import { registerAs } from '@nestjs/config';
 export default registerAs('app', () => ({
   port: parseInt(process.env.PORT ?? '3000', 10),
   corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
+  encryptionKey: process.env.ENCRYPTION_KEY,
   steam: { apiKey: process.env.STEAM_API_KEY },
   playstation: { npsso: process.env.PSN_NPSSO },
   xbox: {

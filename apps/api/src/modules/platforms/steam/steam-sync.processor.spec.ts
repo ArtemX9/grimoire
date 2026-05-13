@@ -207,7 +207,7 @@ describe('SteamSyncProcessor', () => {
       );
     });
 
-    it('updates lastSyncAt once per game processed', async () => {
+    it('updates lastSyncAt once per game processed (plus one isSyncing:true update at start)', async () => {
       steamService.getOwnedGames.mockResolvedValue([makeSteamGame()]);
       igdbService.search.mockResolvedValue([makeIgdbGame()]);
       gamesService.ingestFromSync.mockResolvedValue({});
@@ -215,16 +215,26 @@ describe('SteamSyncProcessor', () => {
 
       await processor.process(makeJob({ userId: 'user-1', steamId: 'steam-id' }));
 
-      expect(prisma.userPlatform.update).toHaveBeenCalledTimes(1);
+      // 1 call to set isSyncing:true + 1 call per game to set lastSyncAt
+      expect(prisma.userPlatform.update).toHaveBeenCalledTimes(2);
+      expect(prisma.userPlatform.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { isSyncing: true } }),
+      );
+      expect(prisma.userPlatform.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ lastSyncAt: expect.any(Date) }) }),
+      );
     });
 
-    it('does not call userPlatform.update when the owned games list is empty', async () => {
+    it('sets isSyncing:true even when the owned games list is empty', async () => {
       steamService.getOwnedGames.mockResolvedValue([]);
       (prisma.userPlatform.update as jest.Mock).mockResolvedValue({});
 
       await processor.process(makeJob({ userId: 'user-1', steamId: 'steam-id' }));
 
-      expect(prisma.userPlatform.update).not.toHaveBeenCalled();
+      expect(prisma.userPlatform.update).toHaveBeenCalledTimes(1);
+      expect(prisma.userPlatform.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { isSyncing: true } }),
+      );
     });
   });
 

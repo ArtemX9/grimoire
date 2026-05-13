@@ -5,7 +5,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import UnmappedGameCard from './components/UnmappedGameCard/UnmappedGameCard';
+import UnmappedPSNGameRow from './components/UnmappedPSNGameRow/UnmappedPSNGameRow';
 import UnmappedSteamGameRow from './components/UnmappedSteamGameRow/UnmappedSteamGameRow';
+import UnmappedXboxGameRow from './components/UnmappedXboxGameRow/UnmappedXboxGameRow';
 
 interface IUnmappedGamesPage {
   games: UnmappedGame[];
@@ -69,6 +71,10 @@ function UnmappedGamesPage({ games, isLoading, mappingGame, onMapClick, onDialog
     switch (game.platform.platform) {
       case Platform.STEAM:
         return <UnmappedSteamGameRow key={game.id} game={game} onMapClick={onMapClick} />;
+      case Platform.PlayStation:
+        return <UnmappedPSNGameRow key={game.id} game={game} onMapClick={onMapClick} />;
+      case Platform.Xbox:
+        return <UnmappedXboxGameRow key={game.id} game={game} onMapClick={onMapClick} />;
       default:
         return <UnmappedGameCard key={game.id} game={game} onMapClick={onMapClick} />;
     }

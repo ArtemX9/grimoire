@@ -1,3 +1,4 @@
+import { PlatformSyncStatus } from '@grimoire/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/apiFetch';
@@ -5,17 +6,12 @@ import { queryClient } from '@/lib/queryClient';
 
 import { gameKeys } from './games';
 
-export type XboxSyncStatus = {
-  connected: boolean;
-  lastSyncAt?: string;
-};
-
 export type SyncXboxResponse = {
   jobId: string;
 };
 
-async function fetchXboxStatus(): Promise<XboxSyncStatus> {
-  return apiFetch<XboxSyncStatus>('/platforms/xbox/status');
+async function fetchXboxStatus(): Promise<PlatformSyncStatus> {
+  return apiFetch<PlatformSyncStatus>('/platforms/xbox/status');
 }
 
 async function syncXbox(): Promise<SyncXboxResponse> {

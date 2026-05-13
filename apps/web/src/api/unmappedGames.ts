@@ -1,5 +1,5 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { MapUnmappedGameSchemaDto, UnmappedGame } from '@grimoire/shared';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/apiFetch';
 import { queryClient } from '@/lib/queryClient';
@@ -17,6 +17,7 @@ export type MapUnmappedGameArgs = {
 };
 
 export const unmappedGameKeys = {
+  all: () => ['unmapped-games'] as const,
   list: (params?: UnmappedGamesQuery) => ['unmapped-games', params] as const,
 };
 
@@ -43,8 +44,10 @@ export function useGetUnmappedGames(params?: UnmappedGamesQuery) {
 export function useMapUnmappedGame() {
   return useMutation({
     mutationFn: mapUnmappedGame,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: unmappedGameKeys.list() });
+    onSuccess: (_, { id }) => {
+      queryClient.setQueriesData({ queryKey: unmappedGameKeys.all() }, (old: UnmappedGame[] | undefined) =>
+        old?.filter((g) => g.id !== id),
+      );
       queryClient.invalidateQueries({ queryKey: gameKeys.list() });
     },
   });

@@ -1,23 +1,18 @@
+import { PlatformSyncStatus, UserPlatform } from '@grimoire/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { UserPlatform } from '@grimoire/shared';
 
 import { apiFetch } from '@/lib/apiFetch';
 import { queryClient } from '@/lib/queryClient';
 
-import { userKeys } from './users';
 import { gameKeys } from './games';
-
-export type PSNSyncStatus = {
-  connected: boolean;
-  lastSyncAt?: string;
-};
+import { userKeys } from './users';
 
 export type ConnectPSNArgs = {
   username: string;
 };
 
-async function fetchPSNStatus(): Promise<PSNSyncStatus> {
-  return apiFetch<PSNSyncStatus>('/platforms/playstation/status');
+async function fetchPSNStatus(): Promise<PlatformSyncStatus> {
+  return apiFetch<PlatformSyncStatus>('/platforms/playstation/status');
 }
 
 async function connectPSN(args: ConnectPSNArgs): Promise<UserPlatform> {

@@ -1,5 +1,5 @@
 import { Platform } from '@grimoire/shared';
-import { AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
 import { useConnectPSN, useGetPSNStatus, useSyncPSN } from '@/api/playstation';
@@ -50,7 +50,8 @@ export function PSNRow() {
   return (
     <div className='flex flex-col gap-3 px-4 py-4'>
       {renderHeader()}
-      {renderLastSynced()}
+      {renderExternalID()}
+      {renderSyncMeta()}
       {renderConnectInput()}
     </div>
   );
@@ -117,7 +118,25 @@ export function PSNRow() {
     return null;
   }
 
-  function renderLastSynced() {
+  function renderExternalID() {
+    if (!status?.externalID) return null;
+    return (
+      <p className='font-sans text-xs text-grimoire-muted'>
+        Account: <span className='text-grimoire-ink'>{status.externalID}</span>
+      </p>
+    );
+  }
+
+  function renderSyncMeta() {
+    if (!connected) return null;
+    if (status?.isSyncing) {
+      return (
+        <p className='flex items-center gap-1.5 font-sans text-xs text-grimoire-muted'>
+          <Loader2 className='h-3 w-3 animate-spin' />
+          Syncing library…
+        </p>
+      );
+    }
     if (!status?.lastSyncAt) return null;
     return (
       <p className='font-sans text-xs text-grimoire-muted'>

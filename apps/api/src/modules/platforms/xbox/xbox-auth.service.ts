@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { live, xnet } from '@xboxreplay/xboxlive-auth';
 
 import { PrismaService } from '../../../prisma/prisma.service';
+import { EncryptorService } from '../../encryptor/encryptor.service';
 import { PLATFORM_ID_XBOX, XBOX_RESPONSE_TYPE, XBOX_SCOPE } from './constants';
 
 export type TokensInfo = {
@@ -36,6 +37,7 @@ export class XboxAuthService {
   constructor(
     private config: ConfigService,
     private prisma: PrismaService,
+    private encryptorService: EncryptorService,
   ) {}
 
   // 1 step - Generate the URL where users will authenticate
@@ -82,18 +84,18 @@ export class XboxAuthService {
         create: {
           userId: userID,
           platformId: PLATFORM_ID_XBOX,
-          refreshToken: userTokenCache.refreshToken,
+          refreshToken: this.encryptorService.encrypt(userTokenCache.refreshToken ?? ''),
           // We try to get the Game Tag, if not present - use Xbox ID
           // @ts-ignore
           externalId: tokens.DisplayClaims.xui[0].gtg ?? tokens.DisplayClaims.xui[0].xid,
-          accessToken,
+          accessToken: this.encryptorService.encrypt(accessToken),
         },
         update: {
-          refreshToken: userTokenCache.refreshToken,
+          refreshToken: this.encryptorService.encrypt(userTokenCache.refreshToken ?? ''),
           // We try to get the Game Tag, if not present - use Xbox ID
           // @ts-ignore
           externalId: tokens.DisplayClaims.xui[0].gtg ?? tokens.DisplayClaims.xui[0].xid,
-          accessToken,
+          accessToken: this.encryptorService.encrypt(accessToken),
         },
         include: {
           platform: true,
@@ -146,7 +148,7 @@ export class XboxAuthService {
         },
       });
 
-      refreshToken = userPlatformInfo.refreshToken as string;
+      refreshToken = this.encryptorService.decrypt(userPlatformInfo.refreshToken as string);
     }
 
     return this.refreshTokens(userID, refreshToken);
@@ -185,7 +187,10 @@ export class XboxAuthService {
       // Persist the rotated refresh token
       await this.prisma.userPlatform.update({
         where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_XBOX } },
-        data: { refreshToken: liveAuth.refresh_token, accessToken },
+        data: {
+          refreshToken: this.encryptorService.encrypt(liveAuth.refresh_token),
+          accessToken: this.encryptorService.encrypt(accessToken),
+        },
       });
 
       if (!tokens.DisplayClaims.xui[0]?.xid || !tokens.Token || !tokens.DisplayClaims.xui[0]?.uhs) {

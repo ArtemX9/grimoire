@@ -143,6 +143,7 @@ model UserPlatform {
   accessToken  String?
   refreshToken String?
   lastSyncAt   DateTime?
+  isSyncing    Boolean?
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   platform     Platforms @relation(fields: [platformId], references: [id], onDelete: Cascade)
 
@@ -200,6 +201,7 @@ enum UnmappedReason {
   DUPLICATE_MATCH
   LOW_CONFIDENCE
   NO_MATCH
+  USER_DELETED
 }
 
 model UnmappedSyncedGame {

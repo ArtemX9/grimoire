@@ -21,3 +21,10 @@ export type PlatformType = {
   id: number;
   platform: Platform
 };
+
+export type PlatformSyncStatus = {
+  connected: boolean;
+  lastSyncAt?: Date;
+  externalID?: string;
+  isSyncing?: boolean;
+}
