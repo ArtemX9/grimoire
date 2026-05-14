@@ -262,7 +262,8 @@ export class GamesService {
           const playtimeChanged = mergedPlaytime > existingTarget.playtimeHours;
           const ratingChanged = mergedRating !== existingTarget.userRating;
           const notesChanged = mergedNotes !== existingTarget.notes;
-          const moodsChanged = mergedMoods.length !== existingTarget.moods.length || mergedMoods.some((m) => !existingTarget.moods.includes(m));
+          const moodsChanged =
+            mergedMoods.length !== existingTarget.moods.length || mergedMoods.some((m) => !existingTarget.moods.includes(m));
 
           if (playtimeChanged || ratingChanged || notesChanged || moodsChanged) {
             targetGame = await tx.userGame.update({
@@ -476,7 +477,7 @@ export class GamesService {
     // We have IGDBGame info - so we update or create the row in a table
     if (!previouslyMappedIGDBGameID && syncedGameIGDBInfo) {
       // Case 2: low confidence match
-      if (!isConfidentMatch(syncedGameInfo.externalTitle || '', syncedGameIGDBInfo.title)) {
+      if (!syncedGameInfo.isManualMapping && !isConfidentMatch(syncedGameInfo.externalTitle || '', syncedGameIGDBInfo.title)) {
         await prismaInstance.unmappedSyncedGame.upsert({
           where: { userId_syncedGameId: { userId: userID, syncedGameId: syncedGameRow.id } },
           create: {

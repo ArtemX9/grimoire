@@ -62,6 +62,7 @@ export type IngestedSyncGameInfo = {
   coverURL?: string;
   summary?: string;
   playtimeHours?: number;
+  isManualMapping?: boolean;
 };
 
 export type IgdbSyncGameInfo = {

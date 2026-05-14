@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { DEFAULT_LIMIT, DEFAULT_OFFSET, MapUnmappedGameSchemaDto, PlatformType, UnmappedGame, UnmappedReasons } from '@grimoire/shared';
 
@@ -8,6 +8,8 @@ import { UnmappedGameWithRelations } from './unmapped-games.types';
 
 @Injectable()
 export class UnmappedGamesService {
+  private readonly logger = new Logger(UnmappedGamesService.name);
+
   constructor(
     private prisma: PrismaService,
     private gamesService: GamesService,
@@ -52,6 +54,7 @@ export class UnmappedGamesService {
           externalTitle: unresolved.syncedGame.externalTitle,
           coverURL: unresolved.syncedGame.coverUrl ?? undefined,
           playtimeHours: unresolved.playtimeHours,
+          isManualMapping: true,
         },
         {
           id: dto.igdbInfo.id,
@@ -66,18 +69,22 @@ export class UnmappedGamesService {
         tx,
       );
 
-      await tx.unmappedSyncedGame.update({
-        where: {
-          userId_syncedGameId: {
-            userId: userID,
-            syncedGameId: dto.syncedGameID,
+      try {
+        await tx.unmappedSyncedGame.update({
+          where: {
+            userId_syncedGameId: {
+              userId: userID,
+              syncedGameId: unresolved.syncedGameId,
+            },
           },
-        },
-        data: {
-          isMapped: true,
-          igdbGameId: dto.igdbInfo.id,
-        },
-      });
+          data: {
+            isMapped: true,
+            igdbGameId: dto.igdbInfo.id,
+          },
+        });
+      } catch (e) {
+        this.logger.error(`${e}`);
+      }
     });
   }
 
