@@ -102,8 +102,8 @@ export class SessionsService {
             notes: dto.notes,
           },
         }),
-        this.prisma.userGame.update({
-          where: { id: dto.gameID },
+        this.prisma.userGame.updateMany({
+          where: { id: dto.gameID, userId },
           data: { playtimeHours: { increment: dto.durationMin / 60 } },
         }),
       ]);

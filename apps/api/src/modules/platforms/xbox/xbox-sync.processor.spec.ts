@@ -248,7 +248,7 @@ describe('XboxSyncProcessor', () => {
   // ---------------------------------------------------------------------------
 
   describe('process (edge cases)', () => {
-    it('sets isSyncing:true even when the owned games list is empty', async () => {
+    it('calls update exactly twice even when the owned games list is empty', async () => {
       xboxService.getOwnedGames.mockResolvedValue([]);
       (prisma.userPlatform.update as jest.Mock).mockResolvedValue({});
 
@@ -256,7 +256,11 @@ describe('XboxSyncProcessor', () => {
 
       expect(igdbService.search).not.toHaveBeenCalled();
       expect(gamesService.ingestFromSync).not.toHaveBeenCalled();
+      expect(prisma.userPlatform.update).toHaveBeenCalledTimes(2);
       expect(prisma.userPlatform.update).toHaveBeenCalledWith(expect.objectContaining({ data: { isSyncing: true } }));
+      expect(prisma.userPlatform.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ lastSyncAt: expect.any(Date), isSyncing: false }) }),
+      );
     });
 
     it('processes multiple Xbox games in a single job', async () => {
@@ -295,7 +299,7 @@ describe('XboxSyncProcessor', () => {
       );
     });
 
-    it('calls update twice for one game: once for isSyncing:true and once for lastSyncAt', async () => {
+    it('calls update exactly twice regardless of game count: once for isSyncing:true, once for completion', async () => {
       xboxService.getOwnedGames.mockResolvedValue([makeXboxGame()]);
       igdbService.search.mockResolvedValue([makeIgdbGame()]);
       gamesService.ingestFromSync.mockResolvedValue({});

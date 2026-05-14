@@ -53,6 +53,7 @@ describe('SessionsService', () => {
             },
             userGame: {
               update: jest.fn(),
+              updateMany: jest.fn(),
             },
             $transaction: jest.fn(),
           },
@@ -214,7 +215,7 @@ describe('SessionsService', () => {
 
       await service.create('user-1', dto);
 
-      expect(prisma.userGame.update).not.toHaveBeenCalled();
+      expect(prisma.userGame.updateMany).not.toHaveBeenCalled();
     });
   });
 
@@ -258,14 +259,14 @@ describe('SessionsService', () => {
       // We need the actual Prisma operation objects.  Because the service passes
       // an array of Prisma operation promises, we verify the updateMany call args
       // via the prisma.userGame.update mock.
-      (prisma.userGame.update as jest.Mock).mockResolvedValue({});
+      (prisma.userGame.updateMany as jest.Mock).mockResolvedValue({ count: 1 });
       (prisma.playSession.create as jest.Mock).mockResolvedValue(created);
 
       await service.create('user-1', dto);
 
-      // The transaction array should have been built using prisma.userGame.update.
-      expect(prisma.userGame.update).toHaveBeenCalledWith({
-        where: { id: 'game-1' },
+      // The transaction array should have been built using prisma.userGame.updateMany.
+      expect(prisma.userGame.updateMany).toHaveBeenCalledWith({
+        where: { id: 'game-1', userId: 'user-1' },
         data: { playtimeHours: { increment: 2 } }, // 120 / 60 = 2
       });
     });

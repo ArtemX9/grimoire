@@ -62,13 +62,12 @@ export class XboxSyncProcessor extends WorkerHost {
         );
       } catch (e) {
         this.logger.warn(`Skipping "${game.name}" for user ${userID}: ${e instanceof Error ? e.message : String(e)}`);
-        continue;
       }
-
-      await this.prisma.userPlatform.update({
-        where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_XBOX } },
-        data: { lastSyncAt: new Date(), isSyncing: false },
-      });
     }
+
+    await this.prisma.userPlatform.update({
+      where: { userId_platformId: { userId: userID, platformId: PLATFORM_ID_XBOX } },
+      data: { lastSyncAt: new Date(), isSyncing: false },
+    });
   }
 }

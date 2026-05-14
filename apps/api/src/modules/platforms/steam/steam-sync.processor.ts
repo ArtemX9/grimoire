@@ -63,13 +63,12 @@ export class SteamSyncProcessor extends WorkerHost {
         );
       } catch (e) {
         this.logger.warn(`Skipping "${steamGame.name}" for user ${userId}: ${e instanceof Error ? e.message : String(e)}`);
-        continue;
       }
-
-      await this.prisma.userPlatform.update({
-        where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
-        data: { lastSyncAt: new Date(), isSyncing: false },
-      });
     }
+
+    await this.prisma.userPlatform.update({
+      where: { userId_platformId: { userId, platformId: PLATFORM_ID_STEAM } },
+      data: { lastSyncAt: new Date(), isSyncing: false },
+    });
   }
 }
