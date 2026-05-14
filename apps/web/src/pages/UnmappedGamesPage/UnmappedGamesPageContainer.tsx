@@ -1,7 +1,7 @@
 import { IgdbGame, UnmappedGame } from '@grimoire/shared';
 import { useState } from 'react';
 
-import { useGetUnmappedGames, useMapUnmappedGame } from '@/api/unmappedGames';
+import { useDeleteUnmappedGame, useGetUnmappedGames, useMapUnmappedGame } from '@/api/unmappedGames';
 import { toast } from '@/components/ui/use-toast';
 
 import UnmappedGamesPage from './UnmappedGamesPage';
@@ -9,10 +9,20 @@ import UnmappedGamesPage from './UnmappedGamesPage';
 function UnmappedGamesPageContainer() {
   const { data: games = [], isLoading } = useGetUnmappedGames({});
   const mapUnmappedGameMutation = useMapUnmappedGame();
+  const deleteUnmappedGameMutation = useDeleteUnmappedGame();
   const [mappingGame, setMappingGame] = useState<UnmappedGame | null>(null);
 
   function handleMapClick(game: UnmappedGame) {
     setMappingGame(game);
+  }
+
+  async function handleDeleteClick(game: UnmappedGame) {
+    try {
+      await deleteUnmappedGameMutation.mutateAsync(game.id);
+      toast({ title: 'Game deleted' });
+    } catch {
+      toast({ title: 'Failed to delete game', variant: 'destructive' });
+    }
   }
 
   function handleDialogOpenChange(open: boolean) {
@@ -56,6 +66,7 @@ function UnmappedGamesPageContainer() {
       isLoading={isLoading}
       mappingGame={mappingGame}
       onMapClick={handleMapClick}
+      onDeleteClick={handleDeleteClick}
       onDialogOpenChange={handleDialogOpenChange}
       onGameSelect={handleGameSelect}
     />

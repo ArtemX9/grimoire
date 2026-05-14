@@ -20,7 +20,7 @@ export class UnmappedGamesService {
       where: {
         userId: userID,
         isMapped: false,
-        NOT: { reason: 'USER_DELETED' },
+        NOT: { reason: UnmappedReasons.USER_DELETED },
       },
       include: {
         syncedGame: {
@@ -86,6 +86,29 @@ export class UnmappedGamesService {
         this.logger.error(`${e}`);
       }
     });
+  }
+
+  async deleteGame(userID: string, unmappedGameID: string) {
+    await this.prisma.unmappedSyncedGame.findUniqueOrThrow({
+      where: {
+        id: unmappedGameID,
+        userId: userID,
+      },
+    });
+
+    try {
+      await this.prisma.unmappedSyncedGame.update({
+        where: {
+          id: unmappedGameID,
+          userId: userID,
+        },
+        data: {
+          reason: UnmappedReasons.USER_DELETED,
+        },
+      });
+    } catch (e) {
+      throw new Error(`Cannot update unmapped game: ${e}`);
+    }
   }
 
   private _toResponse(unmappedGame: UnmappedGameWithRelations): UnmappedGame {

@@ -36,7 +36,7 @@ function sseToken(payload: object): string {
  */
 async function getHollowKnightCard(page: Page) {
   await login(page, USER_EMAIL, USER_PASSWORD);
-  await page.waitForURL('**/library');
+  await page.waitForURL('**/');
 
   const hkCard = page.locator('a[data-game-id]').filter({ hasText: 'Hollow Knight' }).first();
   await expect(hkCard).toBeVisible({ timeout: 10_000 });
@@ -120,9 +120,7 @@ test.describe('AI highlight', () => {
   //    — toolCall fires — filters reset, game reappears, card gets
   //    animate-border-pulse
   // -------------------------------------------------------------------------
-  test('toolCall resets active filters so the highlighted game becomes visible', async ({
-    page,
-  }) => {
+  test('toolCall resets active filters so the highlighted game becomes visible', async ({ page }) => {
     const { hkCard, hollowKnightID } = await getHollowKnightCard(page);
 
     // Hollow Knight is seeded with status BACKLOG.

@@ -17,10 +17,11 @@ const steamPlatform = { id: 1, platform: Platform.STEAM };
 function renderRow(overrides = {}) {
   const game = generateUnmappedGame({ platform: steamPlatform, ...overrides });
   const onMapClick = vi.fn();
+  const onDeleteClick = vi.fn();
 
-  render(<UnmappedSteamGameRow game={game} onMapClick={onMapClick} />);
+  render(<UnmappedSteamGameRow game={game} onMapClick={onMapClick} onDeleteClick={onDeleteClick} />);
 
-  return { game, onMapClick };
+  return { game, onMapClick, onDeleteClick };
 }
 
 describe('UnmappedSteamGameRow', () => {

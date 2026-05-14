@@ -52,7 +52,7 @@ test.describe('Grimoire e2e', () => {
   test('regular user can log in and lands on the library', async ({ page }) => {
     await login(page, USER_EMAIL, USER_PASSWORD);
 
-    await page.waitForURL('**/library');
+    await page.waitForURL('**/');
     await expect(page.getByRole('heading', { name: 'My Library' })).toBeVisible();
   });
 
@@ -61,7 +61,7 @@ test.describe('Grimoire e2e', () => {
   // -------------------------------------------------------------------------
   test('user can navigate from the library to a game detail page', async ({ page }) => {
     await login(page, USER_EMAIL, USER_PASSWORD);
-    await page.waitForURL('**/library');
+    await page.waitForURL('**/');
 
     const firstCard = page.locator('a[href^="/games/"]').first();
     await expect(firstCard).toBeVisible({ timeout: 10_000 });
@@ -81,11 +81,11 @@ test.describe('Grimoire e2e', () => {
   // -------------------------------------------------------------------------
   test('regular user is redirected away from admin routes', async ({ page }) => {
     await login(page, USER_EMAIL, USER_PASSWORD);
-    await page.waitForURL('**/library');
+    await page.waitForURL('**/');
 
     await page.goto('/admin/dashboard');
 
-    await page.waitForURL('**/library');
+    await page.waitForURL('**/');
     await expect(page).not.toHaveURL(/\/admin\/dashboard/);
     await expect(page.getByRole('heading', { name: 'Admin' })).not.toBeVisible();
   });
@@ -124,7 +124,7 @@ test.describe('Data isolation', () => {
     // User 1
     // ------------------------------------------------------------------
     await login(page, USER1_EMAIL, USER1_PASSWORD);
-    await page.waitForURL('**/library');
+    await page.waitForURL('**/');
 
     // User 1's own game must be visible before asserting the other is not.
     await expect(page.getByText(USER1_GAME)).toBeVisible({ timeout: 10_000 });
@@ -156,7 +156,7 @@ test.describe('Data isolation', () => {
     await logout(page);
 
     await login(page, USER2_EMAIL, USER2_PASSWORD);
-    await page.waitForURL('**/library');
+    await page.waitForURL('**/');
 
     // User 2's own game must be visible before asserting the other is not.
     await expect(page.getByText(USER2_GAME)).toBeVisible({ timeout: 10_000 });
@@ -198,7 +198,7 @@ test.describe('Unresolved games', () => {
   // -------------------------------------------------------------------------
   test('shows the Unresolved Games page with heading and subtitle', async ({ page }) => {
     await login(page, USER_EMAIL, USER_PASSWORD);
-    await page.waitForURL('**/library');
+    await page.waitForURL('**/');
 
     await page.goto('/unmapped-games');
 
@@ -213,7 +213,7 @@ test.describe('Unresolved games', () => {
   // -------------------------------------------------------------------------
   test('lists seeded unresolved games with Map manually buttons', async ({ page }) => {
     await login(page, USER_EMAIL, USER_PASSWORD);
-    await page.waitForURL('**/library');
+    await page.waitForURL('**/');
 
     await page.goto('/unmapped-games');
 
@@ -227,7 +227,7 @@ test.describe('Unresolved games', () => {
   // -------------------------------------------------------------------------
   test('library shows unresolved games banner with a Review link', async ({ page }) => {
     await login(page, USER_EMAIL, USER_PASSWORD);
-    await page.waitForURL('**/library');
+    await page.waitForURL('**/');
 
     await expect(page.getByText(/couldn't be synced automatically/i)).toBeVisible({
       timeout: 10_000,
@@ -244,7 +244,7 @@ test.describe('Unresolved games', () => {
   // -------------------------------------------------------------------------
   test('clicking Map manually opens the IGDB search dialog pre-filled with the game title', async ({ page }) => {
     await login(page, USER_EMAIL, USER_PASSWORD);
-    await page.waitForURL('**/library');
+    await page.waitForURL('**/');
 
     await page.goto('/unmapped-games');
 

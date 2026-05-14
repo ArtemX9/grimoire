@@ -67,7 +67,7 @@ function GameDetailPageContainer() {
     try {
       await deleteGameMutation.mutateAsync(game!.id);
       toast({ title: `${game!.title} removed from library` });
-      navigate(ROUTES.LIBRARY);
+      navigate(ROUTES.DEFAULT);
     } catch {
       toast({ title: 'Failed to delete game', variant: 'destructive' });
     }
