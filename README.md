@@ -1,8 +1,11 @@
 # Grimoire
 ![Steam](https://img.shields.io/badge/Steam-sync-1b2838?logo=steam&logoColor=white)
 ![PlayStation](https://img.shields.io/badge/PSN-sync-003791?logo=playstation&logoColor=white)
+![Xbox](https://img.shields.io/badge/Xbox-sync-107C10?logo=xbox&logoColor=white)
+
 ![OpenAI](https://img.shields.io/badge/OpenAI-compatible-412991?logo=openai&logoColor=white)
 ![Grok](https://img.shields.io/badge/Grok-xAI-000000?logo=x&logoColor=white)
+![Ollama](https://img.shields.io/badge/Ollama-local-ffffff?logo=ollama&logoColor=black)
 
 [![API health](https://img.shields.io/website?label=api&url=https%3A%2F%2Fgrimoire.arty-nas.work%2Fhealth)](https://grimoire.arty-nas.work/health)
 [![Tests](https://github.com/ArtemX9/grimoire/actions/workflows/ci.yml/badge.svg)](https://github.com/ArtemX9/grimoire/actions/workflows/ci.yml)
@@ -26,6 +29,7 @@ Personal game backlog manager with Steam and PSN sync, IGDB metadata, and AI-pow
 - IGDB metadata: covers, genres, ratings
 - AI recommendations based on your mood, session length, and actual play history (not generic suggestions)
 - LLM streaming via SSE — token-by-token responses
+- Tool call–powered game highlight — the AI calls a `highlight_game` tool to scroll to and spotlight the recommended game in your library and more to come!
 - Multi-provider LLM: Grok (default), Claude, OpenAI, or Ollama (local) — swap via config
 
 ## Stack
