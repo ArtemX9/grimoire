@@ -19,8 +19,7 @@ export function LibraryPageContainer() {
   const createGameMutation = useCreateGame();
 
   const availablePlatforms = useMemo(
-    () =>
-      [...new Set(games.flatMap((g) => g.platforms.map((p) => p.platformName)))].sort((a, b) => (a > b ? 1 : a === b ? 0 : -1)),
+    () => [...new Set(games.flatMap((g) => g.platforms.map((p) => p.platformName)))].sort((a, b) => (a > b ? 1 : a === b ? 0 : -1)),
     [games],
   );
 

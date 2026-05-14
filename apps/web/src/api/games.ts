@@ -1,5 +1,5 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { CreateGameDto, GameStatus, Platform, RemapGameDto, SortableField, UpdateGameDto, UserGame } from '@grimoire/shared';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/apiFetch';
 import { queryClient } from '@/lib/queryClient';
@@ -116,9 +116,8 @@ export function useUpdateGame() {
   return useMutation({
     mutationFn: updateGame,
     onSuccess: (updatedGame) => {
-      queryClient.setQueriesData(
-        { queryKey: gameKeys.list() },
-        (old: UserGame[] | undefined) => old?.map((g) => (g.id === updatedGame.id ? updatedGame : g)),
+      queryClient.setQueriesData({ queryKey: gameKeys.list() }, (old: UserGame[] | undefined) =>
+        old?.map((g) => (g.id === updatedGame.id ? updatedGame : g)),
       );
       queryClient.setQueryData(gameKeys.detail(updatedGame.id), updatedGame);
       queryClient.invalidateQueries({ queryKey: gameKeys.stats() });
@@ -130,9 +129,8 @@ export function useRemapGame() {
   return useMutation({
     mutationFn: remapGame,
     onSuccess: (updatedGame) => {
-      queryClient.setQueriesData(
-        { queryKey: gameKeys.list() },
-        (old: UserGame[] | undefined) => old?.map((g) => (g.id === updatedGame.id ? updatedGame : g)),
+      queryClient.setQueriesData({ queryKey: gameKeys.list() }, (old: UserGame[] | undefined) =>
+        old?.map((g) => (g.id === updatedGame.id ? updatedGame : g)),
       );
       queryClient.setQueryData(gameKeys.detail(updatedGame.id), updatedGame);
       queryClient.invalidateQueries({ queryKey: gameKeys.stats() });

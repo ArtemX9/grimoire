@@ -8,8 +8,8 @@ import { Platform, PlatformSyncStatus } from '@grimoire/shared';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { PLATFORM_ID_XBOX, XBOX_QUEUE_TITLE } from './constants';
-import { XboxAuthService } from './xbox-auth.service';
 import { XboxGame } from './types';
+import { XboxAuthService } from './xbox-auth.service';
 import { XboxService } from './xbox.service';
 
 // ---------------------------------------------------------------------------
@@ -159,9 +159,7 @@ describe('XboxService', () => {
     });
 
     it('does not expose accessToken or refreshToken in the response', async () => {
-      (prisma.userPlatform.upsert as jest.Mock).mockResolvedValue(
-        makePlatformRow({ accessToken: 'secret', refreshToken: 'also-secret' }),
-      );
+      (prisma.userPlatform.upsert as jest.Mock).mockResolvedValue(makePlatformRow({ accessToken: 'secret', refreshToken: 'also-secret' }));
 
       const result = await service.connect('user-1');
 

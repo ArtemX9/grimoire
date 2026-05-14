@@ -2,17 +2,17 @@ import { Role } from '@grimoire/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { Provider } from 'react-redux';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
-import { authKeys, Session } from '@/api/auth';
+import { Session, authKeys } from '@/api/auth';
 import { AdminRoute } from '@/components/ProtectedRoute/AdminRoute';
 import { MustChangePasswordRoute } from '@/components/ProtectedRoute/MustChangePasswordRoute';
 import { ProtectedRoute } from '@/components/ProtectedRoute/ProtectedRoute';
 import { ROUTES } from '@/constants/routes';
-import { makeStore, makeQueryClient } from '@/test/renderWithQuery';
 import { generateSession } from '@/test';
+import { makeQueryClient, makeStore } from '@/test/renderWithQuery';
 
 // ---------------------------------------------------------------------------
 // Helpers

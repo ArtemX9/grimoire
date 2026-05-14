@@ -220,9 +220,7 @@ function AiPanel({
     return (
       <>
         <div ref={thoughtsRef} className={cn('overflow-y-auto', isThinkingExpanded ? 'max-h-48' : 'h-20')}>
-          <p className='font-sans text-xs italic leading-relaxed text-grimoire-muted'>
-            {streamedThoughts}
-          </p>
+          <p className='font-sans text-xs italic leading-relaxed text-grimoire-muted'>{streamedThoughts}</p>
         </div>
       </>
     );

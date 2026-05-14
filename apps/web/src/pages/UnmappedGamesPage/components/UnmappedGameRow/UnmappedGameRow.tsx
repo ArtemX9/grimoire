@@ -1,7 +1,6 @@
-import { MouseEvent, useState } from 'react';
-
 import { UnmappedGame, UnmappedReasons } from '@grimoire/shared';
 import { ImageOff, Wrench } from 'lucide-react';
+import { MouseEvent, useState } from 'react';
 
 import { PlatformIcon } from '@/components/PlatformIcon/PlatformIcon';
 import { cn } from '@/utils/cn';
@@ -68,11 +67,7 @@ function UnmappedGameRow({ game, hoverImageClassName, onMapClick }: IUnmappedGam
   function renderCover() {
     if (game.coverURL) {
       return (
-        <div
-          className='relative h-8 w-8 shrink-0'
-          onMouseEnter={handleThumbnailMouseEnter}
-          onMouseLeave={handleThumbnailMouseLeave}
-        >
+        <div className='relative h-8 w-8 shrink-0' onMouseEnter={handleThumbnailMouseEnter} onMouseLeave={handleThumbnailMouseLeave}>
           <img src={game.coverURL} alt={game.syncedGameTitle} className='h-8 w-8 rounded object-cover' />
         </div>
       );
@@ -92,7 +87,10 @@ function UnmappedGameRow({ game, hoverImageClassName, onMapClick }: IUnmappedGam
       <img
         src={game.coverURL}
         alt={game.syncedGameTitle}
-        className={cn('pointer-events-none fixed z-50 -translate-y-1/2 rounded border border-grimoire-border-lg object-cover shadow-lg', hoverImageClassName)}
+        className={cn(
+          'pointer-events-none fixed z-50 -translate-y-1/2 rounded border border-grimoire-border-lg object-cover shadow-lg',
+          hoverImageClassName,
+        )}
         style={{ top: hoverPos.top, left: hoverPos.left }}
       />
     );

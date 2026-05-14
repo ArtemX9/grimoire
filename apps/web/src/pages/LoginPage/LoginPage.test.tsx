@@ -41,7 +41,17 @@ vi.mock('@/api/auth', async (importOriginal) => {
 // ---------------------------------------------------------------------------
 
 type SessionShape = {
-  session: { user: { id: string; email: string; name: string; role: Role; mustChangePassword: boolean; aiEnabled: boolean; aiRequestsLimit: number | null } } | null;
+  session: {
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      role: Role;
+      mustChangePassword: boolean;
+      aiEnabled: boolean;
+      aiRequestsLimit: number | null;
+    };
+  } | null;
   isBootstrapped: boolean;
 };
 

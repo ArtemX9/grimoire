@@ -17,14 +17,15 @@ function AiPanelContainer({ hideHeader }: IAiPanelContainer) {
   const { data: me } = useGetMe();
   const { data: games = [] } = useGetGames();
   const dispatch = useAppDispatch();
-  const { selectedMoods, sessionLengthMinutes, streamedTokens, streamedThoughts, isStreaming, desiredPlatform } = useAppSelector((s) => s.ai);
+  const { selectedMoods, sessionLengthMinutes, streamedTokens, streamedThoughts, isStreaming, desiredPlatform } = useAppSelector(
+    (s) => s.ai,
+  );
   const { streamRecommendation } = useAiStream(me);
 
   const aiEnabled = me?.aiEnabled ?? true;
 
   const availablePlatforms = useMemo(
-    () =>
-      [...new Set(games.flatMap((g) => g.platforms.map((p) => p.platformName)))].sort((a, b) => (a > b ? 1 : a === b ? 0 : -1)),
+    () => [...new Set(games.flatMap((g) => g.platforms.map((p) => p.platformName)))].sort((a, b) => (a > b ? 1 : a === b ? 0 : -1)),
     [games],
   );
 

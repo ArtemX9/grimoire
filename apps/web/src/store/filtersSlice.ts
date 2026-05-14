@@ -47,6 +47,5 @@ const filtersSlice = createSlice({
   },
 });
 
-export const { setStatusFilter, setGenreFilter, setPlatformFilter, setSearch, setSortBy, setOrder, resetFilters } =
-  filtersSlice.actions;
+export const { setStatusFilter, setGenreFilter, setPlatformFilter, setSearch, setSortBy, setOrder, resetFilters } = filtersSlice.actions;
 export default filtersSlice.reducer;

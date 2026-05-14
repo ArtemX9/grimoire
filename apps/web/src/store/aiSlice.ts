@@ -61,6 +61,15 @@ const aiSlice = createSlice({
   },
 });
 
-export const { toggleMood, setSessionLength, appendToken, appendThought, startStreaming, stopStreaming, loadRecommendation, setDesiredPlatform } = aiSlice.actions;
+export const {
+  toggleMood,
+  setSessionLength,
+  appendToken,
+  appendThought,
+  startStreaming,
+  stopStreaming,
+  loadRecommendation,
+  setDesiredPlatform,
+} = aiSlice.actions;
 
 export default aiSlice.reducer;

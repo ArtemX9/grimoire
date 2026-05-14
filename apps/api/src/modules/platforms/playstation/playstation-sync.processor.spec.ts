@@ -239,15 +239,11 @@ describe('PlaystationSyncProcessor', () => {
       const games = [generatePsnGame({ name: 'Bad Game', conceptID: 1 }), generatePsnGame({ name: 'Good Game', conceptID: 2 })];
       playstationService.getOwnedGames.mockResolvedValue(games);
       igdbService.search.mockResolvedValue([generateIgdbSearchResult()]);
-      gamesService.ingestFromSync
-        .mockRejectedValueOnce(new Error('DB error'))
-        .mockResolvedValueOnce({});
+      gamesService.ingestFromSync.mockRejectedValueOnce(new Error('DB error')).mockResolvedValueOnce({});
       (prisma.userPlatform.update as jest.Mock).mockResolvedValue({});
 
       // Should not throw — per-game errors are caught and logged
-      await expect(
-        processor.process(generatePsnSyncJob({ userID: 'user-1', psnAccountID: 'psn-account-id' })),
-      ).resolves.not.toThrow();
+      await expect(processor.process(generatePsnSyncJob({ userID: 'user-1', psnAccountID: 'psn-account-id' }))).resolves.not.toThrow();
       // The good game is still processed
       expect(gamesService.ingestFromSync).toHaveBeenCalledTimes(2);
     });
@@ -293,9 +289,7 @@ describe('PlaystationSyncProcessor', () => {
 
       // 1 call to set isSyncing:true + 1 call per game to set lastSyncAt
       expect(prisma.userPlatform.update).toHaveBeenCalledTimes(2);
-      expect(prisma.userPlatform.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { isSyncing: true } }),
-      );
+      expect(prisma.userPlatform.update).toHaveBeenCalledWith(expect.objectContaining({ data: { isSyncing: true } }));
       expect(prisma.userPlatform.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ lastSyncAt: expect.any(Date) }) }),
       );
@@ -308,9 +302,7 @@ describe('PlaystationSyncProcessor', () => {
       await processor.process(generatePsnSyncJob({ userID: 'user-1', psnAccountID: 'psn-account-id' }));
 
       expect(prisma.userPlatform.update).toHaveBeenCalledTimes(1);
-      expect(prisma.userPlatform.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { isSyncing: true } }),
-      );
+      expect(prisma.userPlatform.update).toHaveBeenCalledWith(expect.objectContaining({ data: { isSyncing: true } }));
     });
   });
 

@@ -217,9 +217,7 @@ describe('SteamSyncProcessor', () => {
 
       // 1 call to set isSyncing:true + 1 call per game to set lastSyncAt
       expect(prisma.userPlatform.update).toHaveBeenCalledTimes(2);
-      expect(prisma.userPlatform.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { isSyncing: true } }),
-      );
+      expect(prisma.userPlatform.update).toHaveBeenCalledWith(expect.objectContaining({ data: { isSyncing: true } }));
       expect(prisma.userPlatform.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ lastSyncAt: expect.any(Date) }) }),
       );
@@ -232,9 +230,7 @@ describe('SteamSyncProcessor', () => {
       await processor.process(makeJob({ userId: 'user-1', steamId: 'steam-id' }));
 
       expect(prisma.userPlatform.update).toHaveBeenCalledTimes(1);
-      expect(prisma.userPlatform.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { isSyncing: true } }),
-      );
+      expect(prisma.userPlatform.update).toHaveBeenCalledWith(expect.objectContaining({ data: { isSyncing: true } }));
     });
   });
 

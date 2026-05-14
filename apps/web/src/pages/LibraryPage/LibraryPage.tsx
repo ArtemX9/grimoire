@@ -21,7 +21,6 @@ import GameGridContainer from '@/pages/LibraryPage/components/GameGrid/GameGridC
 import { FiltersState } from '@/store/filtersSlice';
 import { useAppSelector } from '@/store/hooks';
 
-
 let _savedScrollTop = 0;
 
 interface ILibraryPage {

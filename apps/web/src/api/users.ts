@@ -1,5 +1,5 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { User } from '@grimoire/shared';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/apiFetch';
 import { queryClient } from '@/lib/queryClient';

@@ -215,20 +215,13 @@ describe('XboxSyncProcessor', () => {
 
   describe('process (per-game error handling)', () => {
     it('skips a failing game and continues processing the remaining games', async () => {
-      const games = [
-        makeXboxGame({ titleId: 'bad-game', name: 'Bad Game' }),
-        makeXboxGame({ titleId: 'good-game', name: 'Good Game' }),
-      ];
+      const games = [makeXboxGame({ titleId: 'bad-game', name: 'Bad Game' }), makeXboxGame({ titleId: 'good-game', name: 'Good Game' })];
       xboxService.getOwnedGames.mockResolvedValue(games);
       igdbService.search.mockResolvedValue([makeIgdbGame()]);
-      gamesService.ingestFromSync
-        .mockRejectedValueOnce(new Error('DB conflict'))
-        .mockResolvedValueOnce({});
+      gamesService.ingestFromSync.mockRejectedValueOnce(new Error('DB conflict')).mockResolvedValueOnce({});
       (prisma.userPlatform.update as jest.Mock).mockResolvedValue({});
 
-      await expect(
-        processor.process(makeJob({ userID: 'user-1', xboxAccountID: 'XboxGamertag' })),
-      ).resolves.not.toThrow();
+      await expect(processor.process(makeJob({ userID: 'user-1', xboxAccountID: 'XboxGamertag' }))).resolves.not.toThrow();
 
       expect(gamesService.ingestFromSync).toHaveBeenCalledTimes(2);
     });
@@ -239,18 +232,14 @@ describe('XboxSyncProcessor', () => {
       gamesService.ingestFromSync.mockRejectedValue(new Error('DB error'));
       (prisma.userPlatform.update as jest.Mock).mockResolvedValue({});
 
-      await expect(
-        processor.process(makeJob({ userID: 'user-1', xboxAccountID: 'XboxGamertag' })),
-      ).resolves.not.toThrow();
+      await expect(processor.process(makeJob({ userID: 'user-1', xboxAccountID: 'XboxGamertag' }))).resolves.not.toThrow();
     });
 
     it('propagates errors thrown by getOwnedGames (outer failure)', async () => {
       xboxService.getOwnedGames.mockRejectedValue(new Error('Xbox API unavailable'));
       (prisma.userPlatform.update as jest.Mock).mockResolvedValue({});
 
-      await expect(
-        processor.process(makeJob({ userID: 'user-1', xboxAccountID: 'XboxGamertag' })),
-      ).rejects.toThrow('Xbox API unavailable');
+      await expect(processor.process(makeJob({ userID: 'user-1', xboxAccountID: 'XboxGamertag' }))).rejects.toThrow('Xbox API unavailable');
     });
   });
 
@@ -267,16 +256,11 @@ describe('XboxSyncProcessor', () => {
 
       expect(igdbService.search).not.toHaveBeenCalled();
       expect(gamesService.ingestFromSync).not.toHaveBeenCalled();
-      expect(prisma.userPlatform.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { isSyncing: true } }),
-      );
+      expect(prisma.userPlatform.update).toHaveBeenCalledWith(expect.objectContaining({ data: { isSyncing: true } }));
     });
 
     it('processes multiple Xbox games in a single job', async () => {
-      const games = [
-        makeXboxGame({ titleId: 'title-1', name: 'Game A' }),
-        makeXboxGame({ titleId: 'title-2', name: 'Game B' }),
-      ];
+      const games = [makeXboxGame({ titleId: 'title-1', name: 'Game A' }), makeXboxGame({ titleId: 'title-2', name: 'Game B' })];
       xboxService.getOwnedGames.mockResolvedValue(games);
       igdbService.search
         .mockResolvedValueOnce([makeIgdbGame({ id: 10, name: 'Game A' })])
@@ -320,9 +304,7 @@ describe('XboxSyncProcessor', () => {
       await processor.process(makeJob({ userID: 'user-1', xboxAccountID: 'XboxGamertag' }));
 
       expect(prisma.userPlatform.update).toHaveBeenCalledTimes(2);
-      expect(prisma.userPlatform.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { isSyncing: true } }),
-      );
+      expect(prisma.userPlatform.update).toHaveBeenCalledWith(expect.objectContaining({ data: { isSyncing: true } }));
     });
   });
 

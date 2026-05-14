@@ -140,7 +140,9 @@ function Sidebar() {
             aria-label='Open AI recommendations'
             className={cn(
               'flex lg:hidden items-center gap-3 rounded px-2 py-2 font-sans text-sm transition-colors',
-              isAIDrawerOpen ? 'bg-grimoire-hover text-grimoire-gold' : 'text-grimoire-muted hover:bg-grimoire-hover hover:text-grimoire-ink',
+              isAIDrawerOpen
+                ? 'bg-grimoire-hover text-grimoire-gold'
+                : 'text-grimoire-muted hover:bg-grimoire-hover hover:text-grimoire-ink',
             )}
           >
             <Sparkles className='h-4 w-4 shrink-0' />

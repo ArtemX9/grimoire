@@ -1060,8 +1060,19 @@ describe('GamesService', () => {
       updatedTargetGame?: Record<string, unknown>;
     }) {
       const syncedGame = makeSyncedGame({ id: SYNCED_GAME_ID, platformId: PLATFORM_ID, externalId: EXTERNAL_ID });
-      const originalGame = makePrismaGame({ id: ORIGINAL_GAME_ID, playtimeHours: params.originalPlaytime, isMappedManually: false, ...(params.originalOverrides ?? {}) });
-      const targetGame = makePrismaGame({ id: TARGET_GAME_ID, igdbGameId: IGDB_GAME_ID, playtimeHours: params.targetPlaytime, isMappedManually: true, ...(params.targetOverrides ?? {}) });
+      const originalGame = makePrismaGame({
+        id: ORIGINAL_GAME_ID,
+        playtimeHours: params.originalPlaytime,
+        isMappedManually: false,
+        ...(params.originalOverrides ?? {}),
+      });
+      const targetGame = makePrismaGame({
+        id: TARGET_GAME_ID,
+        igdbGameId: IGDB_GAME_ID,
+        playtimeHours: params.targetPlaytime,
+        isMappedManually: true,
+        ...(params.targetOverrides ?? {}),
+      });
       const targetGameAfterPlaytimeUpdate = makePrismaGame({
         ...targetGame,
         ...(params.updatedTargetGame ?? {}),
@@ -1100,9 +1111,7 @@ describe('GamesService', () => {
       (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(tx));
 
       // findOne after transaction
-      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
-        makePrismaGame({ id: TARGET_GAME_ID, playtimeHours: 3, igdbGame }),
-      );
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame({ id: TARGET_GAME_ID, playtimeHours: 3, igdbGame }));
 
       const result = await service.remap('user-1', ORIGINAL_GAME_ID, remapDtoWithExternalId);
 
@@ -1126,9 +1135,7 @@ describe('GamesService', () => {
       (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(tx));
 
       // findOne after transaction
-      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
-        makePrismaGame({ id: TARGET_GAME_ID, playtimeHours: 5, igdbGame }),
-      );
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame({ id: TARGET_GAME_ID, playtimeHours: 5, igdbGame }));
 
       const result = await service.remap('user-1', ORIGINAL_GAME_ID, remapDtoWithExternalId);
 
@@ -1152,9 +1159,7 @@ describe('GamesService', () => {
         targetOverrides: { userRating: 9 },
       });
       (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(txWithTargetRating));
-      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
-        makePrismaGame({ id: TARGET_GAME_ID, userRating: 9, igdbGame }),
-      );
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame({ id: TARGET_GAME_ID, userRating: 9, igdbGame }));
 
       const resultWithTargetRating = await service.remap('user-1', ORIGINAL_GAME_ID, remapDtoWithExternalId);
       expect(resultWithTargetRating.userRating).toBe(9);
@@ -1170,9 +1175,7 @@ describe('GamesService', () => {
         targetOverrides: { userRating: null, updatedTargetGame: { userRating: 6 } },
       });
       (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(txWithSourceRating));
-      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
-        makePrismaGame({ id: TARGET_GAME_ID, userRating: 6, igdbGame }),
-      );
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame({ id: TARGET_GAME_ID, userRating: 6, igdbGame }));
 
       const resultWithSourceRating = await service.remap('user-1', ORIGINAL_GAME_ID, remapDtoWithExternalId);
       const updateCalls: Array<Record<string, unknown>> = (txWithSourceRating.userGame.update as jest.Mock).mock.calls.map(
@@ -1193,9 +1196,7 @@ describe('GamesService', () => {
         targetOverrides: { notes: 'target notes' },
       });
       (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(txWithTargetNotes));
-      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
-        makePrismaGame({ id: TARGET_GAME_ID, notes: 'target notes', igdbGame }),
-      );
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame({ id: TARGET_GAME_ID, notes: 'target notes', igdbGame }));
 
       const resultWithTargetNotes = await service.remap('user-1', ORIGINAL_GAME_ID, remapDtoWithExternalId);
       expect(resultWithTargetNotes.notes).toBe('target notes');
@@ -1211,9 +1212,7 @@ describe('GamesService', () => {
         targetOverrides: { notes: null, updatedTargetGame: { notes: 'source notes' } },
       });
       (prisma.$transaction as jest.Mock).mockImplementation((cb: (tx: unknown) => Promise<unknown>) => cb(txWithSourceNotes));
-      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(
-        makePrismaGame({ id: TARGET_GAME_ID, notes: 'source notes', igdbGame }),
-      );
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame({ id: TARGET_GAME_ID, notes: 'source notes', igdbGame }));
 
       const resultWithSourceNotes = await service.remap('user-1', ORIGINAL_GAME_ID, remapDtoWithExternalId);
       const updateCalls: Array<Record<string, unknown>> = (txWithSourceNotes.userGame.update as jest.Mock).mock.calls.map(
@@ -1264,10 +1263,7 @@ describe('GamesService', () => {
     it('writes a USER_DELETED tombstone for each platform link when game is deleted', async () => {
       (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
       (prisma.userGame.delete as jest.Mock).mockResolvedValue({});
-      (prisma.userGamePlatform.findMany as jest.Mock).mockResolvedValue([
-        { syncedGameId: 'synced-1' },
-        { syncedGameId: 'synced-2' },
-      ]);
+      (prisma.userGamePlatform.findMany as jest.Mock).mockResolvedValue([{ syncedGameId: 'synced-1' }, { syncedGameId: 'synced-2' }]);
 
       await service.remove('user-1', 'game-1');
 

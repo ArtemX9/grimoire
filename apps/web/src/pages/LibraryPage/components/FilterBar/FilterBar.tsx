@@ -1,4 +1,4 @@
-import { GameStatus, Genre, Platform, PLATFORM_LABELS, SortableField } from '@grimoire/shared';
+import { GameStatus, Genre, PLATFORM_LABELS, Platform, SortableField } from '@grimoire/shared';
 import { Search, X } from 'lucide-react';
 
 import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';

@@ -92,8 +92,7 @@ export function LoginPage() {
   function renderDemoHint() {
     return (
       <p className='mt-4 text-center font-sans text-xs text-grimoire-muted'>
-        Want to explore the app?{' '}
-        <span className='font-medium'>demo@grimoire.app</span>
+        Want to explore the app? <span className='font-medium'>demo@grimoire.app</span>
         {' / '}
         <span className='font-medium'>demo1234</span>
       </p>

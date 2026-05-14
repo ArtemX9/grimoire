@@ -154,10 +154,7 @@ describe('GameDetailPage', () => {
     const onPlatformSelect = vi.fn();
     const platform = { platformID: 1, platformName: Platform.STEAM, externalID: '123', externalTitle: 'Half-Life 2' };
     const game = generateUserGame({
-      platforms: [
-        platform,
-        { platformID: 2, platformName: Platform.PlayStation, externalID: 'CUSA001', externalTitle: 'Half-Life 2 PS' },
-      ],
+      platforms: [platform, { platformID: 2, platformName: Platform.PlayStation, externalID: 'CUSA001', externalTitle: 'Half-Life 2 PS' }],
     });
     const { getByText } = renderPage(game, { platformPickerOpen: true, onPlatformSelect });
     getByText('Half-Life 2').closest('button')!.click();

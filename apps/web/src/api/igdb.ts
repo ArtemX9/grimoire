@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
 import { IgdbGame } from '@grimoire/shared';
+import { useQuery } from '@tanstack/react-query';
 
 import { apiFetch } from '@/lib/apiFetch';
 

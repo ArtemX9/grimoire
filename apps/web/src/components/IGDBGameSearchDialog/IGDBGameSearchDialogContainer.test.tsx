@@ -69,10 +69,7 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
     // The mock dialog receives searchResults from the container.
     // With an empty query (< 2 chars), the query is disabled so results should be [].
     // We test this by checking the mock was called with searchResults.
-    expect(mockDialog).toHaveBeenCalledWith(
-      expect.objectContaining({ searchResults: [] }),
-      expect.anything(),
-    );
+    expect(mockDialog).toHaveBeenCalledWith(expect.objectContaining({ searchResults: [] }), expect.anything());
   });
 
   it('resets the search query to empty string when the dialog re-opens after the user had typed', async () => {
@@ -156,10 +153,7 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
     );
 
     // Results from cache are passed to dialog
-    expect(mockDialog).toHaveBeenCalledWith(
-      expect.objectContaining({ searchResults: games }),
-      expect.anything(),
-    );
+    expect(mockDialog).toHaveBeenCalledWith(expect.objectContaining({ searchResults: games }), expect.anything());
   });
 
   it('initializes searchQuery with initialSearchQuery when provided', () => {
