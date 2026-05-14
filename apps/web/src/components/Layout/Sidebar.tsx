@@ -10,7 +10,7 @@ import { toggleAIDrawer } from '@/store/uiSlice';
 import { cn } from '@/utils/cn';
 
 const NAV_ITEMS = [
-  { to: ROUTES.LIBRARY, label: 'Library', icon: Library },
+  { to: ROUTES.DEFAULT, label: 'Library', icon: Library },
   { to: ROUTES.UNMAPPED_GAMES, label: 'Unresolved', icon: AlertTriangle },
   { to: ROUTES.USER_SETTINGS, label: 'Settings', icon: Settings },
 ] as const;
@@ -29,8 +29,8 @@ function Sidebar() {
   const unresolvedBadgeLabel = unresolvedCount > 99 ? '99+' : String(unresolvedCount);
 
   function handleAIClick() {
-    if (location.pathname !== ROUTES.LIBRARY) {
-      navigate(ROUTES.LIBRARY);
+    if (location.pathname !== ROUTES.DEFAULT) {
+      navigate(ROUTES.DEFAULT);
     }
     dispatch(toggleAIDrawer());
   }

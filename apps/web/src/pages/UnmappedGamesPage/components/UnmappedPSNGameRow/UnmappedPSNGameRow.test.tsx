@@ -17,10 +17,11 @@ const psnPlatform = { id: 2, platform: Platform.PlayStation };
 function renderRow(overrides = {}) {
   const game = generateUnmappedGame({ platform: psnPlatform, ...overrides });
   const onMapClick = vi.fn();
+  const onDeleteClick = vi.fn();
 
-  render(<UnmappedPSNGameRow game={game} onMapClick={onMapClick} />);
+  render(<UnmappedPSNGameRow game={game} onMapClick={onMapClick} onDeleteClick={onDeleteClick} />);
 
-  return { game, onMapClick };
+  return { game, onMapClick, onDeleteClick };
 }
 
 describe('UnmappedPSNGameRow', () => {

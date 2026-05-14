@@ -17,10 +17,11 @@ const steamPlatform = { id: 1, platform: Platform.STEAM };
 function renderRow(overrides = {}, hoverImageClassName = 'h-40 w-40') {
   const game = generateUnmappedGame({ platform: steamPlatform, ...overrides });
   const onMapClick = vi.fn();
+  const onDeleteClick = vi.fn();
 
-  render(<UnmappedGameRow game={game} hoverImageClassName={hoverImageClassName} onMapClick={onMapClick} />);
+  render(<UnmappedGameRow game={game} hoverImageClassName={hoverImageClassName} onMapClick={onMapClick} onDeleteClick={onDeleteClick} />);
 
-  return { game, onMapClick };
+  return { game, onMapClick, onDeleteClick };
 }
 
 describe('UnmappedGameRow', () => {

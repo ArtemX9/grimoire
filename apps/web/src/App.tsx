@@ -35,8 +35,7 @@ export default function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
-            <Route path={ROUTES.DEFAULT} element={<Navigate to={ROUTES.LIBRARY} replace />} />
-            <Route path={ROUTES.LIBRARY} element={<LibraryPageContainer />} />
+            <Route path={ROUTES.DEFAULT} element={<LibraryPageContainer />} />
             <Route path={ROUTES.GAME_DETAILS} element={<GameDetailPageContainer />} />
             <Route path={ROUTES.UNMAPPED_GAMES} element={<UnmappedGamesPageContainer />} />
             <Route path={ROUTES.USER_SETTINGS} element={<SettingsPage />} />

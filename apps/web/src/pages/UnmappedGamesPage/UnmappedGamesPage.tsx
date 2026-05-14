@@ -14,11 +14,12 @@ interface IUnmappedGamesPage {
   isLoading: boolean;
   mappingGame: UnmappedGame | null;
   onMapClick: (game: UnmappedGame) => void;
+  onDeleteClick: (game: UnmappedGame) => void;
   onDialogOpenChange: (open: boolean) => void;
   onGameSelect: (game: IgdbGame, onSuccessCallback: () => void, onErrorCallback: () => void) => void;
 }
 
-function UnmappedGamesPage({ games, isLoading, mappingGame, onMapClick, onDialogOpenChange, onGameSelect }: IUnmappedGamesPage) {
+function UnmappedGamesPage({ games, isLoading, mappingGame, onMapClick, onDeleteClick, onDialogOpenChange, onGameSelect }: IUnmappedGamesPage) {
   return (
     <div className='flex h-full flex-col overflow-hidden'>
       {renderHeader()}
@@ -70,11 +71,11 @@ function UnmappedGamesPage({ games, isLoading, mappingGame, onMapClick, onDialog
   function renderGameRow(game: UnmappedGame) {
     switch (game.platform.platform) {
       case Platform.STEAM:
-        return <UnmappedSteamGameRow key={game.id} game={game} onMapClick={onMapClick} />;
+        return <UnmappedSteamGameRow key={game.id} game={game} onMapClick={onMapClick} onDeleteClick={onDeleteClick} />;
       case Platform.PlayStation:
-        return <UnmappedPSNGameRow key={game.id} game={game} onMapClick={onMapClick} />;
+        return <UnmappedPSNGameRow key={game.id} game={game} onMapClick={onMapClick} onDeleteClick={onDeleteClick} />;
       case Platform.Xbox:
-        return <UnmappedXboxGameRow key={game.id} game={game} onMapClick={onMapClick} />;
+        return <UnmappedXboxGameRow key={game.id} game={game} onMapClick={onMapClick} onDeleteClick={onDeleteClick} />;
       default:
         return <UnmappedGameCard key={game.id} game={game} onMapClick={onMapClick} />;
     }

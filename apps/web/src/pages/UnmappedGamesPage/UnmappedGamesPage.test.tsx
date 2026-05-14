@@ -24,6 +24,7 @@ function renderPage(props: Partial<React.ComponentProps<typeof UnmappedGamesPage
     isLoading: false,
     mappingGame: null,
     onMapClick: vi.fn(),
+    onDeleteClick: vi.fn(),
     onDialogOpenChange: vi.fn(),
     onGameSelect: vi.fn(),
   };

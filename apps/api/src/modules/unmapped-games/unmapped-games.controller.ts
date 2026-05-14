@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 
 import { MapUnmappedGameSchema, MapUnmappedGameSchemaDto, User } from '@grimoire/shared';
 
@@ -22,5 +22,10 @@ export class UnmappedGamesController {
     @Body(new ZodValidationPipe(MapUnmappedGameSchema)) body: MapUnmappedGameSchemaDto,
   ) {
     return this.unmappedGamesService.mapGameForUser(user.id, unmappedGameID, body);
+  }
+
+  @Delete(':id')
+  deleteGame(@CurrentUser() user: RequestUser, @Param('id') unmappedGameID: string) {
+    return this.unmappedGamesService.deleteGame(user.id, unmappedGameID);
   }
 }

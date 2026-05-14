@@ -34,6 +34,10 @@ async function mapUnmappedGame({ id, body }: MapUnmappedGameArgs): Promise<void>
   });
 }
 
+async function deleteUnmappedGame(id: string): Promise<void> {
+  return apiFetch<void>(`/unmapped-games/${id}`, { method: 'DELETE' });
+}
+
 export function useGetUnmappedGames(params?: UnmappedGamesQuery) {
   return useQuery({
     queryKey: unmappedGameKeys.list(params),
@@ -49,6 +53,17 @@ export function useMapUnmappedGame() {
         old?.filter((g) => g.id !== id),
       );
       queryClient.invalidateQueries({ queryKey: gameKeys.list() });
+    },
+  });
+}
+
+export function useDeleteUnmappedGame() {
+  return useMutation({
+    mutationFn: deleteUnmappedGame,
+    onSuccess: (_, id) => {
+      queryClient.setQueriesData({ queryKey: unmappedGameKeys.all() }, (old: UnmappedGame[] | undefined) =>
+        old?.filter((g) => g.id !== id),
+      );
     },
   });
 }

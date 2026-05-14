@@ -17,10 +17,11 @@ const xboxPlatform = { id: 3, platform: Platform.Xbox };
 function renderRow(overrides = {}) {
   const game = generateUnmappedGame({ platform: xboxPlatform, ...overrides });
   const onMapClick = vi.fn();
+  const onDeleteClick = vi.fn();
 
-  render(<UnmappedXboxGameRow game={game} onMapClick={onMapClick} />);
+  render(<UnmappedXboxGameRow game={game} onMapClick={onMapClick} onDeleteClick={onDeleteClick} />);
 
-  return { game, onMapClick };
+  return { game, onMapClick, onDeleteClick };
 }
 
 describe('UnmappedXboxGameRow', () => {

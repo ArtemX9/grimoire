@@ -1,7 +1,17 @@
 import { UnmappedGame, UnmappedReasons } from '@grimoire/shared';
-import { ImageOff, Wrench } from 'lucide-react';
+import { ImageOff, Trash2, Wrench } from 'lucide-react';
 import { MouseEvent, useState } from 'react';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { PlatformIcon } from '@/components/PlatformIcon/PlatformIcon';
 import { cn } from '@/utils/cn';
 import { formatPlaytime } from '@/utils/formatPlaytime';
@@ -10,6 +20,7 @@ interface IUnmappedGameRow {
   game: UnmappedGame;
   hoverImageClassName: string;
   onMapClick: (game: UnmappedGame) => void;
+  onDeleteClick: (game: UnmappedGame) => void;
 }
 
 interface IHoverPos {
@@ -34,8 +45,9 @@ const REASON_LABELS: Record<UnmappedReasons, string> = {
 const THUMBNAIL_SIZE = 32;
 const HOVER_GAP = 8;
 
-function UnmappedGameRow({ game, hoverImageClassName, onMapClick }: IUnmappedGameRow) {
+function UnmappedGameRow({ game, hoverImageClassName, onMapClick, onDeleteClick }: IUnmappedGameRow) {
   const [hoverPos, setHoverPos] = useState<IHoverPos | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const reasonStyle = REASON_STYLES[game.reason as UnmappedReasons] ?? 'bg-grimoire-status-backlog-bg text-grimoire-status-backlog-text';
   const reasonLabel = REASON_LABELS[game.reason as UnmappedReasons] ?? game.reason;
@@ -53,28 +65,39 @@ function UnmappedGameRow({ game, hoverImageClassName, onMapClick }: IUnmappedGam
     onMapClick(game);
   }
 
+  function handleDeleteClick() {
+    setConfirmOpen(true);
+  }
+
+  function handleConfirmDelete() {
+    onDeleteClick(game);
+  }
+
   return (
-    <div className='flex flex-col gap-3 rounded border border-grimoire-border bg-grimoire-card p-3 transition-colors hover:border-grimoire-border-lg sm:flex-row sm:items-center'>
-      <div className='flex min-w-0 flex-1 items-center gap-3'>
-        {renderCover()}
-        {renderInfo()}
+    <>
+      <div className='flex flex-col gap-3 rounded border border-grimoire-border bg-grimoire-card p-3 transition-colors hover:border-grimoire-border-lg sm:flex-row sm:items-center'>
+        <div className='flex min-w-0 flex-1 items-center gap-3'>
+          {renderCover()}
+          {renderInfo()}
+        </div>
+        {renderActions()}
+        {renderHoverCover()}
       </div>
-      {renderActions()}
-      {renderHoverCover()}
-    </div>
+      {renderConfirmDialog()}
+    </>
   );
 
   function renderCover() {
     if (game.coverURL) {
       return (
-        <div className='relative h-8 w-8 shrink-0' onMouseEnter={handleThumbnailMouseEnter} onMouseLeave={handleThumbnailMouseLeave}>
-          <img src={game.coverURL} alt={game.syncedGameTitle} className='h-8 w-8 rounded object-cover' />
+        <div className='relative h-16 w-16 shrink-0' onMouseEnter={handleThumbnailMouseEnter} onMouseLeave={handleThumbnailMouseLeave}>
+          <img src={game.coverURL} alt={game.syncedGameTitle} className='h-16 w-16 rounded object-cover' />
         </div>
       );
     }
 
     return (
-      <div className='flex h-8 w-8 shrink-0 items-center justify-center rounded border border-grimoire-border bg-grimoire-input'>
+      <div className='flex h-16 w-16 shrink-0 items-center justify-center rounded border border-grimoire-border bg-grimoire-input'>
         <ImageOff className='h-4 w-4 text-grimoire-muted' />
       </div>
     );
@@ -120,13 +143,42 @@ function UnmappedGameRow({ game, hoverImageClassName, onMapClick }: IUnmappedGam
 
   function renderActions() {
     return (
-      <button
-        onClick={handleMapClick}
-        className='flex w-full shrink-0 items-center justify-center gap-1.5 rounded border border-grimoire-border bg-grimoire-hover px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink sm:w-auto sm:justify-start'
-      >
-        <Wrench className='h-3.5 w-3.5' />
-        Map manually
-      </button>
+      <div className='flex w-full shrink-0 gap-2 sm:w-auto'>
+        <button
+          onClick={handleDeleteClick}
+          aria-label='Delete game'
+          className='flex flex-none items-center justify-center rounded border border-grimoire-status-dropped-bg bg-grimoire-hover p-1.5 font-sans text-xs text-grimoire-status-dropped-text transition-colors hover:border-grimoire-status-dropped-text'
+        >
+          <Trash2 className='h-3.5 w-3.5' />
+        </button>
+        <button
+          onClick={handleMapClick}
+          className='flex flex-1 items-center justify-center gap-1.5 rounded border border-grimoire-border bg-grimoire-hover px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
+        >
+          <Wrench className='h-3.5 w-3.5' />
+          Map manually
+        </button>
+      </div>
+    );
+  }
+
+  function renderConfirmDialog() {
+    return (
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete unmapped game</AlertDialogTitle>
+            <AlertDialogDescription>
+              Delete <span className='font-grimoire text-grimoire-ink'>{game.syncedGameTitle}</span> from your unmapped
+              games? This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     );
   }
 }
