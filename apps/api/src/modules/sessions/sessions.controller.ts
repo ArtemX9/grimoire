@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 
-import { CreateSessionSchema } from '@grimoire/shared';
+import { CreateSessionDto, CreateSessionSchema } from '@grimoire/shared';
 
 import { CurrentUser, RequestUser } from '../../common/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
@@ -21,7 +21,7 @@ export class SessionsController {
   }
 
   @Post()
-  create(@CurrentUser() user: RequestUser, @Body(new ZodValidationPipe(CreateSessionSchema)) body: any) {
+  create(@CurrentUser() user: RequestUser, @Body(new ZodValidationPipe(CreateSessionSchema)) body: CreateSessionDto) {
     return this.sessionsService.create(user.id, body);
   }
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { GameStatus, Genre, Mood, Platform, SortableField, Theme } from '@grimoire/shared';
@@ -489,6 +489,7 @@ describe('GamesService', () => {
     const dto = { status: GameStatus.COMPLETED, playtimeHours: 100 };
 
     it('updates game when it belongs to the requesting user', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
       (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame({ status: 'COMPLETED', playtimeHours: 100 }));
 
       const result = await service.update('user-1', 'game-1', dto);
@@ -497,13 +498,14 @@ describe('GamesService', () => {
       expect(result.playtimeHours).toBe(100);
     });
 
-    it('throws BadRequestException when game does not exist or belongs to a different user', async () => {
-      (prisma.userGame.update as jest.Mock).mockRejectedValue(new Error('Record not found'));
+    it('throws NotFoundException when game does not exist or belongs to a different user', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.update('user-1', 'nonexistent', dto)).rejects.toThrow(BadRequestException);
+      await expect(service.update('user-1', 'nonexistent', dto)).rejects.toThrow(NotFoundException);
     });
 
     it('scopes the update to both id and userId', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
       (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame());
 
       await service.update('user-1', 'game-1', dto);
@@ -513,6 +515,7 @@ describe('GamesService', () => {
 
     it('passes the correct data fields to update', async () => {
       const fullDto = { status: GameStatus.COMPLETED, userRating: 9, moods: [Mood.FOCUSED], notes: 'great', playtimeHours: 100 };
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
       (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame());
 
       await service.update('user-1', 'game-1', fullDto);
@@ -530,6 +533,7 @@ describe('GamesService', () => {
     });
 
     it('maps null optional fields to undefined in the response', async () => {
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
       (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame({ userRating: null, notes: null }));
 
       const result = await service.update('user-1', 'game-1', dto);
@@ -1248,6 +1252,51 @@ describe('GamesService', () => {
       expect(mergedMoods).toHaveLength(3);
       expect(mergedMoods).toEqual(expect.arrayContaining(['focused', 'excited', 'relaxed']));
       expect(result.moods).toEqual(expect.arrayContaining(['focused', 'excited', 'relaxed']));
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // remap — manual path (no platformId/externalId)
+  // ---------------------------------------------------------------------------
+
+  describe('remap — manual path', () => {
+    const igdbGame = makeIgdbGame({ id: 'igdb-new', igdbId: 77777, title: 'New Game' });
+    const remapDto = generateRemapGameDto({ igdbId: 77777, title: 'New Game' });
+    // No externalId → manual path
+
+    it('throws NotFoundException when game does not belong to the requesting user', async () => {
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(igdbGame);
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.remap('user-2', 'game-1', remapDto)).rejects.toThrow(NotFoundException);
+      expect(prisma.userGame.update).not.toHaveBeenCalled();
+    });
+
+    it('updates igdbGameId and isMappedManually when game belongs to the requesting user', async () => {
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(igdbGame);
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(makePrismaGame());
+      (prisma.userGame.update as jest.Mock).mockResolvedValue(makePrismaGame({ igdbGame, isMappedManually: true }));
+
+      const result = await service.remap('user-1', 'game-1', remapDto);
+
+      expect(prisma.userGame.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'game-1', userId: 'user-1' },
+          data: { igdbGameId: igdbGame.id, isMappedManually: true },
+        }),
+      );
+      expect(result.isMappedManually).toBe(true);
+    });
+
+    it('scopes the ownership check to the requesting userId', async () => {
+      (prisma.iGDBGame.upsert as jest.Mock).mockResolvedValue(igdbGame);
+      (prisma.userGame.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.remap('user-99', 'game-1', remapDto)).rejects.toThrow(NotFoundException);
+
+      expect(prisma.userGame.findUnique).toHaveBeenCalledWith({
+        where: { id: 'game-1', userId: 'user-99' },
+      });
     });
   });
 

@@ -1,16 +1,16 @@
-import { Role } from '@grimoire/shared';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { AsyncStatus, Role } from '@grimoire/shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { type Reducer, applyMiddleware, combineReducers, createStore } from 'redux';
+import { thunk } from 'redux-thunk';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { authKeys } from '@/api/auth';
-import { useSignIn } from '@/api/auth';
-import { LoginPage } from '@/pages/LoginPage/LoginPage';
-import { makeQueryClient, makeStore } from '@/test/renderWithQuery';
+import LoginPageContainer from '@/pages/LoginPage/LoginPageContainer';
+import authReducer, { AUTH_SLICE, AuthState } from '@/store/state/auth/index';
+import type { Session } from '@/store/state/auth/index';
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -26,13 +26,13 @@ vi.mock('react-router-dom', async (importOriginal) => {
   };
 });
 
-const mockMutateAsync = vi.fn();
+const mockDispatch = vi.fn();
 
-vi.mock('@/api/auth', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/api/auth')>();
+vi.mock('@/store/hooks', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/store/hooks')>();
   return {
     ...actual,
-    useSignIn: vi.fn(),
+    useAppDispatch: () => mockDispatch,
   };
 });
 
@@ -40,59 +40,27 @@ vi.mock('@/api/auth', async (importOriginal) => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-type SessionShape = {
-  session: {
-    user: {
-      id: string;
-      email: string;
-      name: string;
-      role: Role;
-      mustChangePassword: boolean;
-      aiEnabled: boolean;
-      aiRequestsLimit: number | null;
-    };
-  } | null;
-  isBootstrapped: boolean;
-};
-
-function renderLoginPage({ session, isBootstrapped }: SessionShape) {
-  const queryClient = makeQueryClient();
-  const store = makeStore();
-
-  if (isBootstrapped) {
-    queryClient.setQueryData(authKeys.session(), session);
-  }
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <Provider store={store}>
-        <MemoryRouter>
-          <LoginPage />
-        </MemoryRouter>
-      </Provider>
-    </QueryClientProvider>,
-  );
+function makeStore(isBootstrapped: boolean, session: Session | null = null) {
+  const authState: AuthState = {
+    session,
+    status: isBootstrapped ? AsyncStatus.Succeeded : AsyncStatus.Loading,
+    isBootstrapped,
+    error: null,
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rootReducer: Reducer<any, any> = combineReducers({ [AUTH_SLICE]: authReducer });
+  return createStore(rootReducer, { [AUTH_SLICE]: authState }, applyMiddleware(thunk));
 }
 
-const NOT_BOOTSTRAPPED: SessionShape = { session: null, isBootstrapped: false };
-const NO_SESSION: SessionShape = { session: null, isBootstrapped: true };
-
-function withSession(overrides: { role?: Role; mustChangePassword?: boolean } = {}): SessionShape {
-  return {
-    isBootstrapped: true,
-    session: {
-      user: {
-        id: '1',
-        email: 'user@example.com',
-        name: 'User',
-        role: Role.USER,
-        mustChangePassword: false,
-        aiEnabled: true,
-        aiRequestsLimit: null,
-        ...overrides,
-      },
-    },
-  };
+function renderLoginPage(isBootstrapped: boolean, session: Session | null = null) {
+  const store = makeStore(isBootstrapped, session);
+  return render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <LoginPageContainer />
+      </MemoryRouter>
+    </Provider>,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -101,17 +69,13 @@ function withSession(overrides: { role?: Role; mustChangePassword?: boolean } = 
 
 beforeEach(() => {
   mockNavigate.mockReset();
-  mockMutateAsync.mockReset();
-
-  vi.mocked(useSignIn).mockReturnValue({
-    mutateAsync: mockMutateAsync,
-    isPending: false,
-  } as unknown as ReturnType<typeof useSignIn>);
+  mockDispatch.mockReset();
+  mockDispatch.mockImplementation(() => Promise.reject(new Error('Not mocked')));
 });
 
 describe('LoginPage', () => {
   it('renders the sign-in form with email and password inputs', () => {
-    renderLoginPage(NO_SESSION);
+    renderLoginPage(true);
 
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
@@ -119,7 +83,7 @@ describe('LoginPage', () => {
   });
 
   it('does not render a sign-up option', () => {
-    renderLoginPage(NO_SESSION);
+    renderLoginPage(true);
 
     expect(screen.queryByText(/sign up/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/create account/i)).not.toBeInTheDocument();
@@ -127,20 +91,31 @@ describe('LoginPage', () => {
   });
 
   it('renders nothing while not yet bootstrapped', () => {
-    const { container } = renderLoginPage(NOT_BOOTSTRAPPED);
+    const { container } = renderLoginPage(false);
 
     expect(container).toBeEmptyDOMElement();
   });
 
   it('redirects to / when a session already exists', () => {
-    renderLoginPage(withSession());
+    const session: Session = {
+      user: {
+        id: '1',
+        email: 'user@example.com',
+        name: 'User',
+        role: Role.USER,
+        mustChangePassword: false,
+        aiEnabled: true,
+        aiRequestsLimit: null,
+      },
+    };
+    renderLoginPage(true, session);
 
     expect(screen.queryByRole('button', { name: /sign in/i })).not.toBeInTheDocument();
   });
 
   it('navigates to / after successful sign-in as a regular user', async () => {
-    renderLoginPage(NO_SESSION);
-    mockMutateAsync.mockResolvedValue({ user: { role: Role.USER, mustChangePassword: false } });
+    mockDispatch.mockImplementation(() => Promise.resolve({ user: { role: Role.USER, mustChangePassword: false } }));
+    renderLoginPage(true);
 
     await userEvent.type(screen.getByLabelText(/email/i), 'user@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'password123');
@@ -152,8 +127,8 @@ describe('LoginPage', () => {
   });
 
   it('navigates to /change-password when mustChangePassword is true', async () => {
-    renderLoginPage(NO_SESSION);
-    mockMutateAsync.mockResolvedValue({ user: { role: Role.USER, mustChangePassword: true } });
+    mockDispatch.mockImplementation(() => Promise.resolve({ user: { role: Role.USER, mustChangePassword: true } }));
+    renderLoginPage(true);
 
     await userEvent.type(screen.getByLabelText(/email/i), 'user@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'password123');
@@ -165,8 +140,8 @@ describe('LoginPage', () => {
   });
 
   it('navigates to /admin/dashboard when role is ADMIN', async () => {
-    renderLoginPage(NO_SESSION);
-    mockMutateAsync.mockResolvedValue({ user: { role: Role.ADMIN, mustChangePassword: false } });
+    mockDispatch.mockImplementation(() => Promise.resolve({ user: { role: Role.ADMIN, mustChangePassword: false } }));
+    renderLoginPage(true);
 
     await userEvent.type(screen.getByLabelText(/email/i), 'admin@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'password123');
@@ -178,8 +153,8 @@ describe('LoginPage', () => {
   });
 
   it('shows an error message when the API returns an error', async () => {
-    renderLoginPage(NO_SESSION);
-    mockMutateAsync.mockRejectedValue(new Error('Unauthorized'));
+    mockDispatch.mockImplementation(() => Promise.reject(new Error('Unauthorized')));
+    renderLoginPage(true);
 
     await userEvent.type(screen.getByLabelText(/email/i), 'bad@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'wrongpass');
@@ -191,8 +166,8 @@ describe('LoginPage', () => {
   });
 
   it('does not navigate after an API error', async () => {
-    renderLoginPage(NO_SESSION);
-    mockMutateAsync.mockRejectedValue(new Error('Unauthorized'));
+    mockDispatch.mockImplementation(() => Promise.reject(new Error('Unauthorized')));
+    renderLoginPage(true);
 
     await userEvent.type(screen.getByLabelText(/email/i), 'bad@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'wrongpass');

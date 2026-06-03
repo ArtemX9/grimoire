@@ -95,7 +95,7 @@ function AiPanel({
           {Object.values(Mood).map((mood) => (
             <button
               key={mood}
-              onClick={() => onMoodToggle(mood)}
+              onClick={onMoodToggle.bind(null, mood)}
               disabled={!aiEnabled}
               className={cn(
                 'rounded-full border px-2.5 py-1 font-sans text-xs transition-colors',
@@ -121,7 +121,7 @@ function AiPanel({
           {SESSION_OPTIONS.map((min) => (
             <button
               key={min}
-              onClick={() => onSessionLengthChange(min)}
+              onClick={onSessionLengthChange.bind(null, min)}
               disabled={!aiEnabled}
               className={cn(
                 'flex-1 rounded border py-1.5 font-sans text-xs transition-colors',

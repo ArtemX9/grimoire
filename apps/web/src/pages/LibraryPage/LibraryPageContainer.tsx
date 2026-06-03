@@ -1,27 +1,43 @@
 import { GameStatus, Genre, IgdbGame, Platform, SortableField } from '@grimoire/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { useCreateGame, useGetGameStats, useGetGames } from '@/api/games';
 import { toast } from '@/components/ui/use-toast';
 import { LibraryPage } from '@/pages/LibraryPage/LibraryPage';
-import { setGenreFilter, setOrder, setPlatformFilter, setSearch, setSortBy, setStatusFilter } from '@/store/filtersSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setHighlightedGameID, toggleAIDrawer } from '@/store/uiSlice';
+import { setGenreFilter, setOrder, setPlatformFilter, setSearch, setSortBy, setStatusFilter } from '@/store/state/filters/index';
+import { selectFilters } from '@/store/state/filters/selectors';
+import {
+  selectAvailablePlatforms,
+  selectGameStats,
+  selectGames,
+  selectIsGamesLoading,
+  selectIsStatsLoading,
+} from '@/store/state/games/selectors';
+import { setHighlightedGameID, toggleAIDrawer } from '@/store/state/ui/index';
+import { selectHighlightedGameID, selectIsAIDrawerOpen } from '@/store/state/ui/selectors';
+import { createGame, getGameStats, getGames } from '@/store/thunks/games/index';
+
+// Platform ID 1 represents a manually-added game (no external platform sync)
+const MANUAL_PLATFORM_ID = 1;
 
 export function LibraryPageContainer() {
   const dispatch = useAppDispatch();
-  const filters = useAppSelector((s) => s.filters);
-  const isAIDrawerOpen = useAppSelector((s) => s.ui.isAIDrawerOpen);
+
+  const filters = useAppSelector(selectFilters);
+  const isAIDrawerOpen = useAppSelector(selectIsAIDrawerOpen);
+  const highlightedGameID = useAppSelector(selectHighlightedGameID);
+  const games = useAppSelector(selectGames);
+  const stats = useAppSelector(selectGameStats);
+  const isGamesLoading = useAppSelector(selectIsGamesLoading);
+  const isStatsLoading = useAppSelector(selectIsStatsLoading);
+  const availablePlatforms = useAppSelector(selectAvailablePlatforms);
+
   const [addDialogOpen, setAddDialogOpen] = useState(false);
 
-  const { data: games = [], isLoading: isGamesLoading } = useGetGames();
-  const { data: stats, isLoading: isStatsLoading } = useGetGameStats();
-  const createGameMutation = useCreateGame();
-
-  const availablePlatforms = useMemo(
-    () => [...new Set(games.flatMap((g) => g.platforms.map((p) => p.platformName)))].sort((a, b) => (a > b ? 1 : a === b ? 0 : -1)),
-    [games],
-  );
+  useEffect(function fetchGamesAndStats() {
+    dispatch(getGames());
+    dispatch(getGameStats());
+  }, []);
 
   useEffect(function clearHighlightOnUnmount() {
     return () => {
@@ -31,19 +47,22 @@ export function LibraryPageContainer() {
 
   async function handleAddGame(game: IgdbGame, status: GameStatus, onSuccessCallback: () => void, onErrorCallback: () => void) {
     try {
-      await createGameMutation.mutateAsync({
-        igdbId: game.id,
-        platformId: 1,
-        title: game.name,
-        summary: game.summary ?? game.name,
-        storyLine: game.summary ?? game.name,
-        releaseDate: game.first_release_date ? new Date(game.first_release_date * 1000) : new Date(0),
-        coverUrl: game.cover,
-        genres: game.genres?.map((g) => g) ?? [],
-        themes: game.themes?.map((t) => t) ?? [],
-        status,
-        moods: [],
-      });
+      await dispatch(
+        createGame({
+          igdbId: game.id,
+          platformId: MANUAL_PLATFORM_ID,
+          title: game.name,
+          summary: game.summary ?? game.name,
+          storyLine: game.summary ?? game.name,
+          releaseDate: game.first_release_date ? new Date(game.first_release_date * 1000) : new Date(0),
+          coverUrl: game.cover,
+          genres: game.genres?.map((g) => g) ?? [],
+          themes: game.themes?.map((t) => t) ?? [],
+          status,
+          moods: [],
+        }),
+      );
+      dispatch(getGameStats());
       toast({ title: `${game.name} added to your library` });
       onSuccessCallback();
     } catch {
@@ -76,6 +95,10 @@ export function LibraryPageContainer() {
     dispatch(setOrder(order));
   }
 
+  function handleAIDrawerOpen() {
+    dispatch(toggleAIDrawer());
+  }
+
   return (
     <LibraryPage
       addDialogOpen={addDialogOpen}
@@ -86,8 +109,9 @@ export function LibraryPageContainer() {
       availablePlatforms={availablePlatforms}
       isStatsLoading={isStatsLoading}
       isGamesLoading={isGamesLoading}
+      highlightedGameID={highlightedGameID}
       onAddDialogOpen={setAddDialogOpen}
-      onAIDrawerOpen={() => dispatch(toggleAIDrawer())}
+      onAIDrawerOpen={handleAIDrawerOpen}
       onStatusChange={handleStatusChange}
       onGenreChange={handleGenreChange}
       onPlatformChange={handlePlatformChange}

@@ -1,26 +1,12 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import * as bcryptjs from 'bcryptjs';
-
 import { Role } from '@grimoire/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { EncryptorService } from '../encryptor/encryptor.service';
+import { PlaystationAuthService } from '../platforms/playstation/playstation-auth.service';
 import { AdminService } from './admin.service';
-
-const userSelect = {
-  id: true,
-  email: true,
-  name: true,
-  role: true,
-  plan: true,
-  mustChangePassword: true,
-  aiEnabled: true,
-  aiRequestsUsed: true,
-  aiRequestsLimit: true,
-  createdAt: true,
-  _count: { select: { games: true } },
-};
 
 function makeAdminUserRow(overrides: Partial<Record<string, unknown>> = {}) {
   return {
@@ -61,8 +47,25 @@ describe('AdminService', () => {
             account: {
               create: jest.fn(),
             },
+            platforms: {
+              findUniqueOrThrow: jest.fn(),
+            },
+            platformsTokens: {
+              upsert: jest.fn(),
+            },
             $transaction: jest.fn(),
           },
+        },
+        {
+          provide: EncryptorService,
+          useValue: {
+            encrypt: jest.fn((v: string) => `encrypted:${v}`),
+            decrypt: jest.fn((v: string) => v.replace('encrypted:', '')),
+          },
+        },
+        {
+          provide: PlaystationAuthService,
+          useValue: { initializePlatform: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();

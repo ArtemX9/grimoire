@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { DEFAULT_LIMIT, DEFAULT_OFFSET, MapUnmappedGameSchemaDto, PlatformType, UnmappedGame, UnmappedReasons } from '@grimoire/shared';
 
@@ -8,8 +8,6 @@ import { UnmappedGameWithRelations } from './unmapped-games.types';
 
 @Injectable()
 export class UnmappedGamesService {
-  private readonly logger = new Logger(UnmappedGamesService.name);
-
   constructor(
     private prisma: PrismaService,
     private gamesService: GamesService,
@@ -69,22 +67,18 @@ export class UnmappedGamesService {
         tx,
       );
 
-      try {
-        await tx.unmappedSyncedGame.update({
-          where: {
-            userId_syncedGameId: {
-              userId: userID,
-              syncedGameId: unresolved.syncedGameId,
-            },
+      await tx.unmappedSyncedGame.update({
+        where: {
+          userId_syncedGameId: {
+            userId: userID,
+            syncedGameId: unresolved.syncedGameId,
           },
-          data: {
-            isMapped: true,
-            igdbGameId: dto.igdbInfo.id,
-          },
-        });
-      } catch (e) {
-        this.logger.error(`${e}`);
-      }
+        },
+        data: {
+          isMapped: true,
+          igdbGameId: dto.igdbInfo.id,
+        },
+      });
     });
   }
 
@@ -96,19 +90,15 @@ export class UnmappedGamesService {
       },
     });
 
-    try {
-      await this.prisma.unmappedSyncedGame.update({
-        where: {
-          id: unmappedGameID,
-          userId: userID,
-        },
-        data: {
-          reason: UnmappedReasons.USER_DELETED,
-        },
-      });
-    } catch (e) {
-      throw new Error(`Cannot update unmapped game: ${e}`);
-    }
+    await this.prisma.unmappedSyncedGame.update({
+      where: {
+        id: unmappedGameID,
+        userId: userID,
+      },
+      data: {
+        reason: UnmappedReasons.USER_DELETED,
+      },
+    });
   }
 
   private _toResponse(unmappedGame: UnmappedGameWithRelations): UnmappedGame {

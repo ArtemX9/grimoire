@@ -1,54 +1,18 @@
-import { Role } from '@grimoire/shared';
-import { useRef, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-
-import { useSession, useSignIn } from '@/api/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ROUTES } from '@/constants/routes';
 
-export function LoginPage() {
-  const navigate = useNavigate();
+interface ILoginPage {
+  email: string;
+  password: string;
+  error: string;
+  isPending: boolean;
+  onEmailChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onSignIn: (e: React.FormEvent) => void;
+}
 
-  const sessionQuery = useSession();
-  const isBootstrapped = sessionQuery.status !== 'pending';
-  const session = sessionQuery.data;
-
-  const signInMutation = useSignIn();
-  const isNavigatingAfterSignIn = useRef(false);
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-
-  if (!isBootstrapped) {
-    return null;
-  }
-
-  if (session && !isNavigatingAfterSignIn.current) {
-    return <Navigate to={ROUTES.DEFAULT} replace />;
-  }
-
-  async function handleSignIn(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    try {
-      isNavigatingAfterSignIn.current = true;
-      const result = await signInMutation.mutateAsync({ email, password });
-      if (result.user.mustChangePassword) {
-        navigate(ROUTES.CHANGE_PASSWORD, { replace: true });
-      } else if (result.user.role === Role.ADMIN) {
-        navigate(ROUTES.ADMIN_DASHBOARD, { replace: true });
-      } else {
-        navigate(ROUTES.DEFAULT, { replace: true });
-      }
-    } catch {
-      isNavigatingAfterSignIn.current = false;
-      setError('Invalid email or password. Please try again.');
-    }
-  }
-
+export function LoginPage({ email, password, error, isPending, onEmailChange, onPasswordChange, onSignIn }: ILoginPage) {
   return (
     <div className='flex min-h-screen items-center justify-center bg-grimoire-deep px-4'>
       <div className='w-full max-w-sm'>
@@ -76,12 +40,12 @@ export function LoginPage() {
           <CardDescription>Sign in to your account</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSignIn} className='flex flex-col gap-3'>
+          <form onSubmit={onSignIn} className='flex flex-col gap-3'>
             {renderEmailField()}
             {renderPasswordField()}
             {error && <p className='font-sans text-xs text-grimoire-status-dropped-text'>{error}</p>}
-            <Button type='submit' className='mt-1 w-full' disabled={signInMutation.isPending}>
-              {signInMutation.isPending ? 'Signing in…' : 'Sign In'}
+            <Button type='submit' className='mt-1 w-full' disabled={isPending}>
+              {isPending ? 'Signing in…' : 'Sign In'}
             </Button>
           </form>
         </CardContent>
@@ -110,7 +74,7 @@ export function LoginPage() {
           type='email'
           placeholder='you@example.com'
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => onEmailChange(e.target.value)}
           required
           autoComplete='email'
         />
@@ -129,7 +93,7 @@ export function LoginPage() {
           type='password'
           placeholder='••••••••'
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => onPasswordChange(e.target.value)}
           required
           autoComplete='current-password'
         />

@@ -1,10 +1,19 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 
 import * as bcryptjs from 'bcryptjs';
 
-import { Plan, Role } from '@grimoire/shared';
+import { Plan, Platform, PlatformUpdateResponse, Role } from '@grimoire/shared';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { EncryptorService } from '../encryptor/encryptor.service';
+import { PlaystationAuthService } from '../platforms/playstation/playstation-auth.service';
 import { AdminStatsResponse, AdminUserListResponse, AdminUserResponse } from './admin.types';
 
 type PrismaAdminUser = {
@@ -23,7 +32,13 @@ type PrismaAdminUser = {
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(AdminService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private encryptorService: EncryptorService,
+    private playstationAuthService: PlaystationAuthService,
+  ) {}
 
   private _toResponse(user: PrismaAdminUser): AdminUserResponse {
     return {
@@ -119,7 +134,7 @@ export class AdminService {
         data: {
           email: dto.email,
           name: dto.name,
-          role: Role.ADMIN,
+          role: Role.USER,
           passwordHash: hash,
           mustChangePassword: true,
           plan: Plan.LIFETIME,
@@ -188,6 +203,66 @@ export class AdminService {
     });
 
     return this._toResponse(updated);
+  }
+
+  async getPlatformTokens() {
+    const platformsTokens = await this.prisma.platformsTokens.findMany({
+      include: {
+        platform: true,
+      },
+    });
+
+    return platformsTokens.map((pt) => ({
+      id: pt.platform.platform,
+      token: this.encryptorService.decrypt(pt.token),
+      dateSet: pt.dateSet,
+      tokenValidityFrame: pt.dateFrame,
+    }));
+  }
+
+  async updatePlatformTokens(
+    platformID: Platform,
+    data: {
+      token: string;
+      tokenValidityFrame: number;
+    },
+  ): Promise<PlatformUpdateResponse> {
+    const platform = await this.prisma.platforms.findUniqueOrThrow({
+      where: {
+        platform: platformID,
+      },
+    });
+    const dateSet = new Date();
+    try {
+      await this.prisma.platformsTokens.upsert({
+        where: {
+          id: platform.id,
+        },
+        create: {
+          id: platform.id,
+          token: this.encryptorService.encrypt(data.token),
+          dateSet,
+          dateFrame: data.tokenValidityFrame,
+        },
+        update: {
+          token: this.encryptorService.encrypt(data.token),
+          dateSet,
+          dateFrame: data.tokenValidityFrame,
+        },
+      });
+
+      await this.playstationAuthService.initializePlatform();
+
+      return {
+        id: platformID,
+        token: data.token,
+        dateSet,
+        tokenValidityFrame: data.tokenValidityFrame,
+      };
+    } catch (e) {
+      this.logger.error(`${e}`);
+      throw new UnprocessableEntityException(e);
+    }
   }
 
   async getStats(): Promise<AdminStatsResponse> {

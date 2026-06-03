@@ -41,5 +41,6 @@ import { XboxService } from './xbox/xbox.service';
     XboxAuthService,
     XboxSyncProcessor,
   ],
+  exports: [PlaystationAuthService],
 })
 export class PlatformsModule {}

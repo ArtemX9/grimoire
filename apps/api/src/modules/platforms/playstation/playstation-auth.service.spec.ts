@@ -3,7 +3,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import * as psnApi from 'psn-api';
 
+import { PrismaService } from '../../../prisma/prisma.service';
 import { generatePsnAuthorization } from '../../../test';
+import { EncryptorService } from '../../encryptor/encryptor.service';
 import { PlaystationAuthService } from './playstation-auth.service';
 
 // ---------------------------------------------------------------------------
@@ -15,27 +17,6 @@ jest.mock('psn-api', () => ({
   exchangeAccessCodeForAuthTokens: jest.fn(),
   exchangeRefreshTokenForAuthTokens: jest.fn(),
 }));
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function buildModule(npsso: string | undefined): Promise<TestingModule> {
-  return Test.createTestingModule({
-    providers: [
-      PlaystationAuthService,
-      {
-        provide: 'ConfigService',
-        useValue: {
-          get: jest.fn().mockReturnValue(npsso),
-        },
-      },
-    ],
-  })
-    .overrideProvider('ConfigService')
-    .useValue({ get: jest.fn().mockReturnValue(npsso) })
-    .compile();
-}
 
 // ---------------------------------------------------------------------------
 // Suite
@@ -58,14 +39,29 @@ describe('PlaystationAuthService', () => {
     if (module) await module.close();
   });
 
+  // Build the service with a stored token (npsso defined) or without one (npsso undefined).
+  // When npsso is defined, platformsTokens.findUnique returns a fake DB row whose
+  // token field is the raw NPSSO string (decrypt is an identity function in tests).
   async function createService(npsso: string | undefined = NPSSO): Promise<PlaystationAuthService> {
-    const { ConfigService } = await import('@nestjs/config');
+    const pastDate = new Date(Date.now() - 1000); // dateSet in the past → valid token
+    const platformTokenRow = npsso ? { id: 1, token: npsso, dateSet: pastDate, dateFrame: 3600 } : null;
+
     module = await Test.createTestingModule({
       providers: [
         PlaystationAuthService,
         {
-          provide: ConfigService,
-          useValue: { get: jest.fn().mockReturnValue(npsso) },
+          provide: PrismaService,
+          useValue: {
+            platformsTokens: {
+              findUnique: jest.fn().mockResolvedValue(platformTokenRow),
+            },
+          },
+        },
+        {
+          provide: EncryptorService,
+          useValue: {
+            decrypt: jest.fn((v: string) => v),
+          },
         },
       ],
     }).compile();
@@ -126,7 +122,6 @@ describe('PlaystationAuthService', () => {
       (psnApi.exchangeAccessCodeForAuthTokens as jest.Mock).mockResolvedValue(authorization);
 
       service = await createService();
-      const before = Date.now();
       await service.onModuleInit();
 
       // Advance time to just before expiry — token should still be valid (no refresh call)
@@ -145,19 +140,33 @@ describe('PlaystationAuthService', () => {
       expect(psnApi.exchangeRefreshTokenForAuthTokens).toHaveBeenCalledTimes(1);
     });
 
-    it('is a no-op when the NPSSO is undefined — does not call PSN APIs', async () => {
-      jest.resetAllMocks();
+    it('does not call PSN APIs when no platform token row is stored', async () => {
+      // When platformsTokens.findUnique returns null, initializePlatform returns early
+      // without contacting PSN APIs. We verify by checking no exchange calls are made.
+      (psnApi.exchangeNpssoForAccessCode as jest.Mock).mockClear();
+      (psnApi.exchangeAccessCodeForAuthTokens as jest.Mock).mockClear();
 
-      const { ConfigService } = await import('@nestjs/config');
-      const configGetMock = jest.fn().mockReturnValue(undefined);
-      const configMock = { get: configGetMock };
-
+      // Create a fresh service with null token in DB and call initializePlatform directly
       const localModule = await Test.createTestingModule({
-        providers: [PlaystationAuthService, { provide: ConfigService, useValue: configMock }],
+        providers: [
+          PlaystationAuthService,
+          {
+            provide: PrismaService,
+            useValue: {
+              platformsTokens: {
+                findUnique: jest.fn().mockResolvedValue(null),
+              },
+            },
+          },
+          {
+            provide: EncryptorService,
+            useValue: { decrypt: jest.fn((v: string) => v) },
+          },
+        ],
       }).compile();
       const localService = localModule.get<PlaystationAuthService>(PlaystationAuthService);
+      await localService.initializePlatform();
 
-      await expect(localService.onModuleInit()).resolves.toBeUndefined();
       expect(psnApi.exchangeNpssoForAccessCode).not.toHaveBeenCalled();
       expect(psnApi.exchangeAccessCodeForAuthTokens).not.toHaveBeenCalled();
 

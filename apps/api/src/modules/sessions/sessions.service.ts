@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { CreateSessionDto, Mood, PlaySession, PlaySessionWithGame } from '@grimoire/shared';
 
@@ -75,7 +75,7 @@ export class SessionsService {
 
     const playedTime = dto.durationMin ?? 0;
     if (playedTime && playedTime > FULL_DAY_HOURS) {
-      throw new HttpException('Played time should be less than day', HttpStatus.CONFLICT);
+      throw new BadRequestException('Played time should be less than day');
     }
 
     const totalPlayedTimeForDay = await this.prisma.playSession.aggregate({
@@ -88,7 +88,7 @@ export class SessionsService {
     });
     const totalPlayedTimesSession = totalPlayedTimeForDay._sum.durationMin ?? 0;
     if (totalPlayedTimesSession + playedTime > FULL_DAY_HOURS) {
-      throw new HttpException('Played time should be less than day', HttpStatus.CONFLICT);
+      throw new BadRequestException('Played time should be less than day');
     }
     if (dto.durationMin) {
       const [session] = await this.prisma.$transaction([

@@ -1,37 +1,52 @@
-import { GamePlatform, GameStatus, IgdbGame, Mood, UpdateGameDto } from '@grimoire/shared';
-import { useState } from 'react';
+import { AsyncStatus, GamePlatform, GameStatus, IgdbGame, Mood, UpdateGameDto } from '@grimoire/shared';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { useDeleteGame, useGetGame, useRemapGame, useUpdateGame } from '@/api/games';
-import { useGetGameSessions } from '@/api/sessions';
 import { toast } from '@/components/ui/use-toast';
 import { ROUTES, getGameDetailsURL } from '@/constants/routes';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { selectGamesMutationStatus, selectSelectedGame, selectSelectedGameStatus } from '@/store/state/games/selectors';
+import { selectSessionsByGameId } from '@/store/state/sessions/selectors';
+import { deleteGame, getGame, remapGame, updateGame } from '@/store/thunks/games/index';
+import { getGameSessions } from '@/store/thunks/sessions/index';
 
 import { GameDetailPage } from './GameDetailPage';
 
 function GameDetailPageContainer() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
-  const { data: game, isLoading } = useGetGame(id!);
-  const { data: sessions = [] } = useGetGameSessions(id!);
+  const game = useAppSelector(selectSelectedGame);
+  const selectedGameStatus = useAppSelector(selectSelectedGameStatus);
+  const mutationStatus = useAppSelector(selectGamesMutationStatus);
+  const sessionSelector = selectSessionsByGameId(id!);
+  const sessions = useAppSelector(sessionSelector);
 
-  const updateGameMutation = useUpdateGame();
-  const isUpdating = updateGameMutation.isPending;
-  const remapGameMutation = useRemapGame();
-  const isRemapping = remapGameMutation.isPending;
-  const deleteGameMutation = useDeleteGame();
-  const isDeleting = deleteGameMutation.isPending;
+  const isLoading = selectedGameStatus === AsyncStatus.Loading;
+  const isUpdating = mutationStatus === AsyncStatus.Loading;
+  const isDeleting = mutationStatus === AsyncStatus.Loading;
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [logSessionOpen, setLogSessionOpen] = useState(false);
   const [remapDialogOpen, setRemapDialogOpen] = useState(false);
   const [platformPickerOpen, setPlatformPickerOpen] = useState(false);
   const [selectedPlatformForRemap, setSelectedPlatformForRemap] = useState<GamePlatform | null>(null);
+  const [isRemapping, setIsRemapping] = useState(false);
+
+  useEffect(
+    function fetchGameOnMount() {
+      if (id) {
+        dispatch(getGame(id));
+        dispatch(getGameSessions({ gameId: id }));
+      }
+    },
+    [id],
+  );
 
   async function handleStatusChange(status: GameStatus) {
     try {
-      await updateGameMutation.mutateAsync({ id: game!.id, data: { status } });
+      await dispatch(updateGame({ id: game!.id, data: { status } }));
     } catch {
       toast({ title: 'Failed to update status', variant: 'destructive' });
     }
@@ -39,7 +54,7 @@ function GameDetailPageContainer() {
 
   async function handleMoodsChange(moods: Mood[]) {
     try {
-      await updateGameMutation.mutateAsync({ id: game!.id, data: { moods } });
+      await dispatch(updateGame({ id: game!.id, data: { moods } }));
     } catch {
       toast({ title: 'Failed to update moods', variant: 'destructive' });
     }
@@ -48,7 +63,7 @@ function GameDetailPageContainer() {
   async function handleRatingChange(rating: number) {
     const next = game!.userRating === rating ? undefined : rating;
     try {
-      await updateGameMutation.mutateAsync({ id: game!.id, data: { userRating: next } as UpdateGameDto });
+      await dispatch(updateGame({ id: game!.id, data: { userRating: next } as UpdateGameDto }));
     } catch {
       toast({ title: 'Failed to update rating', variant: 'destructive' });
     }
@@ -56,7 +71,7 @@ function GameDetailPageContainer() {
 
   async function handleSaveNotes(notes: string) {
     try {
-      await updateGameMutation.mutateAsync({ id: game!.id, data: { notes } });
+      await dispatch(updateGame({ id: game!.id, data: { notes } }));
       toast({ title: 'Notes saved' });
     } catch {
       toast({ title: 'Failed to save notes', variant: 'destructive' });
@@ -65,12 +80,16 @@ function GameDetailPageContainer() {
 
   async function handleDelete() {
     try {
-      await deleteGameMutation.mutateAsync(game!.id);
+      await dispatch(deleteGame(game!.id));
       toast({ title: `${game!.title} removed from library` });
       navigate(ROUTES.DEFAULT);
     } catch {
       toast({ title: 'Failed to delete game', variant: 'destructive' });
     }
+  }
+
+  function handleBack() {
+    navigate(-1);
   }
 
   function handlePlatformSelect(platform: GamePlatform) {
@@ -80,23 +99,26 @@ function GameDetailPageContainer() {
   }
 
   async function handleRemapGame(igdbGame: IgdbGame, _status: GameStatus, onSuccessCallback: () => void, onErrorCallback: () => void) {
+    setIsRemapping(true);
     try {
-      const returnedGame = await remapGameMutation.mutateAsync({
-        id: game!.id,
-        data: {
-          igdbId: igdbGame.id,
-          title: igdbGame.name,
-          coverUrl: igdbGame.cover,
-          genres: igdbGame.genres ?? [],
-          summary: igdbGame.summary,
-          storyLine: igdbGame.storyline,
-          themes: igdbGame.themes ?? [],
-          releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,
-          ...(selectedPlatformForRemap
-            ? { platformId: selectedPlatformForRemap.platformID, externalId: selectedPlatformForRemap.externalID }
-            : {}),
-        },
-      });
+      const returnedGame = await dispatch(
+        remapGame({
+          id: game!.id,
+          data: {
+            igdbId: igdbGame.id,
+            title: igdbGame.name,
+            coverUrl: igdbGame.cover,
+            genres: igdbGame.genres ?? [],
+            summary: igdbGame.summary,
+            storyLine: igdbGame.storyline,
+            themes: igdbGame.themes ?? [],
+            releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : undefined,
+            ...(selectedPlatformForRemap
+              ? { platformId: selectedPlatformForRemap.platformID, externalId: selectedPlatformForRemap.externalID }
+              : {}),
+          },
+        }),
+      );
       setSelectedPlatformForRemap(null);
       if (returnedGame.id !== game!.id) {
         navigate(getGameDetailsURL(returnedGame.id), { replace: true });
@@ -106,6 +128,8 @@ function GameDetailPageContainer() {
     } catch {
       toast({ title: 'Failed to re-map game', variant: 'destructive' });
       onErrorCallback();
+    } finally {
+      setIsRemapping(false);
     }
   }
 
@@ -132,7 +156,7 @@ function GameDetailPageContainer() {
       onSaveNotes={handleSaveNotes}
       onDelete={handleDelete}
       onRemapGame={handleRemapGame}
-      onBack={() => navigate(-1)}
+      onBack={handleBack}
     />
   );
 }

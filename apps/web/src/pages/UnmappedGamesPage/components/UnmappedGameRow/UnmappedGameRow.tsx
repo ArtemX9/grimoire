@@ -2,6 +2,7 @@ import { UnmappedGame, UnmappedReasons } from '@grimoire/shared';
 import { ImageOff, Trash2, Wrench } from 'lucide-react';
 import { MouseEvent, useState } from 'react';
 
+import { PlatformIcon } from '@/components/PlatformIcon/PlatformIcon';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,7 +13,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { PlatformIcon } from '@/components/PlatformIcon/PlatformIcon';
 import { cn } from '@/utils/cn';
 import { formatPlaytime } from '@/utils/formatPlaytime';
 
@@ -169,8 +169,8 @@ function UnmappedGameRow({ game, hoverImageClassName, onMapClick, onDeleteClick 
           <AlertDialogHeader>
             <AlertDialogTitle>Delete unmapped game</AlertDialogTitle>
             <AlertDialogDescription>
-              Delete <span className='font-grimoire text-grimoire-ink'>{game.syncedGameTitle}</span> from your unmapped
-              games? This cannot be undone.
+              Delete <span className='font-grimoire text-grimoire-ink'>{game.syncedGameTitle}</span> from your unmapped games? This cannot
+              be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

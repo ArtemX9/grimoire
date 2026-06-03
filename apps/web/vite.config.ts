@@ -21,6 +21,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
+    pool: 'vmForks',
     typecheck: { tsconfig: './tsconfig.test.json' },
     exclude: [...defaultExclude, 'e2e/**'],
     alias: {

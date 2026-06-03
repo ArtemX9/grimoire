@@ -1,68 +1,76 @@
-import { Role } from '@grimoire/shared';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AsyncStatus, Role } from '@grimoire/shared';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { type Reducer, applyMiddleware, combineReducers, createStore } from 'redux';
+import { thunk } from 'redux-thunk';
 import { describe, expect, it } from 'vitest';
 
-import { Session, authKeys } from '@/api/auth';
 import { AdminRoute } from '@/components/ProtectedRoute/AdminRoute';
 import { MustChangePasswordRoute } from '@/components/ProtectedRoute/MustChangePasswordRoute';
 import { ProtectedRoute } from '@/components/ProtectedRoute/ProtectedRoute';
 import { ROUTES } from '@/constants/routes';
+import aiReducer, { AI_SLICE } from '@/store/state/ai/index';
+import authReducer, { AUTH_SLICE } from '@/store/state/auth/index';
+import type { Session } from '@/store/state/auth/index';
+import filtersReducer, { FILTERS_SLICE } from '@/store/state/filters/index';
+import gamesReducer, { GAMES_SLICE } from '@/store/state/games/index';
+import uiReducer, { UI_SLICE } from '@/store/state/ui/index';
+import unmappedGamesReducer, { UNMAPPED_GAMES_SLICE } from '@/store/state/unmappedGames/index';
 import { generateSession } from '@/test';
-import { makeQueryClient, makeStore } from '@/test/renderWithQuery';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-type SessionUser = {
-  id: string;
-  email: string;
-  name: string;
-  role: Role;
-  mustChangePassword: boolean;
-  aiEnabled: boolean;
-  aiRequestsLimit: number | null;
-};
-
-function makeSessionUser(overrides: Partial<SessionUser> = {}): SessionUser {
-  return generateSession({ id: '1', email: 'user@example.com', name: 'User', aiEnabled: true, aiRequestsLimit: null, ...overrides }).user;
+function makeStore(session: Session | null, isBootstrapped: boolean) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rootReducer: Reducer<any, any> = combineReducers({
+    [AUTH_SLICE]: authReducer,
+    [FILTERS_SLICE]: filtersReducer,
+    [GAMES_SLICE]: gamesReducer,
+    [AI_SLICE]: aiReducer,
+    [UI_SLICE]: uiReducer,
+    [UNMAPPED_GAMES_SLICE]: unmappedGamesReducer,
+  });
+  return createStore(
+    rootReducer,
+    {
+      [AUTH_SLICE]: {
+        session,
+        status: isBootstrapped ? AsyncStatus.Succeeded : AsyncStatus.Loading,
+        isBootstrapped,
+        error: null,
+      },
+    },
+    applyMiddleware(thunk),
+  );
 }
 
 type RenderOptions = {
-  session: Session | null | undefined;
+  session: Session | null;
   isBootstrapped: boolean;
 };
 
 function renderWithRoutes(guardElement: React.ReactElement, { session, isBootstrapped }: RenderOptions, initialEntry = ROUTES.DEFAULT) {
-  const queryClient = makeQueryClient();
-  const store = makeStore();
-
-  if (isBootstrapped) {
-    queryClient.setQueryData(authKeys.session(), session ?? null);
-  }
-  // If not bootstrapped, leave the query in 'pending' state (no data set)
+  const store = makeStore(session, isBootstrapped);
 
   return render(
-    <QueryClientProvider client={queryClient}>
-      <Provider store={store}>
-        <MemoryRouter initialEntries={[initialEntry]}>
-          <Routes>
-            <Route path={ROUTES.LOGIN} element={<div>Login Page</div>} />
-            <Route path={ROUTES.CHANGE_PASSWORD} element={<div>Change Password Page</div>} />
-            <Route path={ROUTES.DEFAULT} element={<div>Home Page</div>} />
-            <Route element={guardElement}>
-              <Route path='/protected' element={<div>Protected Content</div>} />
-              <Route path={ROUTES.ADMIN_DASHBOARD} element={<div>Admin Dashboard</div>} />
-              <Route path='/must-change' element={<div>Must Change Content</div>} />
-            </Route>
-          </Routes>
-        </MemoryRouter>
-      </Provider>
-    </QueryClientProvider>,
+    <Provider store={store}>
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <Routes>
+          <Route path={ROUTES.LOGIN} element={<div>Login Page</div>} />
+          <Route path={ROUTES.CHANGE_PASSWORD} element={<div>Change Password Page</div>} />
+          <Route path={ROUTES.DEFAULT} element={<div>Home Page</div>} />
+          <Route element={guardElement}>
+            <Route path='/protected' element={<div>Protected Content</div>} />
+            <Route path={ROUTES.ADMIN_DASHBOARD} element={<div>Admin Dashboard</div>} />
+            <Route path='/must-change' element={<div>Must Change Content</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>
+    </Provider>,
   );
 }
 
@@ -84,17 +92,13 @@ describe('ProtectedRoute', () => {
   });
 
   it(`redirects to ${ROUTES.CHANGE_PASSWORD} when mustChangePassword is true`, () => {
-    renderWithRoutes(
-      <ProtectedRoute />,
-      { session: { user: makeSessionUser({ mustChangePassword: true }) }, isBootstrapped: true },
-      '/protected',
-    );
+    renderWithRoutes(<ProtectedRoute />, { session: generateSession({ mustChangePassword: true }), isBootstrapped: true }, '/protected');
 
     expect(screen.getByText('Change Password Page')).toBeInTheDocument();
   });
 
   it('renders the outlet when session is valid', () => {
-    renderWithRoutes(<ProtectedRoute />, { session: { user: makeSessionUser() }, isBootstrapped: true }, '/protected');
+    renderWithRoutes(<ProtectedRoute />, { session: generateSession(), isBootstrapped: true }, '/protected');
 
     expect(screen.getByText('Protected Content')).toBeInTheDocument();
   });
@@ -118,21 +122,13 @@ describe('AdminRoute', () => {
   });
 
   it(`redirects to ${ROUTES.DEFAULT} when the user is not an admin`, () => {
-    renderWithRoutes(
-      <AdminRoute />,
-      { session: { user: makeSessionUser({ role: Role.USER }) }, isBootstrapped: true },
-      ROUTES.ADMIN_DASHBOARD,
-    );
+    renderWithRoutes(<AdminRoute />, { session: generateSession({ role: Role.USER }), isBootstrapped: true }, ROUTES.ADMIN_DASHBOARD);
 
     expect(screen.getByText('Home Page')).toBeInTheDocument();
   });
 
   it('renders the outlet when the user is an admin', () => {
-    renderWithRoutes(
-      <AdminRoute />,
-      { session: { user: makeSessionUser({ role: Role.ADMIN }) }, isBootstrapped: true },
-      ROUTES.ADMIN_DASHBOARD,
-    );
+    renderWithRoutes(<AdminRoute />, { session: generateSession({ role: Role.ADMIN }), isBootstrapped: true }, ROUTES.ADMIN_DASHBOARD);
 
     expect(screen.getByText('Admin Dashboard')).toBeInTheDocument();
   });
@@ -158,7 +154,7 @@ describe('MustChangePasswordRoute', () => {
   it(`redirects to ${ROUTES.DEFAULT} when mustChangePassword is false`, () => {
     renderWithRoutes(
       <MustChangePasswordRoute />,
-      { session: { user: makeSessionUser({ mustChangePassword: false }) }, isBootstrapped: true },
+      { session: generateSession({ mustChangePassword: false }), isBootstrapped: true },
       '/must-change',
     );
 
@@ -168,7 +164,7 @@ describe('MustChangePasswordRoute', () => {
   it('renders the outlet when mustChangePassword is true', () => {
     renderWithRoutes(
       <MustChangePasswordRoute />,
-      { session: { user: makeSessionUser({ mustChangePassword: true }) }, isBootstrapped: true },
+      { session: generateSession({ mustChangePassword: true }), isBootstrapped: true },
       '/must-change',
     );
 

@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 
-import { MapUnmappedGameSchema, MapUnmappedGameSchemaDto, User } from '@grimoire/shared';
+import { MapUnmappedGameSchema, MapUnmappedGameSchemaDto } from '@grimoire/shared';
 
 import { CurrentUser, RequestUser } from '../../common/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
@@ -11,8 +11,12 @@ export class UnmappedGamesController {
   constructor(private unmappedGamesService: UnmappedGamesService) {}
 
   @Get()
-  getUnmappedGamesForUser(@CurrentUser() user: RequestUser, @Query('limit') limit?: number, @Query('offset') offset?: number) {
-    return this.unmappedGamesService.getUnmappedGamesForUser(user.id, limit, offset);
+  getUnmappedGamesForUser(@CurrentUser() user: RequestUser, @Query('limit') limit?: string, @Query('offset') offset?: string) {
+    return this.unmappedGamesService.getUnmappedGamesForUser(
+      user.id,
+      limit !== undefined ? parseInt(limit, 10) : undefined,
+      offset !== undefined ? parseInt(offset, 10) : undefined,
+    );
   }
 
   @Post('/map/:id')

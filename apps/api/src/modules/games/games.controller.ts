@@ -1,6 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 
-import { CreateGameSchema, GameStatus, Genre, Platform, RemapGameSchema, SortableField, UpdateGameSchema, User } from '@grimoire/shared';
+import {
+  CreateGameDto,
+  CreateGameSchema,
+  GameStatus,
+  Genre,
+  Platform,
+  RemapGameDto,
+  RemapGameSchema,
+  SortableField,
+  UpdateGameDto,
+  UpdateGameSchema,
+} from '@grimoire/shared';
 
 import { CurrentUser, RequestUser } from '../../common/decorators/current-user.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
@@ -34,17 +45,21 @@ export class GamesController {
   }
 
   @Post()
-  createGame(@CurrentUser() user: RequestUser, @Body(new ZodValidationPipe(CreateGameSchema)) body: any) {
+  createGame(@CurrentUser() user: RequestUser, @Body(new ZodValidationPipe(CreateGameSchema)) body: CreateGameDto) {
     return this.gamesService.addManually(user.id, body);
   }
 
   @Patch(':id')
-  updateGameUserData(@CurrentUser() user: RequestUser, @Param('id') id: string, @Body(new ZodValidationPipe(UpdateGameSchema)) body: any) {
+  updateGameUserData(
+    @CurrentUser() user: RequestUser,
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateGameSchema)) body: UpdateGameDto,
+  ) {
     return this.gamesService.update(user.id, id, body);
   }
 
   @Patch(':id/remap')
-  remapGame(@CurrentUser() user: RequestUser, @Param('id') id: string, @Body(new ZodValidationPipe(RemapGameSchema)) body: any) {
+  remapGame(@CurrentUser() user: RequestUser, @Param('id') id: string, @Body(new ZodValidationPipe(RemapGameSchema)) body: RemapGameDto) {
     return this.gamesService.remap(user.id, id, body);
   }
 
