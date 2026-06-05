@@ -20,17 +20,17 @@ export const PSN_SYNC_REJECTED = 'playstation/sync/rejected';
 // Action creators
 // ---------------------------------------------------------------------------
 
-export const psnGetStatusPending = () => ({ type: PSN_GET_STATUS_PENDING }) as const;
-export const psnGetStatusFulfilled = (payload: PlatformSyncStatus) => ({ type: PSN_GET_STATUS_FULFILLED, payload }) as const;
-export const psnGetStatusRejected = (error: string) => ({ type: PSN_GET_STATUS_REJECTED, error }) as const;
+export const psnGetStatusPending = () => ({ type: PSN_GET_STATUS_PENDING, payload: {} });
+export const psnGetStatusFulfilled = (syncStatus: PlatformSyncStatus) => ({ type: PSN_GET_STATUS_FULFILLED, payload: { syncStatus } });
+export const psnGetStatusRejected = (error: string) => ({ type: PSN_GET_STATUS_REJECTED, payload: { error } });
 
-export const psnConnectPending = () => ({ type: PSN_CONNECT_PENDING }) as const;
-export const psnConnectFulfilled = (payload: UserPlatform) => ({ type: PSN_CONNECT_FULFILLED, payload }) as const;
-export const psnConnectRejected = (error: string) => ({ type: PSN_CONNECT_REJECTED, error }) as const;
+export const psnConnectPending = () => ({ type: PSN_CONNECT_PENDING, payload: {} });
+export const psnConnectFulfilled = (userPlatform: UserPlatform) => ({ type: PSN_CONNECT_FULFILLED, payload: { userPlatform } });
+export const psnConnectRejected = (error: string) => ({ type: PSN_CONNECT_REJECTED, payload: { error } });
 
-export const psnSyncPending = () => ({ type: PSN_SYNC_PENDING }) as const;
-export const psnSyncFulfilled = () => ({ type: PSN_SYNC_FULFILLED }) as const;
-export const psnSyncRejected = (error: string) => ({ type: PSN_SYNC_REJECTED, error }) as const;
+export const psnSyncPending = () => ({ type: PSN_SYNC_PENDING, payload: {} });
+export const psnSyncFulfilled = () => ({ type: PSN_SYNC_FULFILLED, payload: {} });
+export const psnSyncRejected = (error: string) => ({ type: PSN_SYNC_REJECTED, payload: { error } });
 
 // ---------------------------------------------------------------------------
 // Action union type

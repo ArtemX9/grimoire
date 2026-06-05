@@ -4,10 +4,8 @@ import type {
   AdminUserListResponse,
   AdminUserRow,
   AiGlobalSettings,
-  PlatformTokenEntry,
   PlatformTokenInfo,
   UpdateAiGlobalArgs,
-  UpdatePlatformTokenArgs,
   UpdateUserAiArgs,
 } from '@/store/thunks/admin/types';
 
@@ -51,47 +49,69 @@ export const ADMIN_TRIGGER_USER_SYNC_REJECTED = 'admin/triggerUserSync/rejected'
 // Action creators
 // ---------------------------------------------------------------------------
 
-export const adminFetchUsersPending = () => ({ type: ADMIN_FETCH_USERS_PENDING }) as const;
-export const adminFetchUsersFulfilled = (payload: AdminUserListResponse) => ({ type: ADMIN_FETCH_USERS_FULFILLED, payload }) as const;
-export const adminFetchUsersRejected = (error: string) => ({ type: ADMIN_FETCH_USERS_REJECTED, error }) as const;
+export const adminFetchUsersPending = () => ({ type: ADMIN_FETCH_USERS_PENDING, payload: {} });
+export const adminFetchUsersFulfilled = (adminUser: AdminUserListResponse) => ({
+  type: ADMIN_FETCH_USERS_FULFILLED,
+  payload: { adminUser },
+});
+export const adminFetchUsersRejected = (error: string) => ({ type: ADMIN_FETCH_USERS_REJECTED, payload: { error } });
 
-export const adminFetchAiSettingsPending = () => ({ type: ADMIN_FETCH_AI_SETTINGS_PENDING }) as const;
-export const adminFetchAiSettingsFulfilled = (payload: AiGlobalSettings) => ({ type: ADMIN_FETCH_AI_SETTINGS_FULFILLED, payload }) as const;
-export const adminFetchAiSettingsRejected = (error: string) => ({ type: ADMIN_FETCH_AI_SETTINGS_REJECTED, error }) as const;
+export const adminFetchAiSettingsPending = () => ({ type: ADMIN_FETCH_AI_SETTINGS_PENDING, payload: {} });
+export const adminFetchAiSettingsFulfilled = (aiGlobalSettings: AiGlobalSettings) => ({
+  type: ADMIN_FETCH_AI_SETTINGS_FULFILLED,
+  payload: { aiGlobalSettings },
+});
+export const adminFetchAiSettingsRejected = (error: string) => ({ type: ADMIN_FETCH_AI_SETTINGS_REJECTED, payload: { error } });
 
-export const adminFetchPlatformsTokensPending = () => ({ type: ADMIN_FETCH_PLATFORMS_TOKENS_PENDING }) as const;
-export const adminFetchPlatformsTokensFulfilled = (payload: PlatformTokenInfo) =>
-  ({ type: ADMIN_FETCH_PLATFORMS_TOKENS_FULFILLED, payload }) as const;
-export const adminFetchPlatformsTokensRejected = (error: string) => ({ type: ADMIN_FETCH_PLATFORMS_TOKENS_REJECTED, error }) as const;
+export const adminFetchPlatformsTokensPending = () => ({ type: ADMIN_FETCH_PLATFORMS_TOKENS_PENDING, payload: {} });
+export const adminFetchPlatformsTokensFulfilled = (playformTokenInfo: PlatformTokenInfo) => ({
+  type: ADMIN_FETCH_PLATFORMS_TOKENS_FULFILLED,
+  payload: { playformTokenInfo },
+});
+export const adminFetchPlatformsTokensRejected = (error: string) => ({ type: ADMIN_FETCH_PLATFORMS_TOKENS_REJECTED, payload: { error } });
 
-export const adminCreateUserPending = () => ({ type: ADMIN_CREATE_USER_PENDING }) as const;
-export const adminCreateUserFulfilled = (payload: AdminUserRow) => ({ type: ADMIN_CREATE_USER_FULFILLED, payload }) as const;
-export const adminCreateUserRejected = (error: string) => ({ type: ADMIN_CREATE_USER_REJECTED, error }) as const;
+export const adminCreateUserPending = () => ({ type: ADMIN_CREATE_USER_PENDING, payload: {} });
+export const adminCreateUserFulfilled = (adminUserRow: AdminUserRow) => ({ type: ADMIN_CREATE_USER_FULFILLED, payload: { adminUserRow } });
+export const adminCreateUserRejected = (error: string) => ({ type: ADMIN_CREATE_USER_REJECTED, payload: { error } });
 
-export const adminDeleteUserFulfilled = (id: string) => ({ type: ADMIN_DELETE_USER_FULFILLED, meta: { arg: id } }) as const;
+export const adminDeleteUserFulfilled = (id: string) => ({ type: ADMIN_DELETE_USER_FULFILLED, payload: { id } });
 
-export const adminUpdateAiSettingsFulfilled = (arg: UpdateAiGlobalArgs) =>
-  ({ type: ADMIN_UPDATE_AI_SETTINGS_FULFILLED, meta: { arg } }) as const;
+export const adminUpdateAiSettingsFulfilled = (globalAIArgs: UpdateAiGlobalArgs) => ({
+  type: ADMIN_UPDATE_AI_SETTINGS_FULFILLED,
+  payload: { globalAIArgs },
+});
 
-export const adminUpdateUserAiSettingsFulfilled = (arg: UpdateUserAiArgs) =>
-  ({ type: ADMIN_UPDATE_USER_AI_SETTINGS_FULFILLED, meta: { arg } }) as const;
+export const adminUpdateUserAiSettingsFulfilled = (userAIArgs: UpdateUserAiArgs) => ({
+  type: ADMIN_UPDATE_USER_AI_SETTINGS_FULFILLED,
+  payload: { userAIArgs },
+});
 
-export const adminUpdateUserPlanFulfilled = (payload: AdminUserRow) => ({ type: ADMIN_UPDATE_USER_PLAN_FULFILLED, payload }) as const;
+export const adminUpdateUserPlanFulfilled = (adminUserRow: AdminUserRow) => ({
+  type: ADMIN_UPDATE_USER_PLAN_FULFILLED,
+  payload: { adminUserRow },
+});
 
-export const adminUpdateUserRoleFulfilled = (payload: AdminUserRow) => ({ type: ADMIN_UPDATE_USER_ROLE_FULFILLED, payload }) as const;
+export const adminUpdateUserRoleFulfilled = (adminUserRow: AdminUserRow) => ({
+  type: ADMIN_UPDATE_USER_ROLE_FULFILLED,
+  payload: { adminUserRow },
+});
 
-export const adminUpdatePlatformTokenPending = (platformID: Platform) =>
-  ({ type: ADMIN_UPDATE_PLATFORM_TOKEN_PENDING, meta: { arg: { platformID } } }) as const;
+export const adminUpdatePlatformTokenPending = (platformID: Platform) => ({
+  type: ADMIN_UPDATE_PLATFORM_TOKEN_PENDING,
+  payload: { platformID },
+});
 export const adminUpdatePlatformTokenFulfilled = (
   platformID: Platform,
   payload: { id: Platform; token: string; tokenValidityFrame: number; dateSet: Date },
-) => ({ type: ADMIN_UPDATE_PLATFORM_TOKEN_FULFILLED, meta: { arg: { platformID } }, payload }) as const;
-export const adminUpdatePlatformTokenRejected = (platformID: Platform) =>
-  ({ type: ADMIN_UPDATE_PLATFORM_TOKEN_REJECTED, meta: { arg: { platformID } } }) as const;
+) => ({ type: ADMIN_UPDATE_PLATFORM_TOKEN_FULFILLED, meta: { arg: { platformID } }, payload });
+export const adminUpdatePlatformTokenRejected = (platformID: Platform) => ({
+  type: ADMIN_UPDATE_PLATFORM_TOKEN_REJECTED,
+  meta: { arg: { platformID } },
+});
 
-export const adminTriggerUserSyncPending = () => ({ type: ADMIN_TRIGGER_USER_SYNC_PENDING }) as const;
-export const adminTriggerUserSyncFulfilled = () => ({ type: ADMIN_TRIGGER_USER_SYNC_FULFILLED }) as const;
-export const adminTriggerUserSyncRejected = (error: string) => ({ type: ADMIN_TRIGGER_USER_SYNC_REJECTED, error }) as const;
+export const adminTriggerUserSyncPending = () => ({ type: ADMIN_TRIGGER_USER_SYNC_PENDING, payload: {} });
+export const adminTriggerUserSyncFulfilled = () => ({ type: ADMIN_TRIGGER_USER_SYNC_FULFILLED, payload: {} });
+export const adminTriggerUserSyncRejected = (error: string) => ({ type: ADMIN_TRIGGER_USER_SYNC_REJECTED, payload: { error } });
 
 // ---------------------------------------------------------------------------
 // Action union type

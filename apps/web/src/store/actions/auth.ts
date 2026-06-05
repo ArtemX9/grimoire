@@ -18,15 +18,15 @@ export const AUTH_SIGN_OUT_FULFILLED = 'auth/signOut/fulfilled';
 // Action creators
 // ---------------------------------------------------------------------------
 
-export const authGetSessionPending = () => ({ type: AUTH_GET_SESSION_PENDING }) as const;
-export const authGetSessionFulfilled = (payload: Session | null) => ({ type: AUTH_GET_SESSION_FULFILLED, payload }) as const;
-export const authGetSessionRejected = (error: string) => ({ type: AUTH_GET_SESSION_REJECTED, error }) as const;
+export const authGetSessionPending = () => ({ type: AUTH_GET_SESSION_PENDING, payload: {} });
+export const authGetSessionFulfilled = (session: Session | null) => ({ type: AUTH_GET_SESSION_FULFILLED, payload: { session } });
+export const authGetSessionRejected = (error: string) => ({ type: AUTH_GET_SESSION_REJECTED, payload: { error } });
 
-export const authSignInPending = () => ({ type: AUTH_SIGN_IN_PENDING }) as const;
-export const authSignInFulfilled = (payload: Session) => ({ type: AUTH_SIGN_IN_FULFILLED, payload }) as const;
-export const authSignInRejected = (error: string) => ({ type: AUTH_SIGN_IN_REJECTED, error }) as const;
+export const authSignInPending = () => ({ type: AUTH_SIGN_IN_PENDING, payload: {} });
+export const authSignInFulfilled = (session: Session) => ({ type: AUTH_SIGN_IN_FULFILLED, payload: { session } });
+export const authSignInRejected = (error: string) => ({ type: AUTH_SIGN_IN_REJECTED, payload: { error } });
 
-export const authSignOutFulfilled = () => ({ type: AUTH_SIGN_OUT_FULFILLED }) as const;
+export const authSignOutFulfilled = () => ({ type: AUTH_SIGN_OUT_FULFILLED, payload: {} });
 
 // ---------------------------------------------------------------------------
 // Action union type

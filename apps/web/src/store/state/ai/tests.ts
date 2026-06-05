@@ -16,7 +16,7 @@ import { selectCanStream, selectIsStreaming, selectSelectedMoods } from '@/store
 // Helpers
 // ---------------------------------------------------------------------------
 
-const initialState = reducer(undefined, { type: '@@INIT' });
+const initialState = reducer(undefined, { type: '@@INIT' } as never);
 
 const DARK = Mood.DARK_AND_TENSE;
 const CHILL = Mood.CHILL;

@@ -9,7 +9,7 @@ export const selectPSNConnectStatus = (state: RootState) => state.playstation.co
 export const selectPSNSyncStatus = (state: RootState) => state.playstation.syncStatus;
 export const selectPSNError = (state: RootState) => state.playstation.error;
 
-export const selectIsPSNConnected = createSelector(selectPSNStatus, (status) => status?.connected ?? false);
+export const selectIsPSNConnected = createSelector(selectPSNStatus, (status) => !!status?.connected);
 
 export const selectIsPSNConnecting = createSelector(selectPSNConnectStatus, (connectStatus) => connectStatus === AsyncStatus.Loading);
 

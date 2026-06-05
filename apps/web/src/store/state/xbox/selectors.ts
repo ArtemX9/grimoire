@@ -8,6 +8,6 @@ export const selectXboxFetchStatus = (state: RootState) => state.xbox.fetchStatu
 export const selectXboxSyncStatus = (state: RootState) => state.xbox.syncStatus;
 export const selectXboxError = (state: RootState) => state.xbox.error;
 
-export const selectIsXboxConnected = createSelector(selectXboxStatus, (status) => status?.connected ?? false);
+export const selectIsXboxConnected = createSelector(selectXboxStatus, (status) => !!status?.connected);
 
 export const selectIsXboxSyncing = createSelector(selectXboxSyncStatus, (syncStatus) => syncStatus === AsyncStatus.Loading);

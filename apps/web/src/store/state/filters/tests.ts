@@ -1,23 +1,15 @@
 import { GameStatus, Genre, Platform, SortableField } from '@grimoire/shared';
 import { describe, expect, it } from 'vitest';
 
-import reducer, {
-  FILTERS_SLICE,
-  FiltersState,
-  resetFilters,
-  setGenreFilter,
-  setOrder,
-  setPlatformFilter,
-  setSearch,
-  setSortBy,
-  setStatusFilter,
-} from '@/store/state/filters/index';
+import { resetFilters, setGenreFilter, setOrder, setPlatformFilter, setSearch, setSortBy, setStatusFilter } from '@/store/actions/filters';
+import reducer, { FILTERS_SLICE, FiltersState } from '@/store/state/filters/index';
 import { selectFilters, selectHasActiveFilters } from '@/store/state/filters/selectors';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
+// @ts-ignore
 const initialState = reducer(undefined, { type: '@@INIT' });
 
 function makeRootState(overrides: Partial<FiltersState> = {}) {

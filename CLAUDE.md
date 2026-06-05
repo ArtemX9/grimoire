@@ -107,9 +107,15 @@ store/
 
 **Layer rules:**
 - All network calls live in `thunks/<domain>/index.ts` — nowhere else. Thunks dispatch pending/fulfilled/rejected action creators from `actions/<domain>.ts`.
-- Reducers are pure switch-statement functions. No mutation — always return new state.
+- Reducers are pure switch-statement functions. No mutation — always return new state. Switch cases delegate to named `handleXxx` functions; never inline state updates in cases.
 - Selectors use `createSelector` from `reselect`. Parameterized selectors are factory functions.
-- `actions/<domain>.ts` exports string constants, action creators, and a union `XxxAction` type used by the reducer's `action` parameter.
+- `actions/<domain>.ts` exports string constants, action creators, and a union `XxxAction` type used by the reducer's `action` parameter. File is divided into three sections with `// ---` dividers: constants, creators, union type. Action creators always wrap data in named payload keys — `{ payload: { session } }`, `{ payload: { error } }` — never bare top-level fields (`{ error }`) or an unwrapped payload (`{ payload: session }`). The `XxxAction` union uses `&` (intersection of all `ReturnType<>`) not `|`.
+
+**Reducer handler convention:**
+- Each `case` calls a dedicated `handle<Domain><Operation><Phase>` function (Phase = `Start | Success | Failure`).
+- Cases are grouped with `// operationName` section comments matching the thunk name.
+- Handler functions are typed: `(state: XxxState, action: ReturnType<typeof actionCreator>): XxxState`.
+- Handler functions are defined after the reducer function, grouped by operation with a matching `// operationName` comment.
 
 ### Container / page split
 

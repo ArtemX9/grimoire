@@ -11,6 +11,15 @@ import {
   STEAM_SYNC_PENDING,
   STEAM_SYNC_REJECTED,
   type SteamAction,
+  steamConnectFulfilled,
+  steamConnectPending,
+  steamConnectRejected,
+  steamGetStatusFulfilled,
+  steamGetStatusPending,
+  steamGetStatusRejected,
+  steamSyncFulfilled,
+  steamSyncPending,
+  steamSyncRejected,
 } from '@/store/actions/steam';
 
 export const STEAM_SLICE = 'steam';
@@ -31,37 +40,68 @@ const initialState: SteamState = {
   error: null,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function steamReducer(state = initialState, rawAction: any): SteamState {
-  const action = rawAction as SteamAction;
+export function steamReducer(state = initialState, action: SteamAction): SteamState {
   switch (action.type) {
     // getSteamStatus
     case STEAM_GET_STATUS_PENDING:
-      return { ...state, fetchStatus: AsyncStatus.Loading, error: null };
+      return handleSteamGetStatusStart(state, action as ReturnType<typeof steamGetStatusPending>);
     case STEAM_GET_STATUS_FULFILLED:
-      return { ...state, fetchStatus: AsyncStatus.Succeeded, status: action.payload };
+      return handleSteamGetStatusSuccess(state, action as ReturnType<typeof steamGetStatusFulfilled>);
     case STEAM_GET_STATUS_REJECTED:
-      return { ...state, fetchStatus: AsyncStatus.Failed, error: action.error };
+      return handleSteamGetStatusFailure(state, action as ReturnType<typeof steamGetStatusRejected>);
 
     // connectSteam
     case STEAM_CONNECT_PENDING:
-      return { ...state, connectStatus: AsyncStatus.Loading, error: null };
+      return handleSteamConnectStart(state, action as ReturnType<typeof steamConnectPending>);
     case STEAM_CONNECT_FULFILLED:
-      return { ...state, connectStatus: AsyncStatus.Succeeded };
+      return handleSteamConnectSuccess(state, action as ReturnType<typeof steamConnectFulfilled>);
     case STEAM_CONNECT_REJECTED:
-      return { ...state, connectStatus: AsyncStatus.Failed, error: action.error };
+      return handleSteamConnectFailure(state, action as ReturnType<typeof steamConnectRejected>);
 
     // syncSteam
     case STEAM_SYNC_PENDING:
-      return { ...state, syncStatus: AsyncStatus.Loading, error: null };
+      return handleSteamSyncStart(state, action as ReturnType<typeof steamSyncPending>);
     case STEAM_SYNC_FULFILLED:
-      return { ...state, syncStatus: AsyncStatus.Succeeded };
+      return handleSteamSyncSuccess(state, action as ReturnType<typeof steamSyncFulfilled>);
     case STEAM_SYNC_REJECTED:
-      return { ...state, syncStatus: AsyncStatus.Failed, error: action.error };
+      return handleSteamSyncFailure(state, action as ReturnType<typeof steamSyncRejected>);
 
     default:
       return state;
   }
+}
+
+// getSteamStatus
+function handleSteamGetStatusStart(state: SteamState, _action: ReturnType<typeof steamGetStatusPending>): SteamState {
+  return { ...state, fetchStatus: AsyncStatus.Loading, error: null };
+}
+function handleSteamGetStatusSuccess(state: SteamState, action: ReturnType<typeof steamGetStatusFulfilled>): SteamState {
+  return { ...state, fetchStatus: AsyncStatus.Succeeded, status: action.payload.syncStatus };
+}
+function handleSteamGetStatusFailure(state: SteamState, action: ReturnType<typeof steamGetStatusRejected>): SteamState {
+  return { ...state, fetchStatus: AsyncStatus.Failed, error: action.payload.error };
+}
+
+// connectSteam
+function handleSteamConnectStart(state: SteamState, _action: ReturnType<typeof steamConnectPending>): SteamState {
+  return { ...state, connectStatus: AsyncStatus.Loading, error: null };
+}
+function handleSteamConnectSuccess(state: SteamState, _action: ReturnType<typeof steamConnectFulfilled>): SteamState {
+  return { ...state, connectStatus: AsyncStatus.Succeeded };
+}
+function handleSteamConnectFailure(state: SteamState, action: ReturnType<typeof steamConnectRejected>): SteamState {
+  return { ...state, connectStatus: AsyncStatus.Failed, error: action.payload.error };
+}
+
+// syncSteam
+function handleSteamSyncStart(state: SteamState, _action: ReturnType<typeof steamSyncPending>): SteamState {
+  return { ...state, syncStatus: AsyncStatus.Loading, error: null };
+}
+function handleSteamSyncSuccess(state: SteamState, _action: ReturnType<typeof steamSyncFulfilled>): SteamState {
+  return { ...state, syncStatus: AsyncStatus.Succeeded };
+}
+function handleSteamSyncFailure(state: SteamState, action: ReturnType<typeof steamSyncRejected>): SteamState {
+  return { ...state, syncStatus: AsyncStatus.Failed, error: action.payload.error };
 }
 
 export default steamReducer;

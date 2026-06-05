@@ -20,18 +20,18 @@ export const SESSIONS_CREATE_REJECTED = 'sessions/create/rejected';
 // Action creators
 // ---------------------------------------------------------------------------
 
-export const sessionsGetRecentPending = () => ({ type: SESSIONS_GET_RECENT_PENDING }) as const;
-export const sessionsGetRecentFulfilled = (payload: PlaySession[]) => ({ type: SESSIONS_GET_RECENT_FULFILLED, payload }) as const;
-export const sessionsGetRecentRejected = (error: string) => ({ type: SESSIONS_GET_RECENT_REJECTED, error }) as const;
+export const sessionsGetRecentPending = () => ({ type: SESSIONS_GET_RECENT_PENDING, payload: {} });
+export const sessionsGetRecentFulfilled = (sessions: PlaySession[]) => ({ type: SESSIONS_GET_RECENT_FULFILLED, payload: { sessions } });
+export const sessionsGetRecentRejected = (error: string) => ({ type: SESSIONS_GET_RECENT_REJECTED, payload: { error } });
 
-export const sessionsGetForGamePending = () => ({ type: SESSIONS_GET_FOR_GAME_PENDING }) as const;
-export const sessionsGetForGameFulfilled = (gameId: string, payload: PlaySession[]) =>
-  ({ type: SESSIONS_GET_FOR_GAME_FULFILLED, meta: { arg: { gameId } }, payload }) as const;
-export const sessionsGetForGameRejected = (error: string) => ({ type: SESSIONS_GET_FOR_GAME_REJECTED, error }) as const;
+export const sessionsGetForGamePending = () => ({ type: SESSIONS_GET_FOR_GAME_PENDING, payload: {} });
+export const sessionsGetForGameFulfilled = (gameId: string, sessions: PlaySession[]) =>
+  ({ type: SESSIONS_GET_FOR_GAME_FULFILLED, payload: { gameId, sessions } });
+export const sessionsGetForGameRejected = (error: string) => ({ type: SESSIONS_GET_FOR_GAME_REJECTED, payload: { error } });
 
-export const sessionsCreatePending = () => ({ type: SESSIONS_CREATE_PENDING }) as const;
-export const sessionsCreateFulfilled = (payload: PlaySession) => ({ type: SESSIONS_CREATE_FULFILLED, payload }) as const;
-export const sessionsCreateRejected = (error: string) => ({ type: SESSIONS_CREATE_REJECTED, error }) as const;
+export const sessionsCreatePending = () => ({ type: SESSIONS_CREATE_PENDING, payload: {} });
+export const sessionsCreateFulfilled = (session: PlaySession) => ({ type: SESSIONS_CREATE_FULFILLED, payload: { session } });
+export const sessionsCreateRejected = (error: string) => ({ type: SESSIONS_CREATE_REJECTED, payload: { error } });
 
 // ---------------------------------------------------------------------------
 // Action union type

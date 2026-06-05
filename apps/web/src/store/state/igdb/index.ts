@@ -9,6 +9,13 @@ import {
   IGDB_SEARCH_PENDING,
   IGDB_SEARCH_REJECTED,
   type IgdbAction,
+  clearSearchResults,
+  igdbGetGameFulfilled,
+  igdbGetGamePending,
+  igdbGetGameRejected,
+  igdbSearchFulfilled,
+  igdbSearchPending,
+  igdbSearchRejected,
 } from '@/store/actions/igdb';
 
 export { clearSearchResults } from '@/store/actions/igdb';
@@ -31,33 +38,58 @@ const initialState: IgdbState = {
   error: null,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function igdbReducer(state = initialState, rawAction: any): IgdbState {
-  const action = rawAction as IgdbAction;
+export function igdbReducer(state = initialState, action: IgdbAction): IgdbState {
   switch (action.type) {
     // searchIgdb
     case IGDB_SEARCH_PENDING:
-      return { ...state, searchStatus: AsyncStatus.Loading, error: null };
+      return handleIgdbSearchStart(state, action as ReturnType<typeof igdbSearchPending>);
     case IGDB_SEARCH_FULFILLED:
-      return { ...state, searchStatus: AsyncStatus.Succeeded, searchResults: action.payload };
+      return handleIgdbSearchSuccess(state, action as ReturnType<typeof igdbSearchFulfilled>);
     case IGDB_SEARCH_REJECTED:
-      return { ...state, searchStatus: AsyncStatus.Failed, error: action.error };
+      return handleIgdbSearchFailure(state, action as ReturnType<typeof igdbSearchRejected>);
 
     // getIgdbGame
     case IGDB_GET_GAME_PENDING:
-      return { ...state, getStatus: AsyncStatus.Loading, error: null };
+      return handleIgdbGetGameStart(state, action as ReturnType<typeof igdbGetGamePending>);
     case IGDB_GET_GAME_FULFILLED:
-      return { ...state, getStatus: AsyncStatus.Succeeded, selectedGame: action.payload };
+      return handleIgdbGetGameSuccess(state, action as ReturnType<typeof igdbGetGameFulfilled>);
     case IGDB_GET_GAME_REJECTED:
-      return { ...state, getStatus: AsyncStatus.Failed, error: action.error };
+      return handleIgdbGetGameFailure(state, action as ReturnType<typeof igdbGetGameRejected>);
 
     // clearSearchResults
     case IGDB_CLEAR_SEARCH_RESULTS:
-      return { ...state, searchResults: [], searchStatus: AsyncStatus.Idle };
+      return handleIgdbClearSearchResults(state, action as ReturnType<typeof clearSearchResults>);
 
     default:
       return state;
   }
+}
+
+// searchIgdb
+function handleIgdbSearchStart(state: IgdbState, _action: ReturnType<typeof igdbSearchPending>): IgdbState {
+  return { ...state, searchStatus: AsyncStatus.Loading, error: null };
+}
+function handleIgdbSearchSuccess(state: IgdbState, action: ReturnType<typeof igdbSearchFulfilled>): IgdbState {
+  return { ...state, searchStatus: AsyncStatus.Succeeded, searchResults: action.payload.games };
+}
+function handleIgdbSearchFailure(state: IgdbState, action: ReturnType<typeof igdbSearchRejected>): IgdbState {
+  return { ...state, searchStatus: AsyncStatus.Failed, error: action.payload.error };
+}
+
+// getIgdbGame
+function handleIgdbGetGameStart(state: IgdbState, _action: ReturnType<typeof igdbGetGamePending>): IgdbState {
+  return { ...state, getStatus: AsyncStatus.Loading, error: null };
+}
+function handleIgdbGetGameSuccess(state: IgdbState, action: ReturnType<typeof igdbGetGameFulfilled>): IgdbState {
+  return { ...state, getStatus: AsyncStatus.Succeeded, selectedGame: action.payload.game };
+}
+function handleIgdbGetGameFailure(state: IgdbState, action: ReturnType<typeof igdbGetGameRejected>): IgdbState {
+  return { ...state, getStatus: AsyncStatus.Failed, error: action.payload.error };
+}
+
+// clearSearchResults
+function handleIgdbClearSearchResults(state: IgdbState, _action: ReturnType<typeof clearSearchResults>): IgdbState {
+  return { ...state, searchResults: [], searchStatus: AsyncStatus.Idle };
 }
 
 export default igdbReducer;

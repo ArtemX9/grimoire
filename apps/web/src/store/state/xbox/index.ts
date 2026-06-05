@@ -8,6 +8,12 @@ import {
   XBOX_SYNC_PENDING,
   XBOX_SYNC_REJECTED,
   type XboxAction,
+  xboxGetStatusFulfilled,
+  xboxGetStatusPending,
+  xboxGetStatusRejected,
+  xboxSyncFulfilled,
+  xboxSyncPending,
+  xboxSyncRejected,
 } from '@/store/actions/xbox';
 
 export const XBOX_SLICE = 'xbox';
@@ -26,29 +32,53 @@ const initialState: XboxState = {
   error: null,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function xboxReducer(state = initialState, rawAction: any): XboxState {
-  const action = rawAction as XboxAction;
+export function xboxReducer(state = initialState, action: XboxAction): XboxState {
   switch (action.type) {
     // getXboxStatus
     case XBOX_GET_STATUS_PENDING:
-      return { ...state, fetchStatus: AsyncStatus.Loading, error: null };
+      return handleXboxGetStatusStart(state, action as ReturnType<typeof xboxGetStatusPending>);
     case XBOX_GET_STATUS_FULFILLED:
-      return { ...state, fetchStatus: AsyncStatus.Succeeded, status: action.payload };
+      return handleXboxGetStatusSuccess(state, action as ReturnType<typeof xboxGetStatusFulfilled>);
     case XBOX_GET_STATUS_REJECTED:
-      return { ...state, fetchStatus: AsyncStatus.Failed, error: action.error };
+      return handleXboxGetStatusFailure(state, action as ReturnType<typeof xboxGetStatusRejected>);
 
     // syncXbox
     case XBOX_SYNC_PENDING:
-      return { ...state, syncStatus: AsyncStatus.Loading, error: null };
+      return handleXboxSyncStart(state, action as ReturnType<typeof xboxSyncPending>);
     case XBOX_SYNC_FULFILLED:
-      return { ...state, syncStatus: AsyncStatus.Succeeded };
+      return handleXboxSyncSuccess(state, action as ReturnType<typeof xboxSyncFulfilled>);
     case XBOX_SYNC_REJECTED:
-      return { ...state, syncStatus: AsyncStatus.Failed, error: action.error };
+      return handleXboxSyncFailure(state, action as ReturnType<typeof xboxSyncRejected>);
 
     default:
       return state;
   }
+}
+// getXboxStatus
+function handleXboxGetStatusStart(state: XboxState, action: ReturnType<typeof xboxGetStatusPending>): XboxState {
+  return { ...state, fetchStatus: AsyncStatus.Loading, error: null };
+}
+function handleXboxGetStatusSuccess(state: XboxState, action: ReturnType<typeof xboxGetStatusFulfilled>): XboxState {
+  return { ...state, fetchStatus: AsyncStatus.Succeeded, status: action.payload.syncStatus };
+}
+function handleXboxGetStatusFailure(state: XboxState, action: ReturnType<typeof xboxGetStatusRejected>): XboxState {
+  return { ...state, fetchStatus: AsyncStatus.Failed, error: action.payload.error };
+}
+
+// syncXbox
+function handleXboxSyncStart(state: XboxState, action: ReturnType<typeof xboxSyncPending>): XboxState {
+  return { ...state, syncStatus: AsyncStatus.Loading, status: { ...state?.status, connected: true, isSyncing: true }, error: null };
+}
+function handleXboxSyncSuccess(state: XboxState, action: ReturnType<typeof xboxSyncFulfilled>): XboxState {
+  return { ...state, syncStatus: AsyncStatus.Succeeded, status: { ...state?.status, connected: true, isSyncing: true }, error: null };
+}
+function handleXboxSyncFailure(state: XboxState, action: ReturnType<typeof xboxSyncRejected>): XboxState {
+  return {
+    ...state,
+    syncStatus: AsyncStatus.Failed,
+    status: { ...state?.status, connected: true, isSyncing: false },
+    error: action.payload.error,
+  };
 }
 
 export default xboxReducer;

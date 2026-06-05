@@ -9,6 +9,13 @@ import {
   AUTH_SIGN_IN_REJECTED,
   AUTH_SIGN_OUT_FULFILLED,
   type AuthAction,
+  authGetSessionFulfilled,
+  authGetSessionPending,
+  authGetSessionRejected,
+  authSignInFulfilled,
+  authSignInPending,
+  authSignInRejected,
+  authSignOutFulfilled,
 } from '@/store/actions/auth';
 import type { Session } from '@/store/thunks/auth/types';
 
@@ -30,34 +37,58 @@ const initialState: AuthState = {
   error: null,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function authReducer(state = initialState, rawAction: any): AuthState {
-  const action = rawAction as AuthAction;
+export function authReducer(state = initialState, action: AuthAction): AuthState {
   switch (action.type) {
+    // getSession
     case AUTH_GET_SESSION_PENDING:
-      return { ...state, status: AsyncStatus.Loading, error: null };
-
+      return handleAuthGetSessionStart(state, action as ReturnType<typeof authGetSessionPending>);
     case AUTH_GET_SESSION_FULFILLED:
-      return { ...state, status: AsyncStatus.Succeeded, session: action.payload, isBootstrapped: true };
-
+      return handleAuthGetSessionSuccess(state, action as ReturnType<typeof authGetSessionFulfilled>);
     case AUTH_GET_SESSION_REJECTED:
-      return { ...state, status: AsyncStatus.Failed, session: null, isBootstrapped: true };
+      return handleAuthGetSessionFailure(state, action as ReturnType<typeof authGetSessionRejected>);
 
+    // signIn
     case AUTH_SIGN_IN_PENDING:
-      return { ...state, status: AsyncStatus.Loading, error: null };
-
+      return handleAuthSignInStart(state, action as ReturnType<typeof authSignInPending>);
     case AUTH_SIGN_IN_FULFILLED:
-      return { ...state, status: AsyncStatus.Succeeded, session: action.payload, isBootstrapped: true };
-
+      return handleAuthSignInSuccess(state, action as ReturnType<typeof authSignInFulfilled>);
     case AUTH_SIGN_IN_REJECTED:
-      return { ...state, status: AsyncStatus.Failed, error: action.error };
+      return handleAuthSignInFailure(state, action as ReturnType<typeof authSignInRejected>);
 
+    // signOut
     case AUTH_SIGN_OUT_FULFILLED:
-      return { ...state, session: null, status: AsyncStatus.Idle };
+      return handleAuthSignOutSuccess(state, action as ReturnType<typeof authSignOutFulfilled>);
 
     default:
       return state;
   }
+}
+
+// getSession
+function handleAuthGetSessionStart(state: AuthState, _action: ReturnType<typeof authGetSessionPending>): AuthState {
+  return { ...state, status: AsyncStatus.Loading, error: null };
+}
+function handleAuthGetSessionSuccess(state: AuthState, action: ReturnType<typeof authGetSessionFulfilled>): AuthState {
+  return { ...state, status: AsyncStatus.Succeeded, session: action.payload.session, isBootstrapped: true };
+}
+function handleAuthGetSessionFailure(state: AuthState, _action: ReturnType<typeof authGetSessionRejected>): AuthState {
+  return { ...state, status: AsyncStatus.Failed, session: null, isBootstrapped: true };
+}
+
+// signIn
+function handleAuthSignInStart(state: AuthState, _action: ReturnType<typeof authSignInPending>): AuthState {
+  return { ...state, status: AsyncStatus.Loading, error: null };
+}
+function handleAuthSignInSuccess(state: AuthState, action: ReturnType<typeof authSignInFulfilled>): AuthState {
+  return { ...state, status: AsyncStatus.Succeeded, session: action.payload.session, isBootstrapped: true };
+}
+function handleAuthSignInFailure(state: AuthState, action: ReturnType<typeof authSignInRejected>): AuthState {
+  return { ...state, status: AsyncStatus.Failed, error: action.payload.error };
+}
+
+// signOut
+function handleAuthSignOutSuccess(state: AuthState, _action: ReturnType<typeof authSignOutFulfilled>): AuthState {
+  return { ...state, session: null, status: AsyncStatus.Idle };
 }
 
 export default authReducer;

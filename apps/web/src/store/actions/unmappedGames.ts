@@ -22,17 +22,17 @@ export const UNMAPPED_GAMES_DELETE_REJECTED = 'unmappedGames/delete/rejected';
 // Action creators
 // ---------------------------------------------------------------------------
 
-export const unmappedGamesGetAllPending = () => ({ type: UNMAPPED_GAMES_GET_ALL_PENDING }) as const;
-export const unmappedGamesGetAllFulfilled = (payload: UnmappedGame[]) => ({ type: UNMAPPED_GAMES_GET_ALL_FULFILLED, payload }) as const;
-export const unmappedGamesGetAllRejected = (error: string) => ({ type: UNMAPPED_GAMES_GET_ALL_REJECTED, error }) as const;
+export const unmappedGamesGetAllPending = () => ({ type: UNMAPPED_GAMES_GET_ALL_PENDING, payload: {} });
+export const unmappedGamesGetAllFulfilled = (games: UnmappedGame[]) => ({ type: UNMAPPED_GAMES_GET_ALL_FULFILLED, payload: { games } });
+export const unmappedGamesGetAllRejected = (error: string) => ({ type: UNMAPPED_GAMES_GET_ALL_REJECTED, payload: { error } });
 
-export const unmappedGamesMapPending = () => ({ type: UNMAPPED_GAMES_MAP_PENDING }) as const;
-export const unmappedGamesMapFulfilled = (arg: MapUnmappedGameArgs) => ({ type: UNMAPPED_GAMES_MAP_FULFILLED, meta: { arg } }) as const;
-export const unmappedGamesMapRejected = (error: string) => ({ type: UNMAPPED_GAMES_MAP_REJECTED, error }) as const;
+export const unmappedGamesMapPending = () => ({ type: UNMAPPED_GAMES_MAP_PENDING, payload: {} });
+export const unmappedGamesMapFulfilled = (args: MapUnmappedGameArgs) => ({ type: UNMAPPED_GAMES_MAP_FULFILLED, payload: { args } });
+export const unmappedGamesMapRejected = (error: string) => ({ type: UNMAPPED_GAMES_MAP_REJECTED, payload: { error } });
 
-export const unmappedGamesDeletePending = () => ({ type: UNMAPPED_GAMES_DELETE_PENDING }) as const;
-export const unmappedGamesDeleteFulfilled = (id: string) => ({ type: UNMAPPED_GAMES_DELETE_FULFILLED, meta: { arg: id } }) as const;
-export const unmappedGamesDeleteRejected = (error: string) => ({ type: UNMAPPED_GAMES_DELETE_REJECTED, error }) as const;
+export const unmappedGamesDeletePending = () => ({ type: UNMAPPED_GAMES_DELETE_PENDING, payload: {} });
+export const unmappedGamesDeleteFulfilled = (id: string) => ({ type: UNMAPPED_GAMES_DELETE_FULFILLED, payload: { id } });
+export const unmappedGamesDeleteRejected = (error: string) => ({ type: UNMAPPED_GAMES_DELETE_REJECTED, payload: { error } });
 
 // ---------------------------------------------------------------------------
 // Action union type

@@ -20,17 +20,17 @@ export const USERS_CHANGE_PASSWORD_REJECTED = 'users/changePassword/rejected';
 // Action creators
 // ---------------------------------------------------------------------------
 
-export const usersGetMePending = () => ({ type: USERS_GET_ME_PENDING }) as const;
-export const usersGetMeFulfilled = (payload: User) => ({ type: USERS_GET_ME_FULFILLED, payload }) as const;
-export const usersGetMeRejected = (error: string) => ({ type: USERS_GET_ME_REJECTED, error }) as const;
+export const usersGetMePending = () => ({ type: USERS_GET_ME_PENDING, payload: {} });
+export const usersGetMeFulfilled = (user: User) => ({ type: USERS_GET_ME_FULFILLED, payload: { user } });
+export const usersGetMeRejected = (error: string) => ({ type: USERS_GET_ME_REJECTED, payload: { error } });
 
-export const usersUpdateMePending = () => ({ type: USERS_UPDATE_ME_PENDING }) as const;
-export const usersUpdateMeFulfilled = (payload: User) => ({ type: USERS_UPDATE_ME_FULFILLED, payload }) as const;
-export const usersUpdateMeRejected = (error: string) => ({ type: USERS_UPDATE_ME_REJECTED, error }) as const;
+export const usersUpdateMePending = () => ({ type: USERS_UPDATE_ME_PENDING, payload: {} });
+export const usersUpdateMeFulfilled = (user: User) => ({ type: USERS_UPDATE_ME_FULFILLED, payload: { user } });
+export const usersUpdateMeRejected = (error: string) => ({ type: USERS_UPDATE_ME_REJECTED, payload: { error } });
 
-export const usersChangePasswordPending = () => ({ type: USERS_CHANGE_PASSWORD_PENDING }) as const;
-export const usersChangePasswordFulfilled = () => ({ type: USERS_CHANGE_PASSWORD_FULFILLED }) as const;
-export const usersChangePasswordRejected = (error: string) => ({ type: USERS_CHANGE_PASSWORD_REJECTED, error }) as const;
+export const usersChangePasswordPending = () => ({ type: USERS_CHANGE_PASSWORD_PENDING, payload: {} });
+export const usersChangePasswordFulfilled = () => ({ type: USERS_CHANGE_PASSWORD_FULFILLED, payload: {} });
+export const usersChangePasswordRejected = (error: string) => ({ type: USERS_CHANGE_PASSWORD_REJECTED, payload: { error } });
 
 // ---------------------------------------------------------------------------
 // Action union type

@@ -18,13 +18,13 @@ export const XBOX_SYNC_REJECTED = 'xbox/sync/rejected';
 // Action creators
 // ---------------------------------------------------------------------------
 
-export const xboxGetStatusPending = () => ({ type: XBOX_GET_STATUS_PENDING }) as const;
-export const xboxGetStatusFulfilled = (payload: PlatformSyncStatus) => ({ type: XBOX_GET_STATUS_FULFILLED, payload }) as const;
-export const xboxGetStatusRejected = (error: string) => ({ type: XBOX_GET_STATUS_REJECTED, error }) as const;
+export const xboxGetStatusPending = () => ({ type: XBOX_GET_STATUS_PENDING, payload: {} });
+export const xboxGetStatusFulfilled = (syncStatus: PlatformSyncStatus) => ({ type: XBOX_GET_STATUS_FULFILLED, payload: { syncStatus } });
+export const xboxGetStatusRejected = (error: string) => ({ type: XBOX_GET_STATUS_REJECTED, payload: { error } });
 
-export const xboxSyncPending = () => ({ type: XBOX_SYNC_PENDING }) as const;
-export const xboxSyncFulfilled = (payload: SyncXboxResponse) => ({ type: XBOX_SYNC_FULFILLED, payload }) as const;
-export const xboxSyncRejected = (error: string) => ({ type: XBOX_SYNC_REJECTED, error }) as const;
+export const xboxSyncPending = () => ({ type: XBOX_SYNC_PENDING, payload: {} });
+export const xboxSyncFulfilled = (syncResponse: SyncXboxResponse) => ({ type: XBOX_SYNC_FULFILLED, payload: { syncResponse } });
+export const xboxSyncRejected = (error: string) => ({ type: XBOX_SYNC_REJECTED, payload: { error } });
 
 // ---------------------------------------------------------------------------
 // Action union type

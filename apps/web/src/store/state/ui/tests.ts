@@ -7,7 +7,7 @@ import { selectHighlightedGameID, selectIsAIDrawerOpen, selectSelectedGameId, se
 // Helpers
 // ---------------------------------------------------------------------------
 
-const initialState = reducer(undefined, { type: '@@INIT' });
+const initialState = reducer(undefined, { type: '@@INIT' } as never);
 
 function makeRootState(overrides: Partial<UiState> = {}) {
   return { [UI_SLICE]: { ...initialState, ...overrides } };

@@ -1,49 +1,34 @@
 import { GameStatus, Genre, Platform, SortableField } from '@grimoire/shared';
 
+import {
+  FILTERS_RESET,
+  FILTERS_SET_GENRE,
+  FILTERS_SET_ORDER,
+  FILTERS_SET_PLATFORM,
+  FILTERS_SET_SEARCH,
+  FILTERS_SET_SORT_BY,
+  FILTERS_SET_STATUS,
+  type FiltersAction,
+  resetFilters,
+  setGenreFilter,
+  setOrder,
+  setPlatformFilter,
+  setSearch,
+  setSortBy,
+  setStatusFilter,
+} from '@/store/actions/filters';
+
+export {
+  resetFilters,
+  setGenreFilter,
+  setOrder,
+  setPlatformFilter,
+  setSearch,
+  setSortBy,
+  setStatusFilter,
+} from '@/store/actions/filters';
+
 export const FILTERS_SLICE = 'filters';
-
-// ---------------------------------------------------------------------------
-// Action type constants
-// ---------------------------------------------------------------------------
-
-export const FILTERS_SET_STATUS = 'filters/SET_STATUS';
-export const FILTERS_SET_GENRE = 'filters/SET_GENRE';
-export const FILTERS_SET_PLATFORM = 'filters/SET_PLATFORM';
-export const FILTERS_SET_SEARCH = 'filters/SET_SEARCH';
-export const FILTERS_SET_SORT_BY = 'filters/SET_SORT_BY';
-export const FILTERS_SET_ORDER = 'filters/SET_ORDER';
-export const FILTERS_RESET = 'filters/RESET';
-
-// ---------------------------------------------------------------------------
-// Action creators
-// ---------------------------------------------------------------------------
-
-export const setStatusFilter = (payload: GameStatus | null) => ({ type: FILTERS_SET_STATUS, payload }) as const;
-
-export const setGenreFilter = (payload: Genre | null) => ({ type: FILTERS_SET_GENRE, payload }) as const;
-
-export const setPlatformFilter = (payload: Platform | null) => ({ type: FILTERS_SET_PLATFORM, payload }) as const;
-
-export const setSearch = (payload: string) => ({ type: FILTERS_SET_SEARCH, payload }) as const;
-
-export const setSortBy = (payload: SortableField | null) => ({ type: FILTERS_SET_SORT_BY, payload }) as const;
-
-export const setOrder = (payload: 'asc' | 'desc') => ({ type: FILTERS_SET_ORDER, payload }) as const;
-
-export const resetFilters = () => ({ type: FILTERS_RESET }) as const;
-
-// ---------------------------------------------------------------------------
-// Action union type
-// ---------------------------------------------------------------------------
-
-export type FiltersAction =
-  | ReturnType<typeof setStatusFilter>
-  | ReturnType<typeof setGenreFilter>
-  | ReturnType<typeof setPlatformFilter>
-  | ReturnType<typeof setSearch>
-  | ReturnType<typeof setSortBy>
-  | ReturnType<typeof setOrder>
-  | ReturnType<typeof resetFilters>;
 
 // ---------------------------------------------------------------------------
 // State
@@ -67,31 +52,74 @@ const initialState: FiltersState = {
   order: 'asc',
 };
 
-// ---------------------------------------------------------------------------
-// Reducer
-// ---------------------------------------------------------------------------
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function filtersReducer(state = initialState, rawAction: any): FiltersState {
-  const action = rawAction as FiltersAction;
+export function filtersReducer(state = initialState, action: FiltersAction): FiltersState {
   switch (action.type) {
+    // setStatus
     case FILTERS_SET_STATUS:
-      return { ...state, status: action.payload };
+      return handleFiltersSetStatus(state, action as ReturnType<typeof setStatusFilter>);
+
+    // setGenre
     case FILTERS_SET_GENRE:
-      return { ...state, genre: action.payload };
+      return handleFiltersSetGenre(state, action as ReturnType<typeof setGenreFilter>);
+
+    // setPlatform
     case FILTERS_SET_PLATFORM:
-      return { ...state, platform: action.payload };
+      return handleFiltersSetPlatform(state, action as ReturnType<typeof setPlatformFilter>);
+
+    // setSearch
     case FILTERS_SET_SEARCH:
-      return { ...state, search: action.payload };
+      return handleFiltersSetSearch(state, action as ReturnType<typeof setSearch>);
+
+    // setSortBy
     case FILTERS_SET_SORT_BY:
-      return { ...state, sortBy: action.payload };
+      return handleFiltersSetSortBy(state, action as ReturnType<typeof setSortBy>);
+
+    // setOrder
     case FILTERS_SET_ORDER:
-      return { ...state, order: action.payload };
+      return handleFiltersSetOrder(state, action as ReturnType<typeof setOrder>);
+
+    // reset
     case FILTERS_RESET:
-      return initialState;
+      return handleFiltersReset(state, action as ReturnType<typeof resetFilters>);
+
     default:
       return state;
   }
+}
+
+// setStatus
+function handleFiltersSetStatus(state: FiltersState, action: ReturnType<typeof setStatusFilter>): FiltersState {
+  return { ...state, status: action.payload.gameStatus };
+}
+
+// setGenre
+function handleFiltersSetGenre(state: FiltersState, action: ReturnType<typeof setGenreFilter>): FiltersState {
+  return { ...state, genre: action.payload.genre };
+}
+
+// setPlatform
+function handleFiltersSetPlatform(state: FiltersState, action: ReturnType<typeof setPlatformFilter>): FiltersState {
+  return { ...state, platform: action.payload.platform };
+}
+
+// setSearch
+function handleFiltersSetSearch(state: FiltersState, action: ReturnType<typeof setSearch>): FiltersState {
+  return { ...state, search: action.payload.searchString };
+}
+
+// setSortBy
+function handleFiltersSetSortBy(state: FiltersState, action: ReturnType<typeof setSortBy>): FiltersState {
+  return { ...state, sortBy: action.payload.sortBy };
+}
+
+// setOrder
+function handleFiltersSetOrder(state: FiltersState, action: ReturnType<typeof setOrder>): FiltersState {
+  return { ...state, order: action.payload.order };
+}
+
+// reset
+function handleFiltersReset(_state: FiltersState, _action: ReturnType<typeof resetFilters>): FiltersState {
+  return initialState;
 }
 
 export default filtersReducer;

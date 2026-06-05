@@ -650,22 +650,36 @@ const STATUS_STYLES: Record<GameStatus, string> = {
 
 ### Actions file
 
+Three sections separated by `// ---` dividers: constants, creators, union type.
+
 ```ts
 // store/actions/auth.ts
 import type { Session } from '@/store/thunks/auth/types';
+
+// ---------------------------------------------------------------------------
+// Action type constants
+// ---------------------------------------------------------------------------
 
 export const AUTH_GET_SESSION_PENDING   = 'auth/getSession/pending';
 export const AUTH_GET_SESSION_FULFILLED = 'auth/getSession/fulfilled';
 export const AUTH_GET_SESSION_REJECTED  = 'auth/getSession/rejected';
 
-export const authGetSessionPending    = () => ({ type: AUTH_GET_SESSION_PENDING } as const);
-export const authGetSessionFulfilled  = (payload: Session | null) => ({ type: AUTH_GET_SESSION_FULFILLED, payload } as const);
-export const authGetSessionRejected   = (error: string) => ({ type: AUTH_GET_SESSION_REJECTED, error } as const);
+// ---------------------------------------------------------------------------
+// Action creators
+// ---------------------------------------------------------------------------
+
+export const authGetSessionPending    = () => ({ type: AUTH_GET_SESSION_PENDING, payload: {} });
+export const authGetSessionFulfilled  = (session: Session | null) => ({ type: AUTH_GET_SESSION_FULFILLED, payload: { session } });
+export const authGetSessionRejected   = (error: string) => ({ type: AUTH_GET_SESSION_REJECTED, payload: { error } });
+
+// ---------------------------------------------------------------------------
+// Action union type
+// ---------------------------------------------------------------------------
 
 export type AuthAction =
-  | ReturnType<typeof authGetSessionPending>
-  | ReturnType<typeof authGetSessionFulfilled>
-  | ReturnType<typeof authGetSessionRejected>;
+  ReturnType<typeof authGetSessionPending> &
+  ReturnType<typeof authGetSessionFulfilled> &
+  ReturnType<typeof authGetSessionRejected>;
 ```
 
 ### Thunk file
@@ -690,11 +704,23 @@ export const getSession = (): AppThunk => async (dispatch) => {
 
 ### Reducer file
 
+Switch cases delegate to named `handleXxx` functions — never inline state updates. Each `case` calls `handleXxx<Domain><Operation><Phase>` where Phase is `Start | Success | Failure`. Cases are grouped with `// operationName` section comments. Handler functions are typed with `ReturnType<typeof actionCreator>` for precise per-action typing.
+
 ```ts
 // store/state/auth/index.ts
 import { AsyncStatus } from '@grimoire/shared';
-import { AUTH_GET_SESSION_PENDING, AUTH_GET_SESSION_FULFILLED, AUTH_GET_SESSION_REJECTED, type AuthAction } from '@/store/actions/auth';
+import {
+  AUTH_GET_SESSION_PENDING,
+  AUTH_GET_SESSION_FULFILLED,
+  AUTH_GET_SESSION_REJECTED,
+  type AuthAction,
+  authGetSessionPending,
+  authGetSessionFulfilled,
+  authGetSessionRejected,
+} from '@/store/actions/auth';
 import type { Session } from '@/store/thunks/auth/types';
+
+export const AUTH_SLICE = 'auth';
 
 export interface AuthState {
   session: Session | null;
@@ -707,16 +733,31 @@ const initialState: AuthState = { session: null, isBootstrapped: false, status: 
 
 export function authReducer(state = initialState, action: AuthAction): AuthState {
   switch (action.type) {
+    // getSession
     case AUTH_GET_SESSION_PENDING:
-      return { ...state, status: AsyncStatus.Loading, error: null };
+      return handleAuthGetSessionStart(state, action);
     case AUTH_GET_SESSION_FULFILLED:
-      return { ...state, status: AsyncStatus.Succeeded, session: action.payload, isBootstrapped: true };
+      return handleAuthGetSessionSuccess(state, action);
     case AUTH_GET_SESSION_REJECTED:
-      return { ...state, status: AsyncStatus.Failed, error: action.error, isBootstrapped: true };
+      return handleAuthGetSessionFailure(state, action);
+
     default:
       return state;
   }
 }
+
+// getSession
+function handleAuthGetSessionStart(state: AuthState, _action: ReturnType<typeof authGetSessionPending>): AuthState {
+  return { ...state, status: AsyncStatus.Loading, error: null };
+}
+function handleAuthGetSessionSuccess(state: AuthState, action: ReturnType<typeof authGetSessionFulfilled>): AuthState {
+  return { ...state, status: AsyncStatus.Succeeded, session: action.payload.session, isBootstrapped: true };
+}
+function handleAuthGetSessionFailure(state: AuthState, action: ReturnType<typeof authGetSessionRejected>): AuthState {
+  return { ...state, status: AsyncStatus.Failed, error: action.payload.error, isBootstrapped: true };
+}
+
+export default authReducer;
 ```
 
 ### Selectors file
@@ -866,6 +907,9 @@ Before finalizing any component, verify all of the following:
 - [ ] `cn()` used for conditional class merging — never string concatenation
 - [ ] File ends with `export default ComponentName;` followed by a newline
 - [ ] Every reducer file exports a named `SCREAMING_SNAKE_CASE_SLICE` const; `combineReducers` uses it — no inline string literals
+- [ ] Reducer switch cases delegate to `handleXxx` functions — no inline state updates in case blocks
+- [ ] Handler functions typed with `ReturnType<typeof actionCreator>`, named `handle<Domain><Operation><Phase>`, defined after the reducer
+- [ ] Actions file has three `// ---` divider sections: constants → creators → union type; union type uses `&` (intersection of all `ReturnType<>`) not `|`; payload keys are always named (`{ payload: { session } }`, `{ payload: { error } }`) — never bare (`{ payload: session }`, `{ error }` top-level)
 - [ ] All route strings come from `ROUTES.XXX` imported from `@/constants/routes` — no inline `'/login'`, `'/'`, etc.
 - [ ] Parameterised navigation uses a helper from `routes.ts` (e.g. `getGameDetailsURL(id)`) — never inline string interpolation
 - [ ] `<Route path=...>` uses the raw `ROUTES.XXX` pattern constant — helpers are only for building actual navigation URLs
