@@ -1,14 +1,17 @@
 import { AI_RESPONSE_TYPE, ToolName, User, parseRecommendationMessage } from '@grimoire/shared';
 import { useCallback } from 'react';
 
-import { appendThought, appendToken, startStreaming, stopStreaming } from '@/store/aiSlice';
-import { resetFilters } from '@/store/filtersSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setHighlightedGameID } from '@/store/uiSlice';
+import { appendThought, appendToken, startStreaming, stopStreaming } from '@/store/state/ai/index';
+import { selectDesiredPlatform, selectSelectedMoods, selectSessionLengthMinutes } from '@/store/state/ai/selectors';
+import { resetFilters } from '@/store/state/filters/index';
+import { setHighlightedGameID } from '@/store/state/ui/index';
 
 export function useAiStream(me: User | undefined) {
   const dispatch = useAppDispatch();
-  const { selectedMoods, sessionLengthMinutes, desiredPlatform } = useAppSelector((s) => s.ai);
+  const selectedMoods = useAppSelector(selectSelectedMoods);
+  const sessionLengthMinutes = useAppSelector(selectSessionLengthMinutes);
+  const desiredPlatform = useAppSelector(selectDesiredPlatform);
 
   const streamRecommendation = useCallback(
     async function fetchRecommendationStream() {

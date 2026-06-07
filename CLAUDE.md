@@ -77,33 +77,49 @@ Auth is handled by **Better Auth** (not Passport). All protected routes use `Aut
 ### Frontend (`apps/web`)
 
 Role-based layout:
-- `src/api/` — all RTK Query slices, one file per backend module (flat, never nested)
-- `src/store/` — Redux slices for client state (`filtersSlice`, `aiSlice`, `uiSlice`, `gamesSlice`)
+- `src/store/` — all state management (see structure below)
 - `src/components/` — shared/cross-page components + all Shadcn/ui primitives in `components/ui/`
 - `src/pages/` — one folder per route; page-specific sub-components co-located in `pages/XxxPage/components/`
 - `src/hooks/` — shared custom hooks
 
 Every route string lives in `src/constants/routes.ts` — use `ROUTES.XXX` everywhere, never inline strings. Parameterised URLs use a helper exported from the same file (e.g. `getGameDetailsURL(id)`).
 
-### RTK Query ↔ Redux slice sync
+### Store structure
 
-RTK Query's `onQueryStarted` and `extraReducers.matchFulfilled` only fire on network requests — **not cache hits**. Cache hits bypass them entirely.
+Plain Redux (no RTK) + `redux-thunk` + `reselect`. No `@reduxjs/toolkit`.
 
-The pattern used here:
-1. `gamesSlice.ts` has `extraReducers` with string-based matchers (avoids a circular import with `gamesApi.ts`):
-   ```ts
-   .addMatcher(
-     (action) => action.type === 'api/executeQuery/fulfilled' && action.meta?.arg?.endpointName === 'getGames',
-     (state, action) => { state.games = action.payload; ... }
-   )
-   ```
-2. `useSliceSync(queryHook, args, actionCreator)` — a hook in `src/hooks/useSliceSync.ts` that calls the RTK hook internally and dispatches to the slice via `useEffect` on `data`. This handles cache hits. Both paths fire on network requests (harmless double-dispatch of the same data).
+```
+store/
+  actions/<domain>.ts       — action type constants + action creator functions + union type
+  state/<domain>/
+    index.ts                — plain reducer (switch statement)
+    selectors.ts            — reselect createSelector selectors
+    tests.ts                — reducer + selector tests using factories
+  thunks/<domain>/
+    index.ts                — ALL fetch/API calls via plain thunk functions
+    types.ts                — arg/return types for each thunk
+  middleware/<domain>/
+    index.ts                — logging/analytics/socket side-effects
+  state/shared.ts           — re-exports AsyncStatus from @grimoire/shared
+  hooks.ts                  — typed useAppDispatch / useAppSelector
+  store.ts                  — createStore + combineReducers + applyMiddleware(thunk)
+```
 
-Use this pattern for any query that needs to sync into a Redux slice.
+**Layer rules:**
+- All network calls live in `thunks/<domain>/index.ts` — nowhere else. Thunks dispatch pending/fulfilled/rejected action creators from `actions/<domain>.ts`.
+- Reducers are pure switch-statement functions. No mutation — always return new state. Switch cases delegate to named `handleXxx` functions; never inline state updates in cases.
+- Selectors use `createSelector` from `reselect`. Parameterized selectors are factory functions.
+- `actions/<domain>.ts` exports string constants, action creators, and a union `XxxAction` type used by the reducer's `action` parameter. File is divided into three sections with `// ---` dividers: constants, creators, union type. Action creators always wrap data in named payload keys — `{ payload: { session } }`, `{ payload: { error } }` — never bare top-level fields (`{ error }`) or an unwrapped payload (`{ payload: session }`). The `XxxAction` union uses `&` (intersection of all `ReturnType<>`) not `|`.
+
+**Reducer handler convention:**
+- Each `case` calls a dedicated `handle<Domain><Operation><Phase>` function (Phase = `Start | Success | Failure`).
+- Cases are grouped with `// operationName` section comments matching the thunk name.
+- Handler functions are typed: `(state: XxxState, action: ReturnType<typeof actionCreator>): XxxState`.
+- Handler functions are defined after the reducer function, grouped by operation with a matching `// operationName` comment.
 
 ### Container / page split
 
-Pages follow a container pattern: `XxxPageContainer.tsx` owns all hooks, RTK Query calls, and Redux state; `XxxPage.tsx` is purely presentational. This keeps pages testable and logic co-located.
+Pages follow a container pattern: `XxxPageContainer.tsx` owns all hooks, dispatch calls, and Redux state; `XxxPage.tsx` is purely presentational. This keeps pages testable and logic co-located.
 
 ### JSX conventions — lean return / render-function pattern
 
@@ -143,14 +159,9 @@ Use `useIsMobile()` hook (`src/hooks/useMobile.ts`, breakpoint 768 px) when the 
 - Zod schemas (`schemas/`) — used for validation in both API (`ZodValidationPipe`) and web (form validation)
 - TypeScript types (`types/`) — `UserGame`, `PlaySession`, `GameStatus`, etc.
 - Constants/enums (`constants/`) — `Genre`, `Platform`, mood tags
+- `enums/asyncStatus.ts` — `AsyncStatus` enum (`Idle | Loading | Succeeded | Failed`)
 
 Build shared first when working locally: `pnpm --filter shared build` (or `dev` for watch mode).
-
-### RTK Query API file conventions
-
-File layout: shared imports → base API import (`./api`, not `@/`) → type definitions → `BASE_URL_PATH` const → `api.injectEndpoints(...)` → hook exports. API files are `.ts` never `.tsx`.
-
-Tag types: `'Game' | 'Session' | 'User' | 'AdminUser' | 'Stats'`
 
 ---
 

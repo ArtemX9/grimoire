@@ -1,16 +1,30 @@
-import { IgdbGame, UnmappedGame } from '@grimoire/shared';
-import { useState } from 'react';
+import { AsyncStatus, IgdbGame, UnmappedGame } from '@grimoire/shared';
+import { useEffect, useState } from 'react';
 
-import { useDeleteUnmappedGame, useGetUnmappedGames, useMapUnmappedGame } from '@/api/unmappedGames';
 import { toast } from '@/components/ui/use-toast';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import {
+  selectUnmappedGames,
+  selectUnmappedGamesFetchStatus,
+  selectUnmappedGamesMutationStatus,
+} from '@/store/state/unmappedGames/selectors';
+import { deleteUnmappedGame, getUnmappedGames, mapUnmappedGame } from '@/store/thunks/unmappedGames/index';
 
 import UnmappedGamesPage from './UnmappedGamesPage';
 
 function UnmappedGamesPageContainer() {
-  const { data: games = [], isLoading } = useGetUnmappedGames({});
-  const mapUnmappedGameMutation = useMapUnmappedGame();
-  const deleteUnmappedGameMutation = useDeleteUnmappedGame();
+  const dispatch = useAppDispatch();
+
+  const games = useAppSelector(selectUnmappedGames);
+  const fetchStatus = useAppSelector(selectUnmappedGamesFetchStatus);
+  const mutationStatus = useAppSelector(selectUnmappedGamesMutationStatus);
+  const isLoading = fetchStatus === AsyncStatus.Loading;
+
   const [mappingGame, setMappingGame] = useState<UnmappedGame | null>(null);
+
+  useEffect(function fetchUnmappedGamesOnMount() {
+    dispatch(getUnmappedGames({}));
+  }, []);
 
   function handleMapClick(game: UnmappedGame) {
     setMappingGame(game);
@@ -18,7 +32,7 @@ function UnmappedGamesPageContainer() {
 
   async function handleDeleteClick(game: UnmappedGame) {
     try {
-      await deleteUnmappedGameMutation.mutateAsync(game.id);
+      await dispatch(deleteUnmappedGame(game.id));
       toast({ title: 'Game deleted' });
     } catch {
       toast({ title: 'Failed to delete game', variant: 'destructive' });
@@ -33,24 +47,26 @@ function UnmappedGamesPageContainer() {
     if (!mappingGame) return;
 
     try {
-      await mapUnmappedGameMutation.mutateAsync({
-        id: mappingGame.id,
-        body: {
-          syncedGameID: mappingGame.syncedGameID,
-          isMapped: true,
-          platformID: mappingGame.platform.id,
-          igdbInfo: {
-            id: igdbGame.id,
-            title: igdbGame.name,
-            genres: igdbGame.genres ?? [],
-            themes: igdbGame.themes ?? [],
-            releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : new Date(0),
-            coverUrl: igdbGame.cover,
-            summary: igdbGame.summary,
-            storyLine: igdbGame.storyline,
+      await dispatch(
+        mapUnmappedGame({
+          id: mappingGame.id,
+          body: {
+            syncedGameID: mappingGame.syncedGameID,
+            isMapped: true,
+            platformID: mappingGame.platform.id,
+            igdbInfo: {
+              id: igdbGame.id,
+              title: igdbGame.name,
+              genres: igdbGame.genres ?? [],
+              themes: igdbGame.themes ?? [],
+              releaseDate: igdbGame.first_release_date ? new Date(igdbGame.first_release_date * 1000) : new Date(0),
+              coverUrl: igdbGame.cover,
+              summary: igdbGame.summary,
+              storyLine: igdbGame.storyline,
+            },
           },
-        },
-      });
+        }),
+      );
       toast({ title: 'Game mapped successfully' });
       setMappingGame(null);
       onSuccessCallback();

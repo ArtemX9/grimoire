@@ -1,51 +1,42 @@
-import { Platform } from '@grimoire/shared';
+import { AsyncStatus, Platform } from '@grimoire/shared';
 import { AlertCircle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
 
-import { useConnectPSN, useGetPSNStatus, useSyncPSN } from '@/api/playstation';
 import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/use-toast';
 import { cn } from '@/utils/cn';
 
-export function PSNRow() {
-  const { data: status, isLoading: isStatusLoading } = useGetPSNStatus();
-  const connectPSNMutation = useConnectPSN();
-  const isConnecting = connectPSNMutation.isPending;
-  const syncPSNMutation = useSyncPSN();
-  const isSyncing = syncPSNMutation.isPending;
-  const [usernameInput, setUsernameInput] = useState('');
-  const [showInput, setShowInput] = useState(false);
+interface IPSNRow {
+  status: { connected: boolean; externalID?: string; isSyncing?: boolean; lastSyncAt?: Date | null } | null;
+  fetchStatus: AsyncStatus;
+  isConnecting: boolean;
+  isSyncing: boolean;
+  connected: boolean;
+  usernameInput: string;
+  showInput: boolean;
+  onUsernameChange: (value: string) => void;
+  onShowInput: () => void;
+  onHideInput: () => void;
+  onConnect: () => void;
+  onSync: () => void;
+}
 
-  const connected = status?.connected ?? false;
-
-  async function handleConnect() {
-    if (!usernameInput.trim()) return;
-    try {
-      await connectPSNMutation.mutateAsync({ username: usernameInput.trim() });
-      toast({ title: 'PlayStation Network account connected' });
-      setShowInput(false);
-      setUsernameInput('');
-    } catch (error) {
-      const backendMessage = (error as { data?: { error?: { message?: string } } })?.data?.error?.message;
-      toast({
-        title: 'Failed to connect PlayStation Network',
-        description: backendMessage ?? 'An unexpected error occurred. Please try again.',
-        variant: 'destructive',
-      });
-    }
-  }
-
-  async function handleSync() {
-    try {
-      await syncPSNMutation.mutateAsync();
-      toast({ title: 'PlayStation sync started — this may take a moment' });
-    } catch {
-      toast({ title: 'Failed to start sync', variant: 'destructive' });
-    }
-  }
+function PSNRow({
+  status,
+  fetchStatus,
+  isConnecting,
+  isSyncing,
+  connected,
+  usernameInput,
+  showInput,
+  onUsernameChange,
+  onShowInput,
+  onHideInput,
+  onConnect,
+  onSync,
+}: IPSNRow) {
+  const isStatusLoading = fetchStatus === AsyncStatus.Loading;
 
   return (
     <div className='flex flex-col gap-3 px-4 py-4'>
@@ -94,7 +85,7 @@ export function PSNRow() {
     if (connected) {
       return (
         <button
-          onClick={handleSync}
+          onClick={onSync}
           disabled={isSyncing}
           className={cn(
             'flex items-center gap-1.5 rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink disabled:opacity-50',
@@ -108,7 +99,7 @@ export function PSNRow() {
     if (!showInput) {
       return (
         <button
-          onClick={() => setShowInput(true)}
+          onClick={onShowInput}
           className='rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
         >
           Connect
@@ -158,15 +149,15 @@ export function PSNRow() {
       <div className='flex gap-2'>
         <Input
           value={usernameInput}
-          onChange={(e) => setUsernameInput(e.target.value)}
+          onChange={(e) => onUsernameChange(e.target.value)}
           placeholder='Your PSN username'
           autoFocus
-          onKeyDown={(e) => e.key === 'Enter' && handleConnect()}
+          onKeyDown={(e) => e.key === 'Enter' && onConnect()}
         />
-        <Button size='sm' onClick={handleConnect} disabled={isConnecting || !usernameInput.trim()}>
+        <Button size='sm' onClick={onConnect} disabled={isConnecting || !usernameInput.trim()}>
           {isConnecting ? 'Connecting…' : 'Save'}
         </Button>
-        <Button variant='ghost' size='sm' onClick={() => setShowInput(false)}>
+        <Button variant='ghost' size='sm' onClick={onHideInput}>
           Cancel
         </Button>
       </div>

@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
 import { Plan, Role, User } from '@grimoire/shared';
 
-import type { AdminUserRow } from '@/api/admin';
-import type { Session } from '@/api/auth';
+import type { Session } from '@/store/state/auth/index';
+import type { AdminUserRow } from '@/store/thunks/admin/types';
 
 // ---------------------------------------------------------------------------
 // User (shared type)
@@ -35,7 +35,7 @@ export function generateUser(params: IGenerateUser = {}): User {
 }
 
 // ---------------------------------------------------------------------------
-// Session (authApi type — the shape returned by /auth/get-session)
+// Session (auth state type — the shape returned by /auth/get-session)
 // ---------------------------------------------------------------------------
 
 export interface IGenerateSession {
@@ -63,7 +63,7 @@ export function generateSession(params: IGenerateSession = {}): Session {
 }
 
 // ---------------------------------------------------------------------------
-// AdminUserRow (adminApi type — the shape used in the admin dashboard)
+// AdminUserRow (admin thunk type — the shape used in the admin dashboard)
 // ---------------------------------------------------------------------------
 
 export interface IGenerateAdminUserRow {

@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { GameStatus, Genre, Platform, SortableField } from '@grimoire/shared';
+import { GameStatus, Genre, Mood, Platform, SortableField, Theme } from '@grimoire/shared';
 
 import { generateGameResponse, generateUser } from '../../test';
 import { GamesController } from './games.controller';
@@ -209,8 +209,9 @@ describe('GamesController', () => {
       storyLine: 'Geralt hunts a monster.',
       releaseDate: new Date('2015-05-19T00:00:00Z'),
       genres: [Genre.RPG],
+      themes: [Theme.Action],
       status: GameStatus.BACKLOG,
-      moods: [] as string[],
+      moods: [] as Mood[],
     };
 
     it('delegates to gamesService.addManually with the user id and validated body', async () => {
@@ -292,7 +293,7 @@ describe('GamesController', () => {
   // ---------------------------------------------------------------------------
 
   describe('remap', () => {
-    const body = { id: 'game-1', igdbId: 99999, title: 'New Title', genres: [Genre.RPG] };
+    const body = { id: 'game-1', igdbId: 99999, title: 'New Title', genres: [Genre.RPG], themes: [Theme.Action] };
 
     it('delegates to gamesService.remap with user id, game id, and body', async () => {
       const user = generateUser({ id: 'user-1' });

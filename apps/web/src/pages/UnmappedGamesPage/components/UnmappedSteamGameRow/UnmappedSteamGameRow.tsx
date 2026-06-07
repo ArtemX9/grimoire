@@ -1,6 +1,6 @@
 import { UnmappedGame } from '@grimoire/shared';
 
-import UnmappedGameRow from '../UnmappedGameRow/UnmappedGameRow';
+import UnmappedGameRow from '@/pages/UnmappedGamesPage/components/UnmappedGameRow/UnmappedGameRow';
 
 interface IUnmappedSteamGameRow {
   game: UnmappedGame;

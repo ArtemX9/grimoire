@@ -151,12 +151,21 @@ model UserPlatform {
 }
 
 model Platforms {
-  id            Int            @id @default(autoincrement())
-  platform      PlatformTitle
-  userPlatforms UserPlatform[]
-  syncedGames   SyncedGame[]
+  id              Int               @id @default(autoincrement())
+  platform        PlatformTitle
+  userPlatforms   UserPlatform[]
+  syncedGames     SyncedGame[]
+  platformsTokens PlatformsTokens?
 
   @@unique([platform])
+}
+
+model PlatformsTokens {
+  id        Int       @id
+  token     String
+  dateFrame Int
+  dateSet   DateTime
+  platform  Platforms @relation(fields: [id], references: [id], onDelete: Cascade)
 }
 
 enum PlatformTitle {

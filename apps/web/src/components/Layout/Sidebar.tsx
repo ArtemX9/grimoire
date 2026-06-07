@@ -1,12 +1,7 @@
 import { AlertTriangle, BookOpen, Library, Settings, Sparkles } from 'lucide-react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
-import { useSession } from '@/api/auth';
-import { useGetUnmappedGames } from '@/api/unmappedGames';
 import { ROUTES } from '@/constants/routes';
-import { useIsMobile } from '@/hooks/useMobile';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { toggleAIDrawer } from '@/store/uiSlice';
 import { cn } from '@/utils/cn';
 
 const NAV_ITEMS = [
@@ -15,25 +10,16 @@ const NAV_ITEMS = [
   { to: ROUTES.USER_SETTINGS, label: 'Settings', icon: Settings },
 ] as const;
 
-function Sidebar() {
-  const isMobile = useIsMobile();
-  const dispatch = useAppDispatch();
-  const isAIDrawerOpen = useAppSelector((s) => s.ui.isAIDrawerOpen);
-  const sessionQuery = useSession();
-  const aiEnabled = sessionQuery.data?.user.aiEnabled ?? false;
-  const navigate = useNavigate();
-  const location = useLocation();
+interface ISidebar {
+  isMobile: boolean;
+  isAIDrawerOpen: boolean;
+  aiEnabled: boolean;
+  unresolvedCount: number;
+  onAIClick: () => void;
+}
 
-  const { data: unmappedGames } = useGetUnmappedGames({});
-  const unresolvedCount = unmappedGames?.length ?? 0;
+function Sidebar({ isMobile, isAIDrawerOpen, aiEnabled, unresolvedCount, onAIClick }: ISidebar) {
   const unresolvedBadgeLabel = unresolvedCount > 99 ? '99+' : String(unresolvedCount);
-
-  function handleAIClick() {
-    if (location.pathname !== ROUTES.DEFAULT) {
-      navigate(ROUTES.DEFAULT);
-    }
-    dispatch(toggleAIDrawer());
-  }
 
   if (isMobile) return renderMobileNav();
 
@@ -43,7 +29,7 @@ function Sidebar() {
     if (unresolvedCount === 0) return null;
 
     return (
-      <span className='absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-0.5 font-sans text-[9px] font-medium leading-none text-white'>
+      <span className='absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-grimoire-status-dropped-bg px-0.5 font-sans text-[9px] font-medium leading-none text-grimoire-status-dropped-text'>
         {unresolvedBadgeLabel}
       </span>
     );
@@ -76,7 +62,7 @@ function Sidebar() {
         ))}
         {aiEnabled && (
           <button
-            onClick={handleAIClick}
+            onClick={onAIClick}
             aria-label='Open AI recommendations'
             className={cn(
               'flex flex-col items-center gap-1 px-6 py-3 font-sans text-[10px] transition-colors',
@@ -136,7 +122,7 @@ function Sidebar() {
         ))}
         {aiEnabled && (
           <button
-            onClick={handleAIClick}
+            onClick={onAIClick}
             aria-label='Open AI recommendations'
             className={cn(
               'flex lg:hidden items-center gap-3 rounded px-2 py-2 font-sans text-sm transition-colors',

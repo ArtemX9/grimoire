@@ -249,10 +249,7 @@ describe('SessionsService', () => {
       const created = makeSession({ durationMin: 120 });
       (prisma.$transaction as jest.Mock).mockResolvedValue([created, {}]);
 
-      // Capture what was passed to $transaction so we can inspect the operations.
-      let capturedOps: unknown[] | undefined;
-      (prisma.$transaction as jest.Mock).mockImplementation((ops: unknown[]) => {
-        capturedOps = ops;
+      (prisma.$transaction as jest.Mock).mockImplementation((_ops: unknown[]) => {
         return Promise.resolve([created, {}]);
       });
 

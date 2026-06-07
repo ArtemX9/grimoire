@@ -1,8 +1,10 @@
-import { GameStatus, IgdbGame } from '@grimoire/shared';
+import { AsyncStatus, GameStatus, IgdbGame } from '@grimoire/shared';
 import { useEffect, useState } from 'react';
 
-import { useSearchIgdb } from '@/api/igdb';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { selectIgdbSearchResults, selectIgdbSearchStatus } from '@/store/state/igdb/selectors';
+import { searchIgdb } from '@/store/thunks/igdb/index';
 
 import IGDBGameSearchDialog from './IGDBGameSearchDialog';
 
@@ -29,9 +31,14 @@ function IGDBGameSearchDialogContainer({
   onGameSelect,
   onOpenChange,
 }: IAddGameDialogContainer) {
+  const dispatch = useAppDispatch();
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery ?? '');
   const [isLoading, setIsLoading] = useState(false);
   const debouncedQuery = useDebounce(searchQuery, 1000);
+
+  const searchResults = useAppSelector(selectIgdbSearchResults);
+  const searchStatus = useAppSelector(selectIgdbSearchStatus);
+  const isSearching = searchStatus === AsyncStatus.Loading;
 
   useEffect(
     function resetOnOpen() {
@@ -42,7 +49,14 @@ function IGDBGameSearchDialogContainer({
     [open], // intentionally only [open] — we want to reset on each open, not on every prop change while open
   );
 
-  const { data: searchResults = [], isFetching: isSearching } = useSearchIgdb(debouncedQuery);
+  useEffect(
+    function triggerSearch() {
+      if (debouncedQuery.length >= 2) {
+        dispatch(searchIgdb({ query: debouncedQuery }));
+      }
+    },
+    [debouncedQuery],
+  );
 
   function handleOpenChange(open: boolean) {
     if (!open) {

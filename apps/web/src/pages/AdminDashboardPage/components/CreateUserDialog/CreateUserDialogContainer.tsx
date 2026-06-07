@@ -1,6 +1,8 @@
 import { useState } from 'react';
 
-import { CreateUserArgs, useCreateAdminUser } from '@/api/admin';
+import { useAppDispatch } from '@/store/hooks';
+import { createAdminUser } from '@/store/thunks/admin/index';
+import type { CreateUserArgs } from '@/store/thunks/admin/types';
 
 import { CreateUserDialog } from './CreateUserDialog';
 
@@ -10,14 +12,15 @@ interface ICreateUserDialogContainer {
 }
 
 export function CreateUserDialogContainer({ open, onClose }: ICreateUserDialogContainer) {
-  const createUserMutation = useCreateAdminUser();
-  const isLoading = createUserMutation.isPending;
+  const dispatch = useAppDispatch();
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   async function handleSubmit(args: CreateUserArgs) {
     setError('');
+    setIsLoading(true);
     try {
-      await createUserMutation.mutateAsync(args);
+      await dispatch(createAdminUser(args));
       onClose();
     } catch (err: unknown) {
       const status = (err as { status?: number })?.status;
@@ -26,6 +29,8 @@ export function CreateUserDialogContainer({ open, onClose }: ICreateUserDialogCo
       } else {
         setError('Could not create user. Please try again.');
       }
+    } finally {
+      setIsLoading(false);
     }
   }
 

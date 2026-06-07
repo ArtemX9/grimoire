@@ -30,6 +30,11 @@ export const UpdateUserAiSchema = z.object({
   aiRequestsLimit: z.number().int().min(0).nullable(),
 });
 
+export const UpdatePlatformTokenInfo = z.object({
+  token: z.string().min(1),
+  tokenValidityFrame: z.number().min(1)
+})
+
 export const ListUsersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
@@ -51,3 +56,4 @@ export type UpdateUserAiDto = z.infer<typeof UpdateUserAiSchema>;
 export type ListUsersQuery = z.infer<typeof ListUsersQuerySchema>;
 export type UpdateUserPlanDto = z.infer<typeof UpdateUserPlanSchema>;
 export type UpdateUserRoleDto = z.infer<typeof UpdateUserRoleSchema>;
+export type UpdatePlatformTokenInfoDto = z.infer<typeof UpdatePlatformTokenInfo>;

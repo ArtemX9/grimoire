@@ -1,12 +1,15 @@
-import { Role } from '@grimoire/shared';
+import { Platform, Role } from '@grimoire/shared';
+import { Link } from 'react-router-dom';
 
-import { AdminUserRow } from '@/api/admin';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ROUTES } from '@/constants/routes';
 import { CreateUserDialogContainer } from '@/pages/AdminDashboardPage/components/CreateUserDialog/CreateUserDialogContainer';
+import PlatformRow from '@/pages/AdminDashboardPage/components/PlatformRow/PlatformRow';
 import { UserRow } from '@/pages/AdminDashboardPage/components/UserRow/UserRow';
+import type { AdminUserRow, PlatformTokenInfo } from '@/store/thunks/admin/types';
 
 interface IAdminDashboard {
   users: AdminUserRow[];
@@ -14,6 +17,7 @@ interface IAdminDashboard {
   globalAiEnabled: boolean;
   isCreateDialogOpen: boolean;
   currentUserID: string | null;
+  platformsTokens?: PlatformTokenInfo;
   onToggleGlobalAi: (enabled: boolean) => void;
   onDeleteUser: (id: string) => void;
   onAiEnabledChange: (id: string, enabled: boolean) => void;
@@ -22,6 +26,7 @@ interface IAdminDashboard {
   onRoleChange: (userID: string, role: Role) => void;
   onOpenCreateDialog: () => void;
   onCloseCreateDialog: () => void;
+  onPlatformTokenUpdate: (platformID: Platform, newToken: string, newValidityFrame: number) => void;
 }
 
 export function AdminDashboard({
@@ -30,6 +35,7 @@ export function AdminDashboard({
   globalAiEnabled,
   isCreateDialogOpen,
   currentUserID,
+  platformsTokens,
   onToggleGlobalAi,
   onDeleteUser,
   onAiEnabledChange,
@@ -38,12 +44,14 @@ export function AdminDashboard({
   onRoleChange,
   onOpenCreateDialog,
   onCloseCreateDialog,
+  onPlatformTokenUpdate,
 }: IAdminDashboard) {
   return (
     <div className='flex flex-col gap-6 p-6'>
       {renderHeader()}
       {renderAiGlobalToggle()}
-      {renderTable()}
+      {renderUsers()}
+      {renderPlatformsTokens()}
       <CreateUserDialogContainer open={isCreateDialogOpen} onClose={onCloseCreateDialog} />
     </div>
   );
@@ -52,9 +60,7 @@ export function AdminDashboard({
     return (
       <div className='flex items-center justify-between'>
         <h1 className='font-grimoire text-xl text-grimoire-ink'>Admin</h1>
-        <Button onClick={onOpenCreateDialog} className='bg-grimoire-gold text-grimoire-deep hover:bg-grimoire-gold-bright'>
-          Create user
-        </Button>
+        <Link to={ROUTES.DEFAULT} className='font-sans text-sm text-grimoire-muted transition-colors hover:text-grimoire-ink'>Dashboard</Link>
       </div>
     );
   }
@@ -69,9 +75,14 @@ export function AdminDashboard({
     );
   }
 
-  function renderTable() {
+  function renderUsers() {
     return (
       <div className='rounded border border-grimoire-border bg-grimoire-card'>
+        <div className='flex p-2 '>
+          <Button onClick={onOpenCreateDialog} className='bg-grimoire-gold text-grimoire-deep hover:bg-grimoire-gold-bright'>
+            Create user
+          </Button>
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
@@ -102,6 +113,41 @@ export function AdminDashboard({
                   onRoleChange={onRoleChange}
                 />
               ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  }
+
+  function renderPlatformsTokens() {
+    return (
+      <div className='rounded border border-grimoire-border bg-grimoire-card'>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Platform</TableHead>
+              <TableHead>Is Token Valid</TableHead>
+              <TableHead>Days Before Expiry</TableHead>
+              <TableHead>Token</TableHead>
+              <TableHead>Token Updated Date</TableHead>
+              <TableHead>Token Expiration Frame</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading && renderSkeletonRows()}
+            {!isLoading && (
+              <PlatformRow
+                key={Platform.PlayStation}
+                platformName={Platform.PlayStation}
+                exists={!!platformsTokens?.[Platform.PlayStation]}
+                isLoading={platformsTokens?.[Platform.PlayStation]?.isLoading ?? false}
+                token={platformsTokens?.[Platform.PlayStation]?.token ?? ''}
+                tokenUpdateDate={platformsTokens?.[Platform.PlayStation]?.dateSet ?? new Date()}
+                tokenValidityFrame={platformsTokens?.[Platform.PlayStation]?.tokenValidityFrame ?? 30}
+                onPlatformRowUpdate={onPlatformTokenUpdate.bind(null, Platform.PlayStation)}
+              />
+            )}
           </TableBody>
         </Table>
       </div>

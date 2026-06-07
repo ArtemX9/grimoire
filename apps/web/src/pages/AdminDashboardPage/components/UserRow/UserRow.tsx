@@ -2,7 +2,6 @@ import { Plan, Role } from '@grimoire/shared';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { AdminUserRow } from '@/api/admin';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { TableCell, TableRow } from '@/components/ui/table';
+import type { AdminUserRow } from '@/store/thunks/admin/types';
 import { cn } from '@/utils/cn';
 
 const ROLE_STYLES: Record<Role, string> = {
@@ -194,7 +194,7 @@ export function UserRow({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => onDelete(user.id)}>Delete</AlertDialogAction>
+              <AlertDialogAction onClick={onDelete.bind(null, user.id)}>Delete</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

@@ -1,15 +1,24 @@
+import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
-import { useSession } from '@/api/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ROUTES } from '@/constants/routes';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { selectIsBootstrapped, selectMustChangePassword, selectSession } from '@/store/state/auth/selectors';
+import { getSession } from '@/store/thunks/auth/index';
 
 export function ProtectedRoute() {
-  const sessionQuery = useSession();
+  const dispatch = useAppDispatch();
+  const isBootstrapped = useAppSelector(selectIsBootstrapped);
+  const session = useAppSelector(selectSession);
+  const mustChangePassword = useAppSelector(selectMustChangePassword);
   const location = useLocation();
 
-  const isBootstrapped = sessionQuery.status !== 'pending';
-  const session = sessionQuery.data;
+  useEffect(function bootstrapSession() {
+    if (!isBootstrapped) {
+      dispatch(getSession());
+    }
+  }, []);
 
   if (!isBootstrapped) {
     return renderLoadingSkeleton();
@@ -19,7 +28,7 @@ export function ProtectedRoute() {
     return <Navigate to={ROUTES.LOGIN} replace />;
   }
 
-  if (session.user.mustChangePassword && location.pathname !== ROUTES.CHANGE_PASSWORD) {
+  if (mustChangePassword && location.pathname !== ROUTES.CHANGE_PASSWORD) {
     return <Navigate to={ROUTES.CHANGE_PASSWORD} replace />;
   }
 

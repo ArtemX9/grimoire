@@ -1,39 +1,30 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-
-import { useChangePassword } from '@/api/users';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ROUTES } from '@/constants/routes';
 
-export function ChangePasswordPage() {
-  const navigate = useNavigate();
-  const changePasswordMutation = useChangePassword();
-  const isLoading = changePasswordMutation.isPending;
+interface IChangePasswordPage {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+  error: string;
+  isLoading: boolean;
+  onCurrentPasswordChange: (value: string) => void;
+  onNewPasswordChange: (value: string) => void;
+  onConfirmPasswordChange: (value: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+}
 
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-
-    if (newPassword !== confirmPassword) {
-      setError('New passwords do not match.');
-      return;
-    }
-
-    try {
-      await changePasswordMutation.mutateAsync({ currentPassword, newPassword });
-      navigate(ROUTES.DEFAULT, { replace: true });
-    } catch {
-      setError('Could not change password. Please check your current password and try again.');
-    }
-  }
-
+export function ChangePasswordPage({
+  currentPassword,
+  newPassword,
+  confirmPassword,
+  error,
+  isLoading,
+  onCurrentPasswordChange,
+  onNewPasswordChange,
+  onConfirmPasswordChange,
+  onSubmit,
+}: IChangePasswordPage) {
   return (
     <div className='flex min-h-screen items-center justify-center bg-grimoire-deep px-4'>
       <div className='w-full max-w-sm'>
@@ -60,7 +51,7 @@ export function ChangePasswordPage() {
           <CardDescription>Your administrator has created this account. Choose a password before continuing.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
+          <form onSubmit={onSubmit} className='flex flex-col gap-3'>
             {renderCurrentPasswordField()}
             {renderNewPasswordField()}
             {renderConfirmPasswordField()}
@@ -85,7 +76,7 @@ export function ChangePasswordPage() {
           type='password'
           placeholder='••••••••'
           value={currentPassword}
-          onChange={(e) => setCurrentPassword(e.target.value)}
+          onChange={(e) => onCurrentPasswordChange(e.target.value)}
           required
           autoComplete='current-password'
         />
@@ -104,7 +95,7 @@ export function ChangePasswordPage() {
           type='password'
           placeholder='••••••••'
           value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
+          onChange={(e) => onNewPasswordChange(e.target.value)}
           required
           autoComplete='new-password'
           minLength={8}
@@ -124,7 +115,7 @@ export function ChangePasswordPage() {
           type='password'
           placeholder='••••••••'
           value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          onChange={(e) => onConfirmPasswordChange(e.target.value)}
           required
           autoComplete='new-password'
           minLength={8}

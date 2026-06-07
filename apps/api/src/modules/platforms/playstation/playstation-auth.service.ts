@@ -8,6 +8,10 @@ import {
   exchangeRefreshTokenForAuthTokens,
 } from 'psn-api';
 
+import { PrismaService } from '../../../prisma/prisma.service';
+import { EncryptorService } from '../../encryptor/encryptor.service';
+import { PLATFORM_ID_PLAYSTATION } from './constants';
+
 @Injectable()
 export class PlaystationAuthService implements OnModuleInit {
   private readonly logger = new Logger(PlaystationAuthService.name);
@@ -17,13 +21,24 @@ export class PlaystationAuthService implements OnModuleInit {
   private tokenExpiry: number = 0;
   private initialized = false;
 
-  constructor(private config: ConfigService) {}
+  constructor(
+    private prisma: PrismaService,
+    private encryptorService: EncryptorService,
+  ) {}
 
   async onModuleInit() {
-    const npsso = this.config.get<string>('app.playstation.npsso');
-    if (!npsso) return;
+    await this.initializePlatform();
+  }
+
+  async initializePlatform() {
+    const tokenInfo = await this.prisma.platformsTokens.findUnique({
+      where: {
+        id: PLATFORM_ID_PLAYSTATION,
+      },
+    });
+    if (!tokenInfo || tokenInfo.dateSet > new Date()) return;
     try {
-      this.accessCode = await this._getAccessCode();
+      this.accessCode = await this._getAccessCode(this.encryptorService.decrypt(tokenInfo.token));
       this.logger.debug('Successfully exchanged NPSSO to Access Code');
       await this._getAuthorization();
       this.initialized = true;
@@ -43,8 +58,7 @@ export class PlaystationAuthService implements OnModuleInit {
     return this.authorization;
   }
 
-  private _getAccessCode() {
-    const npsso = this.config.get('app.playstation.npsso');
+  private _getAccessCode(npsso: string) {
     return exchangeNpssoForAccessCode(npsso);
   }
 

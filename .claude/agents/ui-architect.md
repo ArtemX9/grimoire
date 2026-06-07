@@ -32,7 +32,7 @@ These rules are non-negotiable. Verify every output against them.
 - All new files must be TypeScript `.tsx` or `.ts`
 - Use `@/` path alias for imports — never relative `../../../` chains
 - Gold accent (`grimoire-gold`) appears at most once per screen — never scattered
-- No Redux dispatch or RTK Query hooks inside presentational components
+- No Redux dispatch or thunk calls inside presentational components
 
 ---
 
@@ -44,9 +44,9 @@ These rules are non-negotiable. Verify every output against them.
 | Routing    | React Router v6                                                             |
 | Styling    | Tailwind CSS — dark-only, warm palette, antique gold accent                 |
 | Components | Shadcn/ui (Radix primitives) — copy-paste owned, lives in `components/ui/`  |
-| State      | Redux Toolkit (client) + RTK Query (server) — via `@/store/hooks`           |
+| State      | Plain Redux + redux-thunk + reselect — via `@/store/hooks`                  |
 | Icons      | Lucide React                                                                |
-| Structure  | `pages/` for route-level views, `components/` for shared UI, `api/` for RTK Query slices |
+| Structure  | `pages/` for route-level views, `components/` for shared UI, `store/` for all state      |
 
 ---
 
@@ -187,22 +187,36 @@ export default {
 ## Project Structure (apps/web/src)
 
 ```
-api/                     — All RTK Query API slices (flat)
-  api.ts                 — RTK Query base API (createApi, baseQuery)
-  adminApi.ts
-  authApi.ts
-  gamesApi.ts
-  igdbApi.ts
-  sessionsApi.ts
-  steamApi.ts
-  usersApi.ts
-
-store/                   — Redux store and client-side slices
-  store.ts               — Store setup
-  hooks.ts               — useAppDispatch, useAppSelector
-  aiSlice.ts
-  filtersSlice.ts
-  uiSlice.ts
+store/                   — All state management (plain Redux, no RTK)
+  actions/               — Action type constants + action creators + union types
+    admin.ts
+    ai.ts
+    auth.ts
+    filters.ts
+    games.ts
+    igdb.ts
+    playstation.ts
+    sessions.ts
+    steam.ts
+    ui.ts
+    unmappedGames.ts
+    users.ts
+    xbox.ts
+  state/                 — Plain reducers, selectors, and tests
+    <domain>/
+      index.ts           — Reducer (switch statement, immutable)
+      selectors.ts       — reselect createSelector selectors
+      tests.ts           — Reducer + selector tests using @/test factories
+    shared.ts            — Re-exports AsyncStatus from @grimoire/shared
+  thunks/                — ALL fetch/API calls live here
+    <domain>/
+      index.ts           — Plain thunk functions (dispatch pending/fulfilled/rejected)
+      types.ts           — Arg and return types
+  middleware/            — Logging/analytics/socket side-effects
+    <domain>/
+      index.ts
+  hooks.ts               — useAppDispatch, useAppSelector (typed)
+  store.ts               — createStore + combineReducers + applyMiddleware(thunk)
 
 components/              — Shared/reusable components (all cross-page UI)
   ui/                    — Shadcn primitives
@@ -290,8 +304,8 @@ Every non-trivial UI feature is split into two layers. This boundary is mandator
 
 | Question                                        | Container   | Presentational |
 | ----------------------------------------------- | ----------- | -------------- |
-| Calls RTK Query hooks?                          | Yes         | **Never**      |
-| Dispatches Redux actions for server state?      | Yes         | **Never**      |
+| Dispatches thunks or Redux actions?             | Yes         | **Never**      |
+| Reads from Redux via useAppSelector?            | Yes         | **Never**      |
 | Owns UI-only state (`isOpen`, input value)?     | **Never**   | Yes            |
 | Has Tailwind classes?                           | **Never**   | Yes            |
 | Receives props from parent?                     | Rarely      | Always         |
@@ -331,7 +345,7 @@ Single-responsibility presentational components with no container counterpart li
 // AiPanelContainer.tsx — data, dispatch, side effects. NO Tailwind. NO markup beyond a plain wrapper.
 import { useAiStream } from '@/hooks/useAiStream';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { toggleMood, setSessionLength } from '@/store/aiSlice';
+import { toggleMood, setSessionLength } from '@/store/actions/ai';
 
 import { AiPanel } from './AiPanel';
 
@@ -508,7 +522,7 @@ interface IGameCard {
 ```
  1. Refs            — useRef
  2. Redux hooks     — useAppDispatch, useAppSelector
- 3. RTK Query       — containers only
+ 3. Thunk dispatch  — containers only (dispatch thunks on mount / user action)
  4. Context         — useContext
  5. State           — useState
  6. Derived values  — computed constants, filtered arrays
@@ -625,324 +639,206 @@ const STATUS_STYLES: Record<GameStatus, string> = {
 
 ---
 
-## State Pattern: RTK Query → Slice → Selector
+## State Pattern: Thunk → Reducer → Selector
 
-### Rule
+### Data flow
 
-Components never call RTK Query query hooks to read server state. All server-fetched data that is shared across the app (session, etc.) lives in a Redux slice. RTK Query acts purely as the transport mechanism. The three-step flow is:
+1. **Container dispatches a thunk** — `dispatch(fetchGames())` on mount, or a mutation thunk on user action
+2. **Thunk calls the API and dispatches actions** — `dispatch(gamesFetchPending())` → `apiFetch(...)` → `dispatch(gamesFetchFulfilled(data))` or `dispatch(gamesFetchRejected(error))`
+3. **Reducer handles the actions** — plain switch statement updates state immutably
+4. **Container reads via selector** — `useAppSelector(selectGames)` — never reads raw `state.games.data` inline
 
-1. **Dispatch the request** — RTK Query hook triggers the endpoint (query on mount, or mutation on user action)
-2. **Write to the slice** — `onQueryStarted` in the API file intercepts the settled result and dispatches slice actions
-3. **Read from the selector** — components call `useAppSelector((s) => s.sliceName.field)`, never the RTK Query hook
+### Actions file
 
-RTK Query hooks (`useXxxQuery`) may still be called in containers for local loading/error state that is not shared beyond that container. The selector is always the source of truth for shared data.
-
-### When to apply this pattern
-
-Apply the full slice pattern when the data is:
-- Read by more than one unrelated component (e.g. `session` used in every route guard)
-- The canonical source of truth for an entire domain (e.g. `auth.session`)
-
-Do **not** apply this pattern for data that is only consumed by a single container, where RTK Query's internal cache is sufficient.
-
-### Slice structure
+Three sections separated by `// ---` dividers: constants, creators, union type.
 
 ```ts
-// store/authSlice.ts
-import { PayloadAction, createSlice } from '@reduxjs/toolkit';
+// store/actions/auth.ts
+import type { Session } from '@/store/thunks/auth/types';
 
-import type { Session } from '@/api/authApi';
+// ---------------------------------------------------------------------------
+// Action type constants
+// ---------------------------------------------------------------------------
+
+export const AUTH_GET_SESSION_PENDING   = 'auth/getSession/pending';
+export const AUTH_GET_SESSION_FULFILLED = 'auth/getSession/fulfilled';
+export const AUTH_GET_SESSION_REJECTED  = 'auth/getSession/rejected';
+
+// ---------------------------------------------------------------------------
+// Action creators
+// ---------------------------------------------------------------------------
+
+export const authGetSessionPending    = () => ({ type: AUTH_GET_SESSION_PENDING, payload: {} });
+export const authGetSessionFulfilled  = (session: Session | null) => ({ type: AUTH_GET_SESSION_FULFILLED, payload: { session } });
+export const authGetSessionRejected   = (error: string) => ({ type: AUTH_GET_SESSION_REJECTED, payload: { error } });
+
+// ---------------------------------------------------------------------------
+// Action union type
+// ---------------------------------------------------------------------------
+
+export type AuthAction =
+  ReturnType<typeof authGetSessionPending> &
+  ReturnType<typeof authGetSessionFulfilled> &
+  ReturnType<typeof authGetSessionRejected>;
+```
+
+### Thunk file
+
+```ts
+// store/thunks/auth/index.ts
+import { apiFetch } from '@/lib/apiFetch';
+import { authGetSessionPending, authGetSessionFulfilled, authGetSessionRejected } from '@/store/actions/auth';
+import type { AppThunk } from '@/store/store';
+import type { Session } from './types';
+
+export const getSession = (): AppThunk => async (dispatch) => {
+  dispatch(authGetSessionPending());
+  try {
+    const data = await apiFetch<Session | null>('/auth/get-session');
+    dispatch(authGetSessionFulfilled(data));
+  } catch (err) {
+    dispatch(authGetSessionRejected(err instanceof Error ? err.message : 'Unknown error'));
+  }
+};
+```
+
+### Reducer file
+
+Switch cases delegate to named `handleXxx` functions — never inline state updates. Each `case` calls `handleXxx<Domain><Operation><Phase>` where Phase is `Start | Success | Failure`. Cases are grouped with `// operationName` section comments. Handler functions are typed with `ReturnType<typeof actionCreator>` for precise per-action typing.
+
+```ts
+// store/state/auth/index.ts
+import { AsyncStatus } from '@grimoire/shared';
+import {
+  AUTH_GET_SESSION_PENDING,
+  AUTH_GET_SESSION_FULFILLED,
+  AUTH_GET_SESSION_REJECTED,
+  type AuthAction,
+  authGetSessionPending,
+  authGetSessionFulfilled,
+  authGetSessionRejected,
+} from '@/store/actions/auth';
+import type { Session } from '@/store/thunks/auth/types';
+
+export const AUTH_SLICE = 'auth';
 
 export interface AuthState {
   session: Session | null;
-  isBootstrapped: boolean; // true once the first getSession settles
+  isBootstrapped: boolean;
+  status: AsyncStatus;
+  error: string | null;
 }
 
-const initialState: AuthState = {
-  session: null,
-  isBootstrapped: false,
-};
+const initialState: AuthState = { session: null, isBootstrapped: false, status: AsyncStatus.Idle, error: null };
 
-const authSlice = createSlice({
-  name: 'auth',
-  initialState,
-  reducers: {
-    sessionLoaded: (state, action: PayloadAction<Session | null>) => {
-      state.session = action.payload;
-      state.isBootstrapped = true;
-    },
-    sessionCleared: (state) => {
-      state.session = null;
-    },
-  },
-});
+export function authReducer(state = initialState, action: AuthAction): AuthState {
+  switch (action.type) {
+    // getSession
+    case AUTH_GET_SESSION_PENDING:
+      return handleAuthGetSessionStart(state, action);
+    case AUTH_GET_SESSION_FULFILLED:
+      return handleAuthGetSessionSuccess(state, action);
+    case AUTH_GET_SESSION_REJECTED:
+      return handleAuthGetSessionFailure(state, action);
 
-export const { sessionLoaded, sessionCleared } = authSlice.actions;
-export default authSlice.reducer;
-```
-
-Key decisions:
-- The type imported from the API file (`Session`) flows into the slice — the API file is the single definition point for that type
-- `isBootstrapped` separates "not yet resolved" from "resolved but empty" — prevents redirect flicker on hard refresh
-- No `extraReducers` — action creators live in the slice, not matched by string against RTK action types
-
-### Wiring RTK Query to the slice via `onQueryStarted`
-
-`onQueryStarted` lives inside the API file, right next to the endpoint definition. It dispatches the slice action after `queryFulfilled` resolves.
-
-```ts
-// api/authApi.ts
-import { sessionCleared, sessionLoaded } from '@/store/authSlice';
-
-getSession: builder.query<Session | null, void>({
-  query: () => `${BASE_URL_PATH}/get-session`,
-  providesTags: ['User'],
-  onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
-    try {
-      const { data } = await queryFulfilled;
-      dispatch(sessionLoaded(data));
-    } catch {
-      // Network error on boot — mark as bootstrapped with no session
-      dispatch(sessionLoaded(null));
-    }
-  },
-}),
-
-signIn: builder.mutation<Session, SignInArgs>({
-  query: (body) => ({ url: `${BASE_URL_PATH}/sign-in/email`, method: 'POST', body }),
-  invalidatesTags: ['User'],
-  onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
-    const { data } = await queryFulfilled;
-    dispatch(sessionLoaded(data));
-    // No try/catch — let the mutation error propagate to the calling component
-  },
-}),
-
-signOut: builder.mutation<void, void>({
-  query: () => ({ url: `${BASE_URL_PATH}/sign-out`, method: 'POST' }),
-  invalidatesTags: ['User', 'Game', 'Session', 'Stats'],
-  onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
-    await queryFulfilled;
-    dispatch(sessionCleared());
-  },
-}),
-```
-
-Rules for `onQueryStarted`:
-- Query endpoints: always wrap in try/catch — a network error on boot must still mark `isBootstrapped`
-- Mutation endpoints: no try/catch — let the error surface to the caller via `.unwrap()` so it can show UI feedback
-- Import slice actions via the `@/` alias — the API file is not a plain TS module and can reference store code
-- Do not read from the store inside `onQueryStarted` — only dispatch
-
-### Why `onQueryStarted` over `extraReducers + matchFulfilled`
-
-`extraReducers + matchFulfilled` requires importing RTK Query action creators into the slice file, which creates a `store/ → api/` dependency. `onQueryStarted` keeps the coupling local to the API file where the endpoint is defined, leaving slices free of API imports. It also allows per-endpoint control (e.g. different error handling for queries vs mutations).
-
-### Reading in components
-
-```tsx
-// Before — calls RTK Query, subscribes to its internal cache
-const { data: session, isLoading } = useGetSessionQuery();
-
-// After — reads from the authoritative slice
-const { session, isBootstrapped } = useAppSelector((s) => s.auth);
-```
-
-The component never imports from `@/api/`. It only imports from `@/store/hooks`.
-
-### Testing components that read from the slice
-
-Do not mock RTK Query hooks. Provide a real store with preloaded state:
-
-```tsx
-import { configureStore } from '@reduxjs/toolkit';
-import { Provider } from 'react-redux';
-
-import { api } from '@/api/api';
-import authReducer, { AuthState } from '@/store/authSlice';
-
-function makeStore(auth: AuthState) {
-  return configureStore({
-    reducer: {
-      [api.reducerPath]: api.reducer,
-      auth: authReducer,
-    },
-    preloadedState: { auth },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware),
-  });
+    default:
+      return state;
+  }
 }
 
-function renderWithStore(ui: React.ReactElement, auth: AuthState) {
-  return render(<Provider store={makeStore(auth)}>{ui}</Provider>);
+// getSession
+function handleAuthGetSessionStart(state: AuthState, _action: ReturnType<typeof authGetSessionPending>): AuthState {
+  return { ...state, status: AsyncStatus.Loading, error: null };
 }
+function handleAuthGetSessionSuccess(state: AuthState, action: ReturnType<typeof authGetSessionFulfilled>): AuthState {
+  return { ...state, status: AsyncStatus.Succeeded, session: action.payload.session, isBootstrapped: true };
+}
+function handleAuthGetSessionFailure(state: AuthState, action: ReturnType<typeof authGetSessionRejected>): AuthState {
+  return { ...state, status: AsyncStatus.Failed, error: action.payload.error, isBootstrapped: true };
+}
+
+export default authReducer;
 ```
 
-Only mock RTK Query hooks (e.g. `useSignInMutation`) when the component invokes them directly as mutation triggers — the mock replaces the trigger function, not the cached data.
-
----
-
-## RTK Query Conventions
-
-### File Layout
-
-Every API file in `src/api/` follows this exact top-to-bottom order:
+### Selectors file
 
 ```ts
-// 1. Shared package imports (types from @grimoire/shared)
-import { Role } from '@grimoire/shared';
+// store/state/auth/selectors.ts
+import { createSelector } from 'reselect';
+import type { RootState } from '@/store/store';
 
-// 2. Base API — relative import, never @/
-import { api } from './api';
-
-// 3. All type definitions — export type, one per declaration
-export type AdminUserRow = { ... }
-export type AdminUserListResponse = { ... }
-export type CreateUserArgs = { ... }
-
-// 4. BASE_URL_PATH constant — immediately before injectEndpoints
-const BASE_URL_PATH = 'admin';
-
-// 5. Named api slice — assigned and exported
-export const adminApi = api.injectEndpoints({ ... });
-
-// 6. Hooks — destructured from the named slice and exported
-export const {
-  useListAdminUsersQuery,
-  useCreateAdminUserMutation,
-} = adminApi;
+const selectAuthState = (state: RootState) => state.auth;
+export const selectSession       = createSelector(selectAuthState, (s) => s.session);
+export const selectIsBootstrapped = createSelector(selectAuthState, (s) => s.isBootstrapped);
+export const selectIsAuthenticated = createSelector(selectAuthState, (s) => s.session !== null);
 ```
 
-Rules:
-- The import of `api` is always **relative** (`./api`), never via the `@/` alias
-- There is no React import — API files are plain TypeScript, never `.tsx`
-- `BASE_URL_PATH` is an untyped `const` string, not an enum and not a type
-
-### Type Naming Conventions
-
-| Pattern | Example | When to use |
-| --- | --- | --- |
-| `XxxRow` | `AdminUserRow` | Shape of a single item in a list response |
-| `XxxListResponse` | `AdminUserListResponse` | Paginated/list wrapper (`{ data, total }`) |
-| `CreateXxxArgs` | `CreateUserArgs` | Mutation input for POST creation |
-| `UpdateXxxArgs` | `UpdateUserAiArgs`, `UpdateUserPlanArgs` | Mutation input for PATCH/PUT |
-| `SetupXxxArgs` | `SetupAdminArgs` | One-time setup or special-case mutations |
-| Plain noun | `AiGlobalSettings`, `AdminStats` | Config/settings shapes and complex response objects |
-
-All types are exported individually with `export type`. Never group them in a namespace.
-
-### Query vs Mutation Structure
-
-Queries use string shorthand when there is no body:
-
-```ts
-listAdminUsers: builder.query<AdminUserListResponse, void>({
-  query: () => `${BASE_URL_PATH}/users`,
-  providesTags: ['AdminUser'],
-}),
-```
-
-Mutations always use the object form:
-
-```ts
-createAdminUser: builder.mutation<AdminUserRow, CreateUserArgs>({
-  query: (body) => ({ url: `${BASE_URL_PATH}/users`, method: 'POST', body }),
-  invalidatesTags: ['AdminUser'],
-}),
-```
-
-When the mutation args contain an `id` that belongs in the URL, destructure it inline — do not build a separate variable:
-
-```ts
-updateUserAiSettings: builder.mutation<void, UpdateUserAiArgs>({
-  query: ({ id, ...body }) => ({ url: `${BASE_URL_PATH}/users/${id}/ai`, method: 'PATCH', body }),
-  invalidatesTags: ['AdminUser'],
-}),
-```
-
-When only specific fields go to the body (not a spread), pick them explicitly:
-
-```ts
-updateUserPlan: builder.mutation<AdminUserRow, UpdateUserPlanArgs>({
-  query: ({ id, plan }) => ({ url: `${BASE_URL_PATH}/users/${id}/plan`, method: 'PATCH', body: { plan } }),
-  invalidatesTags: ['AdminUser'],
-}),
-```
-
-### Cache Tags
-
-`providesTags` and `invalidatesTags` always take an array of string literals — never factory functions unless per-item invalidation is genuinely required:
-
-```ts
-providesTags: ['AdminUser']
-invalidatesTags: ['AdminUser']
-```
-
-Cross-tag invalidation is allowed when a mutation affects multiple caches:
-
-```ts
-// Global AI toggle affects both admin view and user view
-invalidatesTags: ['AdminUser', 'User'],
-```
-
-Omit tags entirely on endpoints where cache invalidation is not meaningful (e.g. one-time setup mutations):
-
-```ts
-setupAdmin: builder.mutation<AdminUserRow, SetupAdminArgs>({
-  query: (body) => ({ url: `${BASE_URL_PATH}/setup`, method: 'POST', body }),
-  // no invalidatesTags — one-time setup, no cache to bust
-}),
-```
-
-Known tag types: `'Game' | 'Session' | 'User' | 'AdminUser' | 'Stats'`
-
-### General Rules
-
-- All endpoints in `src/api/<feature>Api.ts` via `api.injectEndpoints`
-- Invalidate conservatively — only tags that actually changed
-- Never call RTK Query hooks in presentational components
-
----
-
-## Redux Slice Key Convention
-
-Every slice file must export a named `const` for its Redux key. The const name is the slice name in `SCREAMING_SNAKE_CASE` with a `_SLICE` suffix. The string value is the exact key registered in `configureStore`.
-
-### Rule
-
-- Declare the const **before** the state interface, immediately after the last import
-- Use the const in **both** `createSlice({ name })` and `configureStore({ reducer })`
-- Never use an inline string literal in either place
-
-### Slice file
-
-```ts
-// store/gamesSlice.ts
-
-export const GAMES_SLICE = 'games';           // ← exported const
-
-export interface GamesState { ... }
-
-const gamesSlice = createSlice({
-  name: GAMES_SLICE,                          // ← used here
-  initialState,
-  reducers: { ... },
-});
-```
-
-### Store file
+### Store setup
 
 ```ts
 // store/store.ts
-import gamesReducer, { GAMES_SLICE } from '@/store/gamesSlice';
+import { createStore, combineReducers, applyMiddleware } from 'redux';
+import { thunk } from 'redux-thunk';
+import type { ThunkAction, ThunkDispatch } from 'redux-thunk';
+import type { Action } from 'redux';
 
-export const store = configureStore({
-  reducer: {
-    [GAMES_SLICE]: gamesReducer,              // ← and here
-  },
-});
+import { authReducer } from './state/auth/index';
+// ... all other reducers
+
+const rootReducer = combineReducers({ auth: authReducer, /* ... */ });
+
+export type RootState = ReturnType<typeof rootReducer>;
+export type AppDispatch = ThunkDispatch<RootState, undefined, Action>;
+export type AppThunk<R = void> = ThunkAction<R, RootState, undefined, Action>;
+
+export const store = createStore(rootReducer, applyMiddleware(thunk));
 ```
 
-This makes the string a single source of truth — renaming a slice key is a one-line change in the slice file with no manual search across `store.ts`.
+### Reading in containers
+
+```tsx
+// Container reads via selectors — never accesses state shape directly
+const session = useAppSelector(selectSession);
+const isBootstrapped = useAppSelector(selectIsBootstrapped);
+```
+
+### Testing reducers and selectors
+
+Use factories from `@/test`. No inline fixture objects.
+
+```tsx
+import { createStore, combineReducers, applyMiddleware } from 'redux';
+import { thunk } from 'redux-thunk';
+import { Provider } from 'react-redux';
+import { authReducer } from '@/store/state/auth/index';
+
+function makeStore(preloaded?: Partial<RootState>) {
+  return createStore(
+    combineReducers({ auth: authReducer }),
+    preloaded,
+    applyMiddleware(thunk),
+  );
+}
+
+function renderWithStore(ui: React.ReactElement, preloaded?: Partial<RootState>) {
+  return render(<Provider store={makeStore(preloaded)}>{ui}</Provider>);
+}
+```
+
+---
+
+## Redux Domain Key Convention
+
+Every reducer file exports a named `const` for its store key in `SCREAMING_SNAKE_CASE` with a `_SLICE` suffix. Use it in `combineReducers` — never an inline string literal.
+
+```ts
+// store/state/games/index.ts
+export const GAMES_SLICE = 'games';
+
+// store/store.ts
+import { gamesReducer, GAMES_SLICE } from './state/games/index';
+const rootReducer = combineReducers({ [GAMES_SLICE]: gamesReducer });
+```
 
 ---
 
@@ -998,7 +894,7 @@ Before finalizing any component, verify all of the following:
 - [ ] Tailwind classes only — no inline styles
 - [ ] File is under 400 lines
 - [ ] Container has zero Tailwind classes
-- [ ] Presentational has zero RTK Query hooks and zero Redux dispatch calls
+- [ ] Presentational has zero thunk dispatches and zero Redux hooks
 - [ ] Content elements (game titles, headings, AI text) use `font-grimoire`
 - [ ] Interface chrome (nav, buttons, badges, metadata) uses `font-sans`
 - [ ] Component body sections are in the correct order (1–11)
@@ -1010,7 +906,10 @@ Before finalizing any component, verify all of the following:
 - [ ] Shadcn primitives imported from `@/components/ui/`
 - [ ] `cn()` used for conditional class merging — never string concatenation
 - [ ] File ends with `export default ComponentName;` followed by a newline
-- [ ] Every slice exports a named `SCREAMING_SNAKE_CASE_SLICE` const; `createSlice({ name })` and `configureStore({ reducer })` both use it — no inline string literals
+- [ ] Every reducer file exports a named `SCREAMING_SNAKE_CASE_SLICE` const; `combineReducers` uses it — no inline string literals
+- [ ] Reducer switch cases delegate to `handleXxx` functions — no inline state updates in case blocks
+- [ ] Handler functions typed with `ReturnType<typeof actionCreator>`, named `handle<Domain><Operation><Phase>`, defined after the reducer
+- [ ] Actions file has three `// ---` divider sections: constants → creators → union type; union type uses `&` (intersection of all `ReturnType<>`) not `|`; payload keys are always named (`{ payload: { session } }`, `{ payload: { error } }`) — never bare (`{ payload: session }`, `{ error }` top-level)
 - [ ] All route strings come from `ROUTES.XXX` imported from `@/constants/routes` — no inline `'/login'`, `'/'`, etc.
 - [ ] Parameterised navigation uses a helper from `routes.ts` (e.g. `getGameDetailsURL(id)`) — never inline string interpolation
 - [ ] `<Route path=...>` uses the raw `ROUTES.XXX` pattern constant — helpers are only for building actual navigation URLs

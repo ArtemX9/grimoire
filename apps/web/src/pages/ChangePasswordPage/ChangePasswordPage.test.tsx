@@ -1,13 +1,15 @@
-import { QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
+import { type Reducer, applyMiddleware, combineReducers, createStore } from 'redux';
+import { thunk } from 'redux-thunk';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useChangePassword } from '@/api/users';
-import { ChangePasswordPage } from '@/pages/ChangePasswordPage/ChangePasswordPage';
-import { makeQueryClient } from '@/test/renderWithQuery';
+import ChangePasswordPageContainer from '@/pages/ChangePasswordPage/ChangePasswordPageContainer';
+import authReducer, { AUTH_SLICE } from '@/store/state/auth/index';
+import usersReducer, { USERS_SLICE } from '@/store/state/users/index';
 
 // ---------------------------------------------------------------------------
 // Module mocks
@@ -23,13 +25,13 @@ vi.mock('react-router-dom', async (importOriginal) => {
   };
 });
 
-const mockMutateAsync = vi.fn();
+const mockDispatch = vi.fn();
 
-vi.mock('@/api/users', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/api/users')>();
+vi.mock('@/store/hooks', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/store/hooks')>();
   return {
     ...actual,
-    useChangePassword: vi.fn(),
+    useAppDispatch: () => mockDispatch,
   };
 });
 
@@ -37,23 +39,24 @@ vi.mock('@/api/users', async (importOriginal) => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function renderPage() {
-  const queryClient = makeQueryClient();
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter>
-        <ChangePasswordPage />
-      </MemoryRouter>
-    </QueryClientProvider>,
-  );
+function makeStore() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rootReducer: Reducer<any, any> = combineReducers({
+    [AUTH_SLICE]: authReducer,
+    [USERS_SLICE]: usersReducer,
+  });
+  return createStore(rootReducer, applyMiddleware(thunk));
 }
 
-function setupIdleMock() {
-  vi.mocked(useChangePassword).mockReturnValue({
-    mutateAsync: mockMutateAsync,
-    isPending: false,
-  } as unknown as ReturnType<typeof useChangePassword>);
+function renderPage() {
+  const store = makeStore();
+  return render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <ChangePasswordPageContainer />
+      </MemoryRouter>
+    </Provider>,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -62,12 +65,11 @@ function setupIdleMock() {
 
 beforeEach(() => {
   mockNavigate.mockReset();
-  mockMutateAsync.mockReset();
+  mockDispatch.mockReset();
 });
 
 describe('ChangePasswordPage', () => {
   it('renders the three password fields and submit button', () => {
-    setupIdleMock();
     renderPage();
 
     expect(screen.getByLabelText(/current \(temporary\) password/i)).toBeInTheDocument();
@@ -77,7 +79,7 @@ describe('ChangePasswordPage', () => {
   });
 
   it('shows a mismatch error without calling the API when passwords differ', async () => {
-    setupIdleMock();
+    mockDispatch.mockImplementation(() => Promise.resolve(undefined));
     renderPage();
 
     await userEvent.type(screen.getByLabelText(/current \(temporary\) password/i), 'tempPass1');
@@ -86,12 +88,11 @@ describe('ChangePasswordPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /set password/i }));
 
     expect(screen.getByText(/do not match/i)).toBeInTheDocument();
-    expect(mockMutateAsync).not.toHaveBeenCalled();
+    expect(mockDispatch).not.toHaveBeenCalled();
   });
 
   it('navigates to / on successful password change', async () => {
-    setupIdleMock();
-    mockMutateAsync.mockResolvedValue(undefined);
+    mockDispatch.mockImplementation(() => Promise.resolve(undefined));
     renderPage();
 
     await userEvent.type(screen.getByLabelText(/current \(temporary\) password/i), 'tempPass1');
@@ -105,8 +106,7 @@ describe('ChangePasswordPage', () => {
   });
 
   it('shows an error message when the API call fails', async () => {
-    setupIdleMock();
-    mockMutateAsync.mockRejectedValue(new Error('Forbidden'));
+    mockDispatch.mockImplementation(() => Promise.reject(new Error('Forbidden')));
     renderPage();
 
     await userEvent.type(screen.getByLabelText(/current.*password/i), 'wrongTemp');
@@ -120,8 +120,7 @@ describe('ChangePasswordPage', () => {
   });
 
   it('does not navigate when the API call fails', async () => {
-    setupIdleMock();
-    mockMutateAsync.mockRejectedValue(new Error('Forbidden'));
+    mockDispatch.mockImplementation(() => Promise.reject(new Error('Forbidden')));
     renderPage();
 
     await userEvent.type(screen.getByLabelText(/current.*password/i), 'wrongTemp');

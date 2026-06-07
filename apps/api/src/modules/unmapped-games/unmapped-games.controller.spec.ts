@@ -61,20 +61,20 @@ describe('UnmappedGamesController', () => {
       expect(result).toBe(unmappedGames);
     });
 
-    it('forwards the optional limit query param to the service', async () => {
+    it('forwards the optional limit query param to the service as a parsed integer', async () => {
       const user = generateUser({ id: 'user-1' });
       unmappedGamesService.getUnmappedGamesForUser.mockResolvedValue([]);
 
-      await controller.getUnmappedGamesForUser(user, 10, undefined);
+      await controller.getUnmappedGamesForUser(user, '10', undefined);
 
       expect(unmappedGamesService.getUnmappedGamesForUser).toHaveBeenCalledWith('user-1', 10, undefined);
     });
 
-    it('forwards the optional offset query param to the service', async () => {
+    it('forwards the optional offset query param to the service as a parsed integer', async () => {
       const user = generateUser({ id: 'user-1' });
       unmappedGamesService.getUnmappedGamesForUser.mockResolvedValue([]);
 
-      await controller.getUnmappedGamesForUser(user, undefined, 20);
+      await controller.getUnmappedGamesForUser(user, undefined, '20');
 
       expect(unmappedGamesService.getUnmappedGamesForUser).toHaveBeenCalledWith('user-1', undefined, 20);
     });

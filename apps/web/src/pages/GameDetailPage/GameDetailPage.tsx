@@ -1,33 +1,18 @@
 import { GamePlatform, GameStatus, IgdbGame, Mood, UserGame } from '@grimoire/shared';
-import { ArrowLeft, Clock, Gamepad2, RefreshCcw, Star, Trash2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 import IGDBGameSearchDialogContainer from '@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer';
-import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import GameDetailAbout from '@/pages/GameDetailPage/components/GameDetailAbout/GameDetailAbout';
+import GameDetailDeleteDialog from '@/pages/GameDetailPage/components/GameDetailDeleteDialog/GameDetailDeleteDialog';
+import GameDetailHeader from '@/pages/GameDetailPage/components/GameDetailHeader/GameDetailHeader';
+import GameDetailPlatformPicker from '@/pages/GameDetailPage/components/GameDetailPlatformPicker/GameDetailPlatformPicker';
+import GameDetailRating from '@/pages/GameDetailPage/components/GameDetailRating/GameDetailRating';
+import GameDetailSessions from '@/pages/GameDetailPage/components/GameDetailSessions/GameDetailSessions';
 import GameNotes from '@/pages/GameDetailPage/components/GameNotes/GameNotes';
-import LogSessionDialog from '@/pages/GameDetailPage/components/LogSessionDialog';
-import { cn } from '@/utils/cn';
-
-const STATUS_STYLES: Record<GameStatus, string> = {
-  PLAYING: 'bg-grimoire-status-playing-bg   text-grimoire-status-playing-text',
-  BACKLOG: 'bg-grimoire-status-backlog-bg   text-grimoire-status-backlog-text',
-  COMPLETED: 'bg-grimoire-status-completed-bg text-grimoire-status-completed-text',
-  DROPPED: 'bg-grimoire-status-dropped-bg   text-grimoire-status-dropped-text',
-  WISHLIST: 'bg-grimoire-status-wishlist-bg  text-grimoire-status-wishlist-text',
-};
-
-const STATUS_LABELS: Record<GameStatus, string> = {
-  PLAYING: 'Playing',
-  BACKLOG: 'Backlog',
-  COMPLETED: 'Completed',
-  DROPPED: 'Dropped',
-  WISHLIST: 'Wishlist',
-};
+import LogSessionDialogContainer from '@/pages/GameDetailPage/components/LogSessionDialogContainer';
 
 type GameSession = {
   id: string;
@@ -111,228 +96,6 @@ export function GameDetailPage({
     </ScrollArea>
   );
 
-  function renderCover() {
-    return (
-      <div className='mx-auto w-36 shrink-0 sm:mx-0 sm:w-48 lg:w-52'>
-        <div className='relative aspect-[3/4] overflow-hidden rounded-lg border border-grimoire-border bg-grimoire-hover shadow-lg'>
-          {game?.coverURL ? (
-            <img src={game.coverURL} alt={game.title} className='absolute inset-0 h-full w-full object-cover' />
-          ) : (
-            <div className='flex h-full w-full flex-col items-center justify-center gap-2'>
-              <Gamepad2 className='h-10 w-10 text-grimoire-faint' />
-              <span className='font-grimoire text-2xl text-grimoire-faint select-none'>{game!.title.charAt(0).toUpperCase()}</span>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  function renderHeroDetails() {
-    return (
-      <div className='flex flex-1 flex-col gap-5 min-w-0'>
-        <div className='flex flex-col gap-3'>
-          <h1 className='font-grimoire text-3xl leading-snug text-grimoire-ink sm:text-4xl'>{game!.title}</h1>
-
-          <div className='flex flex-wrap items-center gap-2'>
-            <span className={cn('rounded-full px-3 py-0.5 font-sans text-xs font-medium', STATUS_STYLES[game!.status])}>
-              {STATUS_LABELS[game!.status]}
-            </span>
-
-            {renderPlaytime()}
-          </div>
-
-          {renderPlatforms()}
-
-          {renderGenreBadges()}
-        </div>
-
-        {renderStatusPicker()}
-
-        {renderMoodPicker()}
-
-        {renderActionButtons()}
-      </div>
-    );
-  }
-
-  function renderPlaytime() {
-    return (
-      <span className='flex items-center gap-1.5 font-sans text-sm text-grimoire-muted'>
-        <Clock className='h-3.5 w-3.5' />
-        {Math.round(game!.playtimeHours)}h played
-      </span>
-    );
-  }
-
-  function renderPlatforms() {
-    if (game!.platforms.length === 0) return null;
-    return (
-      <div className='flex flex-wrap items-center gap-2'>
-        <span className='font-sans text-xs text-grimoire-muted'>Owned on</span>
-        {game!.platforms.map((p) => (
-          <span
-            key={p.platformID}
-            className='flex items-center gap-1 rounded border border-grimoire-border px-2 py-0.5 font-sans text-xs text-grimoire-muted'
-          >
-            <PlatformIcon platform={p.platformName} />
-            {p.platformName}
-          </span>
-        ))}
-      </div>
-    );
-  }
-
-  function renderGenreBadges() {
-    if (game!.genres.length === 0) return null;
-    return (
-      <div className='flex flex-wrap gap-1.5'>
-        {game!.genres.map((g) => (
-          <Badge key={g} variant='secondary'>
-            {g}
-          </Badge>
-        ))}
-      </div>
-    );
-  }
-
-  function renderStatusPicker() {
-    return (
-      <div className='flex flex-col gap-1.5'>
-        <p className='font-sans text-xs text-grimoire-muted'>Status</p>
-        <div className='flex flex-wrap gap-1.5'>
-          {Object.values(GameStatus).map((status) => (
-            <button
-              key={status}
-              onClick={() => onStatusChange(status)}
-              disabled={isUpdating}
-              className={cn(
-                'rounded-full border px-3 py-1 font-sans text-xs transition-colors disabled:opacity-50',
-                game!.status === status
-                  ? cn(STATUS_STYLES[status], 'border-transparent')
-                  : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg hover:text-grimoire-ink',
-              )}
-            >
-              {STATUS_LABELS[status]}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  function renderActionButtons() {
-    function handleRemapClick() {
-      if (game!.platforms.length > 1) {
-        onPlatformPickerOpen(true);
-      } else if (game!.platforms.length === 1) {
-        onPlatformSelect(game!.platforms[0]);
-      } else {
-        onRemapDialogOpen(true);
-      }
-    }
-
-    return (
-      <div className='mt-auto flex flex-wrap items-center gap-2 pt-2'>
-        <button
-          onClick={() => onLogSessionOpen(true)}
-          className='rounded border border-grimoire-gold-dim bg-grimoire-gold/10 px-4 py-2 font-sans text-xs font-medium text-grimoire-gold transition-colors hover:bg-grimoire-gold/20'
-        >
-          Log session
-        </button>
-        <button
-          onClick={handleRemapClick}
-          className='flex items-center gap-1.5 rounded border border-grimoire-border px-4 py-2 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
-        >
-          <RefreshCcw className='h-3.5 w-3.5' />
-          Re-map
-        </button>
-        <button
-          onClick={() => onDeleteDialogOpen(true)}
-          className='flex items-center gap-1.5 rounded border border-grimoire-status-dropped-text/20 px-4 py-2 font-sans text-xs text-grimoire-status-dropped-text transition-colors hover:bg-grimoire-status-dropped-bg'
-        >
-          <Trash2 className='h-3.5 w-3.5' />
-          Remove
-        </button>
-      </div>
-    );
-  }
-
-  function renderMoodPicker() {
-    return (
-      <div className='flex flex-col gap-1.5'>
-        <p className='font-sans text-xs text-grimoire-muted'>Moods</p>
-        <div className='flex flex-wrap gap-1.5'>
-          {Object.values(Mood).map((mood) => {
-            const active = game!.moods.includes(mood);
-            return (
-              <button
-                key={mood}
-                onClick={() => {
-                  const next = active ? game!.moods.filter((m) => m !== mood) : [...game!.moods, mood];
-                  onMoodsChange(next);
-                }}
-                disabled={isUpdating}
-                className={cn(
-                  'rounded-full border px-3 py-1 font-sans text-xs transition-colors disabled:opacity-50',
-                  active
-                    ? 'border-grimoire-gold-dim bg-grimoire-gold/10 text-grimoire-gold'
-                    : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg hover:text-grimoire-ink',
-                )}
-              >
-                {mood}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  function renderRatingCard() {
-    return (
-      <Card>
-        <CardHeader className='pb-3'>
-          <CardTitle>Your rating</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className='flex flex-col gap-3'>
-            {game!.userRating ? (
-              <p className='font-grimoire text-3xl text-grimoire-gold'>
-                {game!.userRating}
-                <span className='font-sans text-base text-grimoire-muted'>/10</span>
-              </p>
-            ) : (
-              <p className='font-sans text-sm text-grimoire-faint'>Not rated yet</p>
-            )}
-            <div className='flex items-center gap-1'>
-              {Array.from({ length: 10 }).map((_, i) => {
-                const rating = i + 1;
-                const filled = game!.userRating !== undefined && rating <= game!.userRating;
-                return (
-                  <button
-                    key={rating}
-                    onClick={() => onRatingChange(rating)}
-                    disabled={isUpdating}
-                    aria-label={`Rate ${rating}`}
-                    className='transition-transform hover:scale-110 disabled:opacity-50'
-                  >
-                    <Star
-                      className={cn(
-                        'h-4 w-4',
-                        filled ? 'fill-grimoire-gold text-grimoire-gold' : 'fill-transparent text-grimoire-faint hover:text-grimoire-muted',
-                      )}
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   function renderBackNav() {
     return (
       <button
@@ -347,14 +110,17 @@ export function GameDetailPage({
 
   function renderHeroCard() {
     return (
-      <Card>
-        <CardContent className='p-6 sm:p-8'>
-          <div className='flex flex-col gap-6 sm:flex-row sm:gap-8'>
-            {renderCover()}
-            {renderHeroDetails()}
-          </div>
-        </CardContent>
-      </Card>
+      <GameDetailHeader
+        game={game!}
+        isUpdating={isUpdating}
+        onStatusChange={onStatusChange}
+        onMoodsChange={onMoodsChange}
+        onLogSessionOpen={onLogSessionOpen}
+        onDeleteDialogOpen={onDeleteDialogOpen}
+        onPlatformPickerOpen={onPlatformPickerOpen}
+        onPlatformSelect={onPlatformSelect}
+        onRemapDialogOpen={onRemapDialogOpen}
+      />
     );
   }
 
@@ -362,29 +128,14 @@ export function GameDetailPage({
     return (
       <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
         <div className='flex flex-col gap-6 lg:col-span-2'>
-          {renderDescriptionCard()}
+          <GameDetailAbout summary={game!.summary} storyLine={game!.storyLine} />
           {renderNotesCard()}
         </div>
         <div className='flex flex-col gap-6'>
-          {renderRatingCard()}
-          {renderSessionsCard()}
+          <GameDetailRating userRating={game!.userRating} isUpdating={isUpdating} onRatingChange={onRatingChange} />
+          <GameDetailSessions sessions={sessions} />
         </div>
       </div>
-    );
-  }
-
-  function renderDescriptionCard() {
-    const text = game!.summary ?? game!.storyLine;
-    if (!text) return null;
-    return (
-      <Card>
-        <CardHeader className='pb-3'>
-          <CardTitle>About</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className='font-sans text-sm leading-relaxed text-grimoire-muted'>{text}</p>
-        </CardContent>
-      </Card>
     );
   }
 
@@ -404,28 +155,22 @@ export function GameDetailPage({
   function renderDialogs() {
     return (
       <>
-        <Dialog open={deleteDialogOpen} onOpenChange={onDeleteDialogOpen}>
-          <DialogContent className='max-w-sm'>
-            <DialogHeader>
-              <DialogTitle>Remove from library?</DialogTitle>
-            </DialogHeader>
-            <p className='font-sans text-sm text-grimoire-muted'>
-              This will permanently remove <span className='text-grimoire-ink'>{game!.title}</span> and all its sessions.
-            </p>
-            <DialogFooter>
-              <Button variant='ghost' size='sm' onClick={() => onDeleteDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant='destructive' size='sm' onClick={onDelete} disabled={isDeleting}>
-                Remove
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <GameDetailDeleteDialog
+          open={deleteDialogOpen}
+          gameTitle={game!.title}
+          isDeleting={isDeleting}
+          onOpenChange={onDeleteDialogOpen}
+          onDelete={onDelete}
+        />
 
-        <LogSessionDialog open={logSessionOpen} gameId={game!.id} onOpenChange={onLogSessionOpen} />
+        <LogSessionDialogContainer open={logSessionOpen} gameId={game!.id} onOpenChange={onLogSessionOpen} />
 
-        {renderPlatformPickerDialog()}
+        <GameDetailPlatformPicker
+          open={platformPickerOpen}
+          platforms={game!.platforms}
+          onOpenChange={onPlatformPickerOpen}
+          onPlatformSelect={onPlatformSelect}
+        />
 
         <IGDBGameSearchDialogContainer
           dialogTitle='Remap game'
@@ -437,71 +182,6 @@ export function GameDetailPage({
           onGameSelect={onRemapGame}
         />
       </>
-    );
-  }
-
-  function renderPlatformPickerDialog() {
-    return (
-      <Dialog open={platformPickerOpen} onOpenChange={onPlatformPickerOpen}>
-        <DialogContent className='max-w-sm'>
-          <DialogHeader>
-            <DialogTitle>Which platform entry to remap?</DialogTitle>
-          </DialogHeader>
-          <p className='font-sans text-sm text-grimoire-muted'>
-            This game has multiple platform entries. Select the one you want to remap.
-          </p>
-          <div className='flex flex-col gap-2 pt-1'>
-            {game!.platforms.map((platform) => (
-              <button
-                key={platform.platformID}
-                onClick={() => onPlatformSelect(platform)}
-                className='flex items-center gap-3 rounded border border-grimoire-border bg-grimoire-hover px-4 py-3 text-left transition-colors hover:border-grimoire-border-lg hover:bg-grimoire-card'
-              >
-                <PlatformIcon platform={platform.platformName} className='h-4 w-4 shrink-0 text-grimoire-muted' />
-                <div className='flex min-w-0 flex-col gap-0.5'>
-                  <span className='font-sans text-xs font-medium text-grimoire-ink'>{platform.platformName}</span>
-                  <span className='truncate font-sans text-xs text-grimoire-muted'>{platform.externalTitle}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  function renderSessionsCard() {
-    return (
-      <Card>
-        <CardHeader className='pb-3'>
-          <div className='flex items-center justify-between'>
-            <CardTitle>Sessions</CardTitle>
-            <span className='font-sans text-xs text-grimoire-muted'>
-              {sessions.length} {sessions.length === 1 ? 'session' : 'sessions'}
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent className='pt-0'>
-          {sessions.length === 0 ? (
-            <p className='py-4 text-center font-sans text-sm text-grimoire-faint'>No sessions logged yet</p>
-          ) : (
-            <div className='flex flex-col divide-y divide-grimoire-border'>
-              {sessions.map((session) => (
-                <div key={session.id} className='flex items-center justify-between py-2.5'>
-                  <span className='font-sans text-sm text-grimoire-muted'>
-                    {new Date(session.startedAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </span>
-                  <span className='font-sans text-sm text-grimoire-ink'>{session.durationMin ? `${session.durationMin} min` : '—'}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     );
   }
 }

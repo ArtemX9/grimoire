@@ -8,9 +8,12 @@ import { generateUserGame } from '@/test';
 import { GameDetailPage } from './GameDetailPage';
 
 vi.mock('@/components/ui/scroll-area', () => ({ ScrollArea: ({ children }: { children: React.ReactNode }) => <div>{children}</div> }));
-vi.mock('@/pages/GameDetailPage/components/LogSessionDialog', () => ({ default: () => null }));
+vi.mock('@/pages/GameDetailPage/components/LogSessionDialogContainer', () => ({ default: () => null }));
 vi.mock('@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer', () => ({ default: () => null }));
 vi.mock('@/pages/GameDetailPage/components/GameNotes/GameNotes', () => ({ default: () => null }));
+vi.mock('@/pages/GameDetailPage/components/GameDetailRating/GameDetailRating', () => ({ default: () => null }));
+vi.mock('@/pages/GameDetailPage/components/GameDetailSessions/GameDetailSessions', () => ({ default: () => null }));
+vi.mock('@/pages/GameDetailPage/components/GameDetailDeleteDialog/GameDetailDeleteDialog', () => ({ default: () => null }));
 
 function renderPage(game: UserGame | null, props = {}) {
   const defaults = {

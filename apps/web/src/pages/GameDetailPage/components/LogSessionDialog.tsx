@@ -1,46 +1,30 @@
 import { Mood } from '@grimoire/shared';
 import { useState } from 'react';
 
-import { useCreateSession } from '@/api/sessions';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/components/ui/use-toast';
 import { cn } from '@/utils/cn';
 
 interface ILogSessionDialog {
   open: boolean;
-  gameId: string;
+  isLoading: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit: (durationMin: string, selectedMoods: Mood[], notes: string) => void;
 }
 
-function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
+function LogSessionDialog({ open, isLoading, onOpenChange, onSubmit }: ILogSessionDialog) {
   const [durationMin, setDurationMin] = useState('');
   const [selectedMoods, setSelectedMoods] = useState<Mood[]>([]);
   const [notes, setNotes] = useState('');
-
-  const createSessionMutation = useCreateSession();
-  const isLoading = createSessionMutation.isPending;
 
   function handleMoodToggle(mood: Mood) {
     setSelectedMoods((prev) => (prev.includes(mood) ? prev.filter((m) => m !== mood) : [...prev, mood]));
   }
 
-  async function handleSubmit() {
-    try {
-      await createSessionMutation.mutateAsync({
-        gameID: gameId,
-        startedAt: new Date(),
-        durationMin: durationMin ? parseInt(durationMin, 10) : undefined,
-        mood: selectedMoods,
-        notes: notes || undefined,
-      });
-      toast({ title: 'Session logged' });
-      handleClose();
-    } catch {
-      toast({ title: 'Failed to log session', variant: 'destructive' });
-    }
+  function handleSubmit() {
+    onSubmit(durationMin, selectedMoods, notes);
   }
 
   function handleClose() {
@@ -90,7 +74,7 @@ function LogSessionDialog({ open, gameId, onOpenChange }: ILogSessionDialog) {
           {Object.values(Mood).map((mood) => (
             <button
               key={mood}
-              onClick={() => handleMoodToggle(mood)}
+              onClick={handleMoodToggle.bind(null, mood)}
               className={cn(
                 'rounded-full border px-2.5 py-1 font-sans text-xs transition-colors',
                 selectedMoods.includes(mood)

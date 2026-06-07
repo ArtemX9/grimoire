@@ -1,33 +1,21 @@
-import { Platform } from '@grimoire/shared';
+import { AsyncStatus, Platform } from '@grimoire/shared';
 import { AlertCircle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 
-import { useGetXboxStatus, useSyncXbox } from '@/api/xbox';
 import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/use-toast';
 import { cn } from '@/utils/cn';
 
-const XBOX_CONNECT_URL = '/api/v1/platforms/xbox/connect/redirect';
+interface IXboxRow {
+  status: { connected: boolean; externalID?: string; isSyncing?: boolean; lastSyncAt?: Date | null } | null;
+  fetchStatus: AsyncStatus;
+  isSyncing: boolean;
+  connected: boolean;
+  onConnect: () => void;
+  onSync: () => void;
+}
 
-export function XboxRow() {
-  const { data: status, isLoading: isStatusLoading } = useGetXboxStatus();
-  const syncXboxMutation = useSyncXbox();
-  const isSyncing = syncXboxMutation.isPending;
-
-  const connected = status?.connected ?? false;
-
-  function handleConnect() {
-    window.location.href = XBOX_CONNECT_URL;
-  }
-
-  async function handleSync() {
-    try {
-      await syncXboxMutation.mutateAsync();
-      toast({ title: 'Xbox sync started — this may take a moment' });
-    } catch {
-      toast({ title: 'Failed to start sync', variant: 'destructive' });
-    }
-  }
+function XboxRow({ status, fetchStatus, isSyncing, connected, onConnect, onSync }: IXboxRow) {
+  const isStatusLoading = fetchStatus === AsyncStatus.Loading;
 
   return (
     <div className='flex flex-col gap-3 px-4 py-4'>
@@ -75,7 +63,7 @@ export function XboxRow() {
     if (connected) {
       return (
         <button
-          onClick={handleSync}
+          onClick={onSync}
           disabled={isSyncing}
           className={cn(
             'flex items-center gap-1.5 rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink disabled:opacity-50',
@@ -88,7 +76,7 @@ export function XboxRow() {
     }
     return (
       <button
-        onClick={handleConnect}
+        onClick={onConnect}
         className='rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
       >
         Connect

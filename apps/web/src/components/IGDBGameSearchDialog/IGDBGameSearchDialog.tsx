@@ -106,17 +106,11 @@ function IGDBGameSearchDialog({
       return <p className='mt-2 font-sans text-sm text-grimoire-muted text-center py-4'>No results found</p>;
     }
 
-    return (
-      <div className='flex flex-col gap-1 mt-1 max-h-96 overflow-y-auto'>
-        {searchResults.map((game) => renderResultRow(game))}
-      </div>
-    );
+    return <div className='flex flex-col gap-1 mt-1 max-h-96 overflow-y-auto'>{searchResults.map((game) => renderResultRow(game))}</div>;
   }
 
   function renderResultRow(game: IgdbGame) {
-    const releaseYear = game.first_release_date
-      ? new Date(game.first_release_date * 1000).getFullYear()
-      : null;
+    const releaseYear = game.first_release_date ? new Date(game.first_release_date * 1000).getFullYear() : null;
 
     return (
       <button
@@ -128,13 +122,9 @@ function IGDBGameSearchDialog({
         <div className='flex flex-col min-w-0 gap-0.5'>
           <span className='font-grimoire text-sm sm:text-base text-grimoire-ink truncate'>{game.name}</span>
           <div className='flex flex-wrap items-center gap-x-2 gap-y-0.5'>
-            {releaseYear && (
-              <span className='font-sans text-xs text-grimoire-muted'>{releaseYear}</span>
-            )}
+            {releaseYear && <span className='font-sans text-xs text-grimoire-muted'>{releaseYear}</span>}
             {game.genres && game.genres.length > 0 && (
-              <span className='font-sans text-xs text-grimoire-muted'>
-                {game.genres.slice(0, 2).join(', ')}
-              </span>
+              <span className='font-sans text-xs text-grimoire-muted'>{game.genres.slice(0, 2).join(', ')}</span>
             )}
           </div>
         </div>
@@ -144,13 +134,7 @@ function IGDBGameSearchDialog({
 
   function renderResultCover(game: IgdbGame) {
     if (game.cover) {
-      return (
-        <img
-          src={game.cover}
-          alt={game.name}
-          className='h-20 w-14 sm:h-24 sm:w-16 rounded object-cover shrink-0'
-        />
-      );
+      return <img src={game.cover} alt={game.name} className='h-20 w-14 sm:h-24 sm:w-16 rounded object-cover shrink-0' />;
     }
 
     return (
@@ -175,9 +159,7 @@ function IGDBGameSearchDialog({
   function renderConfirmGameCard() {
     if (!selectedGame) return null;
 
-    const releaseYear = selectedGame.first_release_date
-      ? new Date(selectedGame.first_release_date * 1000).getFullYear()
-      : null;
+    const releaseYear = selectedGame.first_release_date ? new Date(selectedGame.first_release_date * 1000).getFullYear() : null;
 
     const genres = selectedGame.genres?.slice(0, 3) ?? [];
 
@@ -188,12 +170,8 @@ function IGDBGameSearchDialog({
           <span className='font-grimoire text-base sm:text-lg text-grimoire-ink leading-snug'>{selectedGame.name}</span>
           {(releaseYear || genres.length > 0) && (
             <div className='flex flex-wrap items-center gap-x-2 gap-y-0.5'>
-              {releaseYear && (
-                <span className='font-sans text-xs text-grimoire-muted'>{releaseYear}</span>
-              )}
-              {genres.length > 0 && (
-                <span className='font-sans text-xs text-grimoire-muted'>{genres.join(', ')}</span>
-              )}
+              {releaseYear && <span className='font-sans text-xs text-grimoire-muted'>{releaseYear}</span>}
+              {genres.length > 0 && <span className='font-sans text-xs text-grimoire-muted'>{genres.join(', ')}</span>}
             </div>
           )}
           {selectedGame.summary && (
@@ -210,13 +188,7 @@ function IGDBGameSearchDialog({
     if (!selectedGame) return null;
 
     if (selectedGame.cover) {
-      return (
-        <img
-          src={selectedGame.cover}
-          alt={selectedGame.name}
-          className='h-28 w-20 sm:h-36 sm:w-24 rounded object-cover shrink-0'
-        />
-      );
+      return <img src={selectedGame.cover} alt={selectedGame.name} className='h-28 w-20 sm:h-36 sm:w-24 rounded object-cover shrink-0' />;
     }
 
     return (

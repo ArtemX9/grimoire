@@ -3,7 +3,6 @@ import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigationType } from 'react-router-dom';
 
-import { GameStats } from '@/api/games';
 import AiPanelContainer from '@/components/AiPanel/AiPanelContainer';
 import IGDBGameSearchDialogContainer from '@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer';
 import UnresolvedGamesBannerContainer from '@/components/UnresolvedGamesBanner/UnresolvedGamesBannerContainer';
@@ -18,8 +17,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import FilterBar from '@/pages/LibraryPage/components/FilterBar/FilterBar';
 import GameGridContainer from '@/pages/LibraryPage/components/GameGrid/GameGridContainer';
-import { FiltersState } from '@/store/filtersSlice';
-import { useAppSelector } from '@/store/hooks';
+import { FiltersState } from '@/store/state/filters/index';
+import type { GameStats } from '@/store/thunks/games/types';
 
 let _savedScrollTop = 0;
 
@@ -32,6 +31,7 @@ interface ILibraryPage {
   stats: GameStats | null | undefined;
   games: UserGame[];
   availablePlatforms: Platform[];
+  highlightedGameID: string | null;
   onAddDialogOpen: (shouldOpen: boolean) => void;
   onAIDrawerOpen: () => void;
   onStatusChange: (status: GameStatus | null) => void;
@@ -50,6 +50,7 @@ export function LibraryPage({
   stats,
   games,
   availablePlatforms,
+  highlightedGameID,
   isStatsLoading,
   isGamesLoading,
   onAddDialogOpen,
@@ -66,7 +67,6 @@ export function LibraryPage({
   const hasRestoredScroll = useRef(false);
   const navigationType = useNavigationType();
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const highlightedGameID = useAppSelector((s) => s.ui.highlightedGameID);
 
   useEffect(function resetScrollOnFreshVisit() {
     if (navigationType !== 'POP') {
@@ -110,6 +110,10 @@ export function LibraryPage({
 
   function handleScroll(event: React.UIEvent<HTMLDivElement>) {
     _savedScrollTop = (event.target as HTMLDivElement).scrollTop;
+  }
+
+  function handleFiltersToggle() {
+    setFiltersOpen((prev) => !prev);
   }
 
   return (
@@ -196,7 +200,7 @@ export function LibraryPage({
         </div>
         <div className='flex shrink-0 items-center gap-2'>
           <button
-            onClick={() => setFiltersOpen((prev) => !prev)}
+            onClick={handleFiltersToggle}
             className='sm:hidden flex items-center gap-1.5 rounded border border-grimoire-border bg-grimoire-card px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
           >
             {filtersOpen ? <ChevronUp className='h-3.5 w-3.5' /> : <ChevronDown className='h-3.5 w-3.5' />}

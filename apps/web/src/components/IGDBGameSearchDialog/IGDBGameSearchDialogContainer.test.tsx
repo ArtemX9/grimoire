@@ -1,11 +1,13 @@
-import { IgdbGame } from '@grimoire/shared';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AsyncStatus, IgdbGame } from '@grimoire/shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { Provider } from 'react-redux';
+import { type Reducer, applyMiddleware, combineReducers, createStore } from 'redux';
+import { thunk } from 'redux-thunk';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { igdbKeys } from '@/api/igdb';
+import igdbReducer, { IGDB_SLICE } from '@/store/state/igdb/index';
 import { generateIgdbGame } from '@/test';
 
 import IGDBGameSearchDialogContainer from './IGDBGameSearchDialogContainer';
@@ -22,17 +24,32 @@ vi.mock('./IGDBGameSearchDialog', () => ({ default: mockDialog }));
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeQueryClient() {
-  return new QueryClient({ defaultOptions: { queries: { retry: false } } });
+function makeStore(searchResults: IgdbGame[] = [], searchStatus = AsyncStatus.Idle) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rootReducer: Reducer<any, any> = combineReducers({ [IGDB_SLICE]: igdbReducer });
+  return createStore(
+    rootReducer,
+    {
+      [IGDB_SLICE]: {
+        searchResults,
+        selectedGame: null,
+        searchStatus,
+        getStatus: AsyncStatus.Idle,
+        error: null,
+      },
+    },
+    applyMiddleware(thunk),
+  );
 }
 
 function makeGame(overrides: Partial<IgdbGame> = {}): IgdbGame {
   return generateIgdbGame({ id: 1, name: 'Elden Ring', ...overrides });
 }
 
-function renderContainer(queryClient: QueryClient, onOpenChange = vi.fn()) {
+function renderContainer(searchResults: IgdbGame[] = [], onOpenChange = vi.fn()) {
+  const store = makeStore(searchResults);
   render(
-    <QueryClientProvider client={queryClient}>
+    <Provider store={store}>
       <IGDBGameSearchDialogContainer
         open={true}
         onOpenChange={onOpenChange}
@@ -41,7 +58,7 @@ function renderContainer(queryClient: QueryClient, onOpenChange = vi.fn()) {
         progressIndicatorText='Loading...'
         actionButtonTitle='Add'
       />
-    </QueryClientProvider>,
+    </Provider>,
   );
   return { onOpenChange };
 }
@@ -63,19 +80,17 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
   });
 
   it('passes empty searchResults and isSearching=false when query is short', () => {
-    const queryClient = makeQueryClient();
-    renderContainer(queryClient);
+    renderContainer([]);
 
     // The mock dialog receives searchResults from the container.
-    // With an empty query (< 2 chars), the query is disabled so results should be [].
-    // We test this by checking the mock was called with searchResults.
+    // With an empty query (< 2 chars), results should be [].
     expect(mockDialog).toHaveBeenCalledWith(expect.objectContaining({ searchResults: [] }), expect.anything());
   });
 
   it('resets the search query to empty string when the dialog re-opens after the user had typed', async () => {
-    const queryClient = makeQueryClient();
+    const store = makeStore();
     const { rerender } = render(
-      <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
         <IGDBGameSearchDialogContainer
           open={true}
           onOpenChange={vi.fn()}
@@ -84,7 +99,7 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
           progressIndicatorText='Loading...'
           actionButtonTitle='Add'
         />
-      </QueryClientProvider>,
+      </Provider>,
     );
 
     // Simulate the user having typed something before closing.
@@ -93,7 +108,7 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
 
     // Transition to closed — query is NOT reset yet
     rerender(
-      <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
         <IGDBGameSearchDialogContainer
           open={false}
           onOpenChange={vi.fn()}
@@ -102,12 +117,12 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
           progressIndicatorText='Loading...'
           actionButtonTitle='Add'
         />
-      </QueryClientProvider>,
+      </Provider>,
     );
 
     // Re-open — the useEffect fires on open=true and resets query to ''
     rerender(
-      <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
         <IGDBGameSearchDialogContainer
           open={true}
           onOpenChange={vi.fn()}
@@ -116,50 +131,31 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
           progressIndicatorText='Loading...'
           actionButtonTitle='Add'
         />
-      </QueryClientProvider>,
+      </Provider>,
     );
     expect(screen.getByTestId('search-query')).toBeEmptyDOMElement();
   });
 
   it('calls the parent onOpenChange prop with false when the dialog closes', async () => {
-    const queryClient = makeQueryClient();
     const onOpenChange = vi.fn();
-    renderContainer(queryClient, onOpenChange);
+    renderContainer([], onOpenChange);
 
     await userEvent.click(screen.getByRole('button', { name: 'close-dialog' }));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it('passes cached search results to dialog when query is long enough', () => {
-    const queryClient = makeQueryClient();
+  it('passes pre-loaded search results to dialog when available in store', () => {
     const games = [makeGame(), makeGame({ id: 2, name: 'Hades' })];
+    renderContainer(games);
 
-    // Pre-seed TanStack Query cache with results for a 2+ char query
-    queryClient.setQueryData(igdbKeys.search('El'), games);
-
-    render(
-      <QueryClientProvider client={queryClient}>
-        <IGDBGameSearchDialogContainer
-          open={true}
-          onOpenChange={vi.fn()}
-          onGameSelect={vi.fn()}
-          dialogTitle='Test'
-          progressIndicatorText='Loading...'
-          actionButtonTitle='Add'
-          initialSearchQuery='El'
-        />
-      </QueryClientProvider>,
-    );
-
-    // Results from cache are passed to dialog
     expect(mockDialog).toHaveBeenCalledWith(expect.objectContaining({ searchResults: games }), expect.anything());
   });
 
   it('initializes searchQuery with initialSearchQuery when provided', () => {
-    const queryClient = makeQueryClient();
+    const store = makeStore();
     render(
-      <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
         <IGDBGameSearchDialogContainer
           open={true}
           onOpenChange={vi.fn()}
@@ -169,16 +165,15 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
           actionButtonTitle='Add'
           initialSearchQuery='Elden Ring'
         />
-      </QueryClientProvider>,
+      </Provider>,
     );
     expect(screen.getByTestId('search-query')).toHaveTextContent('Elden Ring');
   });
 
   it('pre-fills with new initialSearchQuery when dialog is re-opened for a different game', async () => {
-    const queryClient = makeQueryClient();
-    // Start closed, with first game's title
+    const store = makeStore();
     const { rerender } = render(
-      <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
         <IGDBGameSearchDialogContainer
           open={false}
           onOpenChange={vi.fn()}
@@ -188,12 +183,12 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
           actionButtonTitle='Add'
           initialSearchQuery='Game A'
         />
-      </QueryClientProvider>,
+      </Provider>,
     );
 
     // Open with Game A
     rerender(
-      <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
         <IGDBGameSearchDialogContainer
           open={true}
           onOpenChange={vi.fn()}
@@ -203,13 +198,13 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
           actionButtonTitle='Add'
           initialSearchQuery='Game A'
         />
-      </QueryClientProvider>,
+      </Provider>,
     );
     expect(screen.getByTestId('search-query')).toHaveTextContent('Game A');
 
     // Close, then open with Game B
     rerender(
-      <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
         <IGDBGameSearchDialogContainer
           open={false}
           onOpenChange={vi.fn()}
@@ -219,11 +214,11 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
           actionButtonTitle='Add'
           initialSearchQuery='Game B'
         />
-      </QueryClientProvider>,
+      </Provider>,
     );
 
     rerender(
-      <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
         <IGDBGameSearchDialogContainer
           open={true}
           onOpenChange={vi.fn()}
@@ -233,15 +228,15 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
           actionButtonTitle='Add'
           initialSearchQuery='Game B'
         />
-      </QueryClientProvider>,
+      </Provider>,
     );
     expect(screen.getByTestId('search-query')).toHaveTextContent('Game B');
   });
 
   it('initializes with empty string when no initialSearchQuery is provided and dialog opens', async () => {
-    const queryClient = makeQueryClient();
+    const store = makeStore();
     const { rerender } = render(
-      <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
         <IGDBGameSearchDialogContainer
           open={false}
           onOpenChange={vi.fn()}
@@ -250,11 +245,11 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
           progressIndicatorText='Loading...'
           actionButtonTitle='Add'
         />
-      </QueryClientProvider>,
+      </Provider>,
     );
 
     rerender(
-      <QueryClientProvider client={queryClient}>
+      <Provider store={store}>
         <IGDBGameSearchDialogContainer
           open={true}
           onOpenChange={vi.fn()}
@@ -263,7 +258,7 @@ describe('IGDBGameSearchDialogContainer — close cleanup', () => {
           progressIndicatorText='Loading...'
           actionButtonTitle='Add'
         />
-      </QueryClientProvider>,
+      </Provider>,
     );
 
     expect(screen.getByTestId('search-query')).toBeEmptyDOMElement();

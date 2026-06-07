@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaClient } from '@prisma/client/extension';
 
@@ -22,7 +22,7 @@ export class GamesService {
     sortBy?: SortableField,
     order: 'asc' | 'desc' = 'asc',
   ): Promise<GameResponse[]> {
-    let orderBy: any = {
+    let orderBy: Record<string, unknown> = {
       igdbGame: {
         title: order,
       },
@@ -62,61 +62,57 @@ export class GamesService {
       }
     }
 
-    try {
-      const games = await this.prisma.userGame.findMany({
-        where: {
-          userId,
-          ...(status && { status: Array.isArray(status) ? { in: status } : status }),
-          ...(search && {
-            igdbGame: {
-              title: {
-                contains: search,
-                mode: 'insensitive',
-              },
+    const games = await this.prisma.userGame.findMany({
+      where: {
+        userId,
+        ...(status && { status: Array.isArray(status) ? { in: status } : status }),
+        ...(search && {
+          igdbGame: {
+            title: {
+              contains: search,
+              mode: 'insensitive',
             },
-          }),
-          ...(genre && {
-            igdbGame: {
-              genres: {
-                has: genre,
-              },
+          },
+        }),
+        ...(genre && {
+          igdbGame: {
+            genres: {
+              has: genre,
             },
-          }),
-          ...(platform && {
-            userGamePlatforms: {
-              some: {
-                syncedGame: {
-                  platform: {
-                    platform,
-                  },
+          },
+        }),
+        ...(platform && {
+          userGamePlatforms: {
+            some: {
+              syncedGame: {
+                platform: {
+                  platform,
                 },
               },
             },
-          }),
-        },
-        include: {
-          igdbGame: true,
-          userGamePlatforms: {
-            include: {
-              syncedGame: {
-                include: {
-                  platform: {
-                    select: {
-                      id: true,
-                      platform: true,
-                    },
+          },
+        }),
+      },
+      include: {
+        igdbGame: true,
+        userGamePlatforms: {
+          include: {
+            syncedGame: {
+              include: {
+                platform: {
+                  select: {
+                    id: true,
+                    platform: true,
                   },
                 },
               },
             },
           },
         },
-        orderBy,
-      });
-      return games.map((g) => this._toResponse(g));
-    } catch (e) {
-      throw new NotFoundException('Games could not be obtained', JSON.stringify(e));
-    }
+      },
+      orderBy,
+    });
+    return games.map((g) => this._toResponse(g));
   }
 
   async findOne(userId: string, userGameID: string): Promise<GameResponse> {
@@ -236,7 +232,7 @@ export class GamesService {
           where: { userId_igdbGameId: { userId, igdbGameId: igdbGame.id } },
         });
         if (!targetGame) {
-          const original = await tx.userGame.findUniqueOrThrow({ where: { id: originalGameID } });
+          const original = await tx.userGame.findUniqueOrThrow({ where: { id: originalGameID, userId } });
           targetGame = await tx.userGame.create({
             data: {
               userId,
@@ -250,7 +246,7 @@ export class GamesService {
         } else {
           // Target already exists — merge fields from both entries
           const existingTarget = targetGame;
-          const original = await tx.userGame.findUniqueOrThrow({ where: { id: originalGameID } });
+          const original = await tx.userGame.findUniqueOrThrow({ where: { id: originalGameID, userId } });
           const mergedPlaytime = Math.max(existingTarget.playtimeHours, original.playtimeHours);
           // Rating: keep target's if set; fall back to source's
           const mergedRating = existingTarget.userRating ?? original.userRating;
@@ -301,7 +297,7 @@ export class GamesService {
         }
 
         if (remainingPlatforms === 0) {
-          const original = await tx.userGame.findUnique({ where: { id: originalGameID } });
+          const original = await tx.userGame.findUnique({ where: { id: originalGameID, userId } });
           if (original && !original.isMappedManually) {
             await tx.userGame.delete({ where: { id: originalGameID } });
           }
@@ -314,9 +310,12 @@ export class GamesService {
     }
 
     // When game was created by user manually
+    await this._findOwned(userId, originalGameID);
+
     const userGame = await this.prisma.userGame.update({
       where: {
         id: originalGameID,
+        userId,
       },
       data: {
         igdbGameId: igdbGame.id,
@@ -328,38 +327,36 @@ export class GamesService {
   }
 
   async update(userId: string, id: string, dto: UpdateGameDto): Promise<GameResponse> {
-    try {
-      const game = await this.prisma.userGame.update({
-        where: { id, userId },
-        data: {
-          userRating: dto.userRating,
-          moods: dto.moods,
-          notes: dto.notes,
-          status: dto.status,
-        },
-        include: {
-          igdbGame: true,
-          userGamePlatforms: {
-            include: {
-              syncedGame: {
-                include: {
-                  platform: {
-                    select: {
-                      id: true,
-                      platform: true,
-                    },
+    await this._findOwned(userId, id);
+
+    const game = await this.prisma.userGame.update({
+      where: { id, userId },
+      data: {
+        userRating: dto.userRating,
+        moods: dto.moods,
+        notes: dto.notes,
+        status: dto.status,
+      },
+      include: {
+        igdbGame: true,
+        userGamePlatforms: {
+          include: {
+            syncedGame: {
+              include: {
+                platform: {
+                  select: {
+                    id: true,
+                    platform: true,
                   },
                 },
               },
             },
           },
         },
-      });
+      },
+    });
 
-      return this._toResponse(game);
-    } catch (e) {
-      throw new BadRequestException(e);
-    }
+    return this._toResponse(game);
   }
 
   async remove(userId: string, id: string): Promise<void> {
@@ -613,7 +610,7 @@ export class GamesService {
     });
 
     if (existingUserGame) {
-      const titlesMatch = existingUserGame.userGamePlatforms.every((ugp: any) =>
+      const titlesMatch = existingUserGame.userGamePlatforms.every((ugp: { syncedGame: { externalTitle: string } }) =>
         isConfidentMatch(ugp.syncedGame.externalTitle, igdbGameRow.title),
       );
 

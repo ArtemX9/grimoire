@@ -1,11 +1,12 @@
-import { useGetUnmappedGames } from '@/api/unmappedGames';
+import { useAppSelector } from '@/store/hooks';
+import { selectUnmappedGamesCount } from '@/store/state/unmappedGames/selectors';
 
 import UnresolvedGamesBanner from './UnresolvedGamesBanner';
 
 function UnresolvedGamesBannerContainer() {
-  const { data = [] } = useGetUnmappedGames({});
+  const count = useAppSelector(selectUnmappedGamesCount);
 
-  return <UnresolvedGamesBanner count={data.length} />;
+  return <UnresolvedGamesBanner count={count} />;
 }
 
 export default UnresolvedGamesBannerContainer;

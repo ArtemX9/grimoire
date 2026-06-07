@@ -1,64 +1,80 @@
-import { Role } from '@grimoire/shared';
-import { useState } from 'react';
+import { AsyncStatus, Platform, Role } from '@grimoire/shared';
+import { useEffect, useState } from 'react';
 
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
-  useDeleteAdminUser,
-  useGetAiGlobalSettings,
-  useListAdminUsers,
-  useUpdateAiGlobalSettings,
-  useUpdateUserAiSettings,
-  useUpdateUserPlan,
-  useUpdateUserRole,
-} from '@/api/admin';
-import { useSession } from '@/api/auth';
+  selectAdminPlatformsTokensStatus,
+  selectAdminUsers,
+  selectAdminUsersStatus,
+  selectAiSettings,
+  selectGlobalAiEnabled,
+  selectPlatformsTokens,
+} from '@/store/state/admin/selectors';
+import { selectCurrentUserId } from '@/store/state/auth/selectors';
+import {
+  deleteAdminUser,
+  fetchAdminUsers,
+  fetchAiGlobalSettings,
+  fetchPlatformsTokens,
+  updateAiGlobalSettings,
+  updatePlatformToken,
+  updateUserAiSettings,
+  updateUserPlan,
+  updateUserRole,
+} from '@/store/thunks/admin';
 
 import { AdminDashboard } from './AdminDashboard';
 
 export function AdminDashboardContainer() {
+  const dispatch = useAppDispatch();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const { data: usersResponse, isLoading: isUsersLoading } = useListAdminUsers();
-  const { data: aiSettings, isLoading: isAiSettingsLoading } = useGetAiGlobalSettings();
-  const sessionQuery = useSession();
-  const currentUserID = sessionQuery.data?.user.id ?? null;
+  const users = useAppSelector(selectAdminUsers);
+  const usersStatus = useAppSelector(selectAdminUsersStatus);
+  const aiSettings = useAppSelector(selectAiSettings);
+  const platformsTokens = useAppSelector(selectPlatformsTokens);
+  const platformsTokensStatus = useAppSelector(selectAdminPlatformsTokensStatus);
+  const currentUserID = useAppSelector(selectCurrentUserId);
+  const globalAiEnabled = useAppSelector(selectGlobalAiEnabled);
 
-  const users = usersResponse?.data ?? [];
+  const isLoading = usersStatus === AsyncStatus.Loading || platformsTokensStatus === AsyncStatus.Loading;
 
-  const deleteUserMutation = useDeleteAdminUser();
-  const updateAiGlobalMutation = useUpdateAiGlobalSettings();
-  const updateUserAiMutation = useUpdateUserAiSettings();
-  const updateUserPlanMutation = useUpdateUserPlan();
-  const updateUserRoleMutation = useUpdateUserRole();
-
-  const globalAiEnabled = aiSettings?.aiEnabled ?? true;
-  const isLoading = isUsersLoading || isAiSettingsLoading;
+  useEffect(function fetchAdminDataOnMount() {
+    dispatch(fetchAdminUsers());
+    dispatch(fetchAiGlobalSettings());
+    dispatch(fetchPlatformsTokens());
+  }, []);
 
   async function handleDeleteUser(id: string) {
-    await deleteUserMutation.mutateAsync(id);
+    await dispatch(deleteAdminUser(id));
   }
 
   async function handleToggleGlobalAi(enabled: boolean) {
-    await updateAiGlobalMutation.mutateAsync({ aiEnabled: enabled });
+    await dispatch(updateAiGlobalSettings({ aiEnabled: enabled }));
   }
 
   async function handleAiEnabledChange(id: string, enabled: boolean) {
     const user = users.find((u) => u.id === id);
     if (!user) return;
-    await updateUserAiMutation.mutateAsync({ id, aiEnabled: enabled, aiRequestsLimit: user.aiRequestsLimit });
+    await dispatch(updateUserAiSettings({ id, aiEnabled: enabled, aiRequestsLimit: user.aiRequestsLimit }));
   }
 
   async function handleAiLimitChange(id: string, limit: number | null) {
     const user = users.find((u) => u.id === id);
     if (!user) return;
-    await updateUserAiMutation.mutateAsync({ id, aiEnabled: user.aiEnabled, aiRequestsLimit: limit });
+    await dispatch(updateUserAiSettings({ id, aiEnabled: user.aiEnabled, aiRequestsLimit: limit }));
   }
 
   async function handlePlanChange(id: string, plan: string) {
-    await updateUserPlanMutation.mutateAsync({ id, plan });
+    await dispatch(updateUserPlan({ id, plan }));
   }
 
   async function handleRoleChange(userID: string, role: Role) {
-    await updateUserRoleMutation.mutateAsync({ userID, role });
+    await dispatch(updateUserRole({ userID, role }));
+  }
+
+  async function handlePlatformTokenUpdate(platformID: Platform, newToken: string, newValidityFrame: number) {
+    await dispatch(updatePlatformToken({ platformID, token: newToken, tokenValidityFrame: newValidityFrame }));
   }
 
   return (
@@ -68,14 +84,16 @@ export function AdminDashboardContainer() {
       globalAiEnabled={globalAiEnabled}
       isCreateDialogOpen={isCreateDialogOpen}
       currentUserID={currentUserID}
+      platformsTokens={platformsTokens}
       onToggleGlobalAi={handleToggleGlobalAi}
       onDeleteUser={handleDeleteUser}
       onAiEnabledChange={handleAiEnabledChange}
       onAiLimitChange={handleAiLimitChange}
       onPlanChange={handlePlanChange}
       onRoleChange={handleRoleChange}
-      onOpenCreateDialog={() => setIsCreateDialogOpen(true)}
-      onCloseCreateDialog={() => setIsCreateDialogOpen(false)}
+      onPlatformTokenUpdate={handlePlatformTokenUpdate}
+      onOpenCreateDialog={setIsCreateDialogOpen.bind(null, true)}
+      onCloseCreateDialog={setIsCreateDialogOpen.bind(null, false)}
     />
   );
 }

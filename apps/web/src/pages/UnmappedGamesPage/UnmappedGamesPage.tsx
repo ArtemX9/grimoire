@@ -19,7 +19,15 @@ interface IUnmappedGamesPage {
   onGameSelect: (game: IgdbGame, onSuccessCallback: () => void, onErrorCallback: () => void) => void;
 }
 
-function UnmappedGamesPage({ games, isLoading, mappingGame, onMapClick, onDeleteClick, onDialogOpenChange, onGameSelect }: IUnmappedGamesPage) {
+function UnmappedGamesPage({
+  games,
+  isLoading,
+  mappingGame,
+  onMapClick,
+  onDeleteClick,
+  onDialogOpenChange,
+  onGameSelect,
+}: IUnmappedGamesPage) {
   return (
     <div className='flex h-full flex-col overflow-hidden'>
       {renderHeader()}

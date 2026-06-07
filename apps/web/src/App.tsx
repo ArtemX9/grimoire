@@ -1,6 +1,6 @@
+import { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-import { useSession } from '@/api/auth';
 import Layout from '@/components/Layout/Layout';
 import { AdminRoute } from '@/components/ProtectedRoute/AdminRoute';
 import { MustChangePasswordRoute } from '@/components/ProtectedRoute/MustChangePasswordRoute';
@@ -8,25 +8,35 @@ import { ProtectedRoute } from '@/components/ProtectedRoute/ProtectedRoute';
 import { Toaster } from '@/components/ui/toaster';
 import { ROUTES } from '@/constants/routes';
 import { AdminDashboardPage } from '@/pages/AdminDashboardPage/AdminDashboardPage';
-import { AdminSetupPage } from '@/pages/AdminSetupPage/AdminSetupPage';
-import { ChangePasswordPage } from '@/pages/ChangePasswordPage/ChangePasswordPage';
+import AdminSetupPageContainer from '@/pages/AdminSetupPage/AdminSetupPageContainer';
+import ChangePasswordPageContainer from '@/pages/ChangePasswordPage/ChangePasswordPageContainer';
 import GameDetailPageContainer from '@/pages/GameDetailPage/GameDetailPageContainer';
 import { LibraryPageContainer } from '@/pages/LibraryPage/LibraryPageContainer';
-import { LoginPage } from '@/pages/LoginPage/LoginPage';
-import { SettingsPage } from '@/pages/SettingsPage/SettingsPage';
+import LoginPageContainer from '@/pages/LoginPage/LoginPageContainer';
+import SettingsPageContainer from '@/pages/SettingsPage/SettingsPageContainer';
 import UnmappedGamesPageContainer from '@/pages/UnmappedGamesPage/UnmappedGamesPageContainer';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { selectIsBootstrapped } from '@/store/state/auth/selectors';
+import { getSession } from '@/store/thunks/auth/index';
 
 export default function App() {
-  useSession();
+  const dispatch = useAppDispatch();
+  const isBootstrapped = useAppSelector(selectIsBootstrapped);
+
+  useEffect(function bootstrapSession() {
+    if (!isBootstrapped) {
+      dispatch(getSession());
+    }
+  }, []);
 
   return (
     <>
       <Routes>
-        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
-        <Route path={ROUTES.ADMIN_SETUP} element={<AdminSetupPage />} />
+        <Route path={ROUTES.LOGIN} element={<LoginPageContainer />} />
+        <Route path={ROUTES.ADMIN_SETUP} element={<AdminSetupPageContainer />} />
 
         <Route element={<MustChangePasswordRoute />}>
-          <Route path={ROUTES.CHANGE_PASSWORD} element={<ChangePasswordPage />} />
+          <Route path={ROUTES.CHANGE_PASSWORD} element={<ChangePasswordPageContainer />} />
         </Route>
 
         <Route element={<AdminRoute />}>
@@ -38,7 +48,7 @@ export default function App() {
             <Route path={ROUTES.DEFAULT} element={<LibraryPageContainer />} />
             <Route path={ROUTES.GAME_DETAILS} element={<GameDetailPageContainer />} />
             <Route path={ROUTES.UNMAPPED_GAMES} element={<UnmappedGamesPageContainer />} />
-            <Route path={ROUTES.USER_SETTINGS} element={<SettingsPage />} />
+            <Route path={ROUTES.USER_SETTINGS} element={<SettingsPageContainer />} />
           </Route>
         </Route>
       </Routes>

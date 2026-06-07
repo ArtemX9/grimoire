@@ -118,7 +118,7 @@ describe('AiPanel — aiEnabled=true', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Chill' }));
 
-    expect(onMoodToggle).toHaveBeenCalledWith('Chill');
+    expect(onMoodToggle).toHaveBeenCalledWith('Chill', expect.anything());
   });
 
   it('calls onSessionLengthChange with the correct minutes when a session button is clicked', async () => {
@@ -127,7 +127,7 @@ describe('AiPanel — aiEnabled=true', () => {
 
     await userEvent.click(screen.getByRole('button', { name: '2h' }));
 
-    expect(onSessionLengthChange).toHaveBeenCalledWith(120);
+    expect(onSessionLengthChange).toHaveBeenCalledWith(120, expect.anything());
   });
 
   it('calls onRequest when the get-recommendation button is clicked', async () => {

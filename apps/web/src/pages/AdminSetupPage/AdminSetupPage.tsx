@@ -1,38 +1,30 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-
-import { useSetupAdmin } from '@/api/admin';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ROUTES } from '@/constants/routes';
 
-export function AdminSetupPage() {
-  const navigate = useNavigate();
-  const setupAdminMutation = useSetupAdmin();
-  const isLoading = setupAdminMutation.isPending;
+interface IAdminSetupPage {
+  name: string;
+  email: string;
+  password: string;
+  error: string;
+  isLoading: boolean;
+  onNameChange: (value: string) => void;
+  onEmailChange: (value: string) => void;
+  onPasswordChange: (value: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+}
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    try {
-      await setupAdminMutation.mutateAsync({ email, password, name: name || undefined });
-      navigate(ROUTES.LOGIN, { replace: true });
-    } catch (err: unknown) {
-      const status = (err as { status?: number })?.status;
-      if (status === 403) {
-        navigate(ROUTES.LOGIN, { replace: true });
-      } else {
-        setError('Could not create admin account. Please try again.');
-      }
-    }
-  }
-
+export function AdminSetupPage({
+  name,
+  email,
+  password,
+  error,
+  isLoading,
+  onNameChange,
+  onEmailChange,
+  onPasswordChange,
+  onSubmit,
+}: IAdminSetupPage) {
   return (
     <div className='flex min-h-screen items-center justify-center bg-grimoire-deep px-4'>
       <div className='w-full max-w-sm'>
@@ -59,7 +51,7 @@ export function AdminSetupPage() {
           <CardDescription>No accounts exist yet. Create the first administrator account to get started.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className='flex flex-col gap-3'>
+          <form onSubmit={onSubmit} className='flex flex-col gap-3'>
             {renderNameField()}
             {renderEmailField()}
             {renderPasswordField()}
@@ -84,7 +76,7 @@ export function AdminSetupPage() {
           type='text'
           placeholder='Your name'
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => onNameChange(e.target.value)}
           autoComplete='name'
         />
       </div>
@@ -102,7 +94,7 @@ export function AdminSetupPage() {
           type='email'
           placeholder='admin@example.com'
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => onEmailChange(e.target.value)}
           required
           autoComplete='email'
         />
@@ -121,7 +113,7 @@ export function AdminSetupPage() {
           type='password'
           placeholder='••••••••'
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => onPasswordChange(e.target.value)}
           required
           autoComplete='new-password'
           minLength={8}
