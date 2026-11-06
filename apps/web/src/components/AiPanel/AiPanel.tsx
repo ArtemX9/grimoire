@@ -196,9 +196,9 @@ function AiPanel({
   function renderThinkingHeader() {
     return (
       <div className='mb-1.5 flex items-center justify-between'>
-        <p className='font-sans text-xs text-grimoire-faint'>Reasoning…</p>
+        <p className='font-sans text-xs text-grimoire-muted'>Reasoning…</p>
         <CollapsibleTrigger asChild>
-          <button className='flex items-center gap-0.5 font-sans text-xs text-grimoire-faint transition-colors hover:text-grimoire-muted'>
+          <button className='flex items-center gap-0.5 font-sans text-xs text-grimoire-muted transition-colors hover:text-grimoire-ink'>
             {isThinkingExpanded ? (
               <>
                 <span>Show less</span>
@@ -230,7 +230,7 @@ function AiPanel({
     if (!streamedTokens && !isStreaming) {
       return (
         <div className='rounded border border-grimoire-border bg-grimoire-deep p-3'>
-          <p className='font-sans text-xs text-grimoire-faint text-center leading-relaxed'>Select moods and ask for a recommendation</p>
+          <p className='font-sans text-xs text-grimoire-muted text-center leading-relaxed'>Select moods and ask for a recommendation</p>
         </div>
       );
     }

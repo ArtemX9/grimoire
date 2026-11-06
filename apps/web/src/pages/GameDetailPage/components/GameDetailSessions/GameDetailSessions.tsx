@@ -21,16 +21,12 @@ function GameDetailSessions({ sessions }: IGameDetailSessions) {
           </span>
         </div>
       </CardHeader>
-      <CardContent className='pt-0'>
-        {sessions.length === 0 ? renderEmpty() : renderList()}
-      </CardContent>
+      <CardContent className='pt-0'>{sessions.length === 0 ? renderEmpty() : renderList()}</CardContent>
     </Card>
   );
 
   function renderEmpty() {
-    return (
-      <p className='py-4 text-center font-sans text-sm text-grimoire-faint'>No sessions logged yet</p>
-    );
+    return <p className='py-4 text-center font-sans text-sm text-grimoire-muted'>No sessions logged yet</p>;
   }
 
   function renderList() {
@@ -45,9 +41,7 @@ function GameDetailSessions({ sessions }: IGameDetailSessions) {
                 year: 'numeric',
               })}
             </span>
-            <span className='font-sans text-sm text-grimoire-ink'>
-              {session.durationMin ? `${session.durationMin} min` : '—'}
-            </span>
+            <span className='font-sans text-sm text-grimoire-ink'>{session.durationMin ? `${session.durationMin} min` : '—'}</span>
           </div>
         ))}
       </div>

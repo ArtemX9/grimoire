@@ -44,7 +44,7 @@ function GameGrid({ games, isLoading, highlightedGameID }: IGameGrid) {
     return (
       <div className='flex flex-col items-center justify-center py-20 text-center'>
         <p className='font-grimoire text-lg text-grimoire-muted'>Your library is empty</p>
-        <p className='mt-1 font-sans text-sm text-grimoire-faint'>Add games manually or connect Steam to get started</p>
+        <p className='mt-1 font-sans text-sm text-grimoire-muted'>Add games manually or connect Steam to get started</p>
       </div>
     );
   }

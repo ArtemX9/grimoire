@@ -173,3 +173,11 @@ export const deleteGame =
       throw new Error(message);
     }
   };
+
+// ---------------------------------------------------------------------------
+// exportGames
+// ---------------------------------------------------------------------------
+
+// Read-only snapshot for file export: deliberately bypasses the games slice so the
+// unfiltered list never overwrites the Library's filtered view.
+export const exportGames = (): AppThunk<Promise<UserGame[]>> => async () => apiFetch<UserGame[]>('/games');

@@ -1,4 +1,4 @@
-import { AlertTriangle, BookOpen, Library, Settings, Sparkles } from 'lucide-react';
+import { AlertTriangle, BookOpen, Library, Settings, Shield, Sparkles } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 import { ROUTES } from '@/constants/routes';
@@ -10,16 +10,20 @@ const NAV_ITEMS = [
   { to: ROUTES.USER_SETTINGS, label: 'Settings', icon: Settings },
 ] as const;
 
+const ADMIN_NAV_ITEM = { to: ROUTES.ADMIN_DASHBOARD, label: 'Admin', icon: Shield } as const;
+
 interface ISidebar {
   isMobile: boolean;
   isAIDrawerOpen: boolean;
   aiEnabled: boolean;
+  isAdmin: boolean;
   unresolvedCount: number;
   onAIClick: () => void;
 }
 
-function Sidebar({ isMobile, isAIDrawerOpen, aiEnabled, unresolvedCount, onAIClick }: ISidebar) {
+function Sidebar({ isMobile, isAIDrawerOpen, aiEnabled, isAdmin, unresolvedCount, onAIClick }: ISidebar) {
   const unresolvedBadgeLabel = unresolvedCount > 99 ? '99+' : String(unresolvedCount);
+  const navItems = isAdmin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS;
 
   if (isMobile) return renderMobileNav();
 
@@ -37,14 +41,14 @@ function Sidebar({ isMobile, isAIDrawerOpen, aiEnabled, unresolvedCount, onAICli
 
   function renderMobileNav() {
     return (
-      <nav className='fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-grimoire-border bg-grimoire-card px-2 pb-[env(safe-area-inset-bottom)]'>
-        {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+      <nav className='fixed bottom-0 left-0 right-0 z-50 flex items-stretch border-t border-grimoire-border bg-grimoire-card px-1 pb-[env(safe-area-inset-bottom)]'>
+        {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
               cn(
-                'relative flex flex-col items-center gap-1 px-6 py-3 font-sans text-[10px] transition-colors',
+                'relative flex min-w-0 flex-1 flex-col items-center gap-1 px-1 py-2.5 font-sans text-[11px] transition-colors',
                 isActive
                   ? 'text-grimoire-gold'
                   : to === ROUTES.UNMAPPED_GAMES && unresolvedCount > 0
@@ -65,7 +69,7 @@ function Sidebar({ isMobile, isAIDrawerOpen, aiEnabled, unresolvedCount, onAICli
             onClick={onAIClick}
             aria-label='Open AI recommendations'
             className={cn(
-              'flex flex-col items-center gap-1 px-6 py-3 font-sans text-[10px] transition-colors',
+              'flex min-w-0 flex-1 flex-col items-center gap-1 px-1 py-2.5 font-sans text-[11px] transition-colors',
               isAIDrawerOpen ? 'text-grimoire-gold' : 'text-grimoire-muted',
             )}
           >
@@ -98,7 +102,7 @@ function Sidebar({ isMobile, isAIDrawerOpen, aiEnabled, unresolvedCount, onAICli
   function renderDesktopNav() {
     return (
       <nav className='flex flex-col gap-1 w-full'>
-        {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+        {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}

@@ -139,7 +139,7 @@ describe('LoginPage', () => {
     });
   });
 
-  it('navigates to /admin/dashboard when role is ADMIN', async () => {
+  it('navigates admins to the library like everyone else', async () => {
     mockDispatch.mockImplementation(() => Promise.resolve({ user: { role: Role.ADMIN, mustChangePassword: false } }));
     renderLoginPage(true);
 
@@ -148,7 +148,7 @@ describe('LoginPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/admin/dashboard', { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
     });
   });
 

@@ -207,7 +207,7 @@ function FilterBar({
               'rounded border px-2.5 py-0.5 font-sans text-xs transition-colors',
               activeGenre === genre
                 ? 'border-grimoire-gold-dim bg-grimoire-gold/10 text-grimoire-gold'
-                : 'border-grimoire-border text-grimoire-faint hover:border-grimoire-border-lg hover:text-grimoire-muted',
+                : 'border-grimoire-border text-grimoire-muted hover:border-grimoire-border-lg hover:text-grimoire-ink',
             )}
           >
             {genre}

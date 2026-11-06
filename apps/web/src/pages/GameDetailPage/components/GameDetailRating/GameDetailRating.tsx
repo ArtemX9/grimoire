@@ -33,7 +33,7 @@ function GameDetailRating({ userRating, isUpdating, onRatingChange }: IGameDetai
         </p>
       );
     }
-    return <p className='font-sans text-sm text-grimoire-faint'>Not rated yet</p>;
+    return <p className='font-sans text-sm text-grimoire-muted'>Not rated yet</p>;
   }
 
   function renderStars() {
@@ -52,10 +52,8 @@ function GameDetailRating({ userRating, isUpdating, onRatingChange }: IGameDetai
             >
               <Star
                 className={cn(
-                  'h-4 w-4',
-                  filled
-                    ? 'fill-grimoire-gold-dim text-grimoire-gold-dim'
-                    : 'fill-transparent text-grimoire-faint hover:text-grimoire-muted',
+                  'h-5 w-5',
+                  filled ? 'fill-grimoire-gold text-grimoire-gold' : 'fill-transparent text-grimoire-muted hover:text-grimoire-ink',
                 )}
               />
             </button>

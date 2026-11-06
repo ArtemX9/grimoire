@@ -2,7 +2,7 @@ import { GamePlatform, GameStatus, IgdbGame, Mood, UserGame } from '@grimoire/sh
 import { ArrowLeft } from 'lucide-react';
 
 import IGDBGameSearchDialogContainer from '@/components/IGDBGameSearchDialog/IGDBGameSearchDialogContainer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import GameDetailAbout from '@/pages/GameDetailPage/components/GameDetailAbout/GameDetailAbout';
@@ -100,7 +100,7 @@ export function GameDetailPage({
     return (
       <button
         onClick={onBack}
-        className='flex items-center gap-1.5 font-sans text-sm text-grimoire-muted transition-colors hover:text-grimoire-ink'
+        className='-ml-2 flex h-11 w-fit items-center gap-1.5 rounded px-2 font-sans text-sm text-grimoire-muted transition-colors hover:text-grimoire-ink'
       >
         <ArrowLeft className='h-4 w-4' />
         Back
@@ -142,10 +142,7 @@ export function GameDetailPage({
   function renderNotesCard() {
     return (
       <Card>
-        <CardHeader className='pb-3'>
-          <CardTitle>Notes</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className='p-5'>
           <GameNotes notes={game!.notes} isSaving={isUpdating} onSave={onSaveNotes} />
         </CardContent>
       </Card>

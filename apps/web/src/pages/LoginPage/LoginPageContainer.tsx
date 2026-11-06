@@ -1,8 +1,6 @@
 import { useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
-import { Role } from '@grimoire/shared';
-
 import { ROUTES } from '@/constants/routes';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectIsBootstrapped, selectSession } from '@/store/state/auth/selectors';
@@ -41,8 +39,6 @@ function LoginPageContainer() {
       const result = await dispatch(signIn({ email, password }));
       if (result.user.mustChangePassword) {
         navigate(ROUTES.CHANGE_PASSWORD, { replace: true });
-      } else if (result.user.role === Role.ADMIN) {
-        navigate(ROUTES.ADMIN_DASHBOARD, { replace: true });
       } else {
         navigate(ROUTES.DEFAULT, { replace: true });
       }

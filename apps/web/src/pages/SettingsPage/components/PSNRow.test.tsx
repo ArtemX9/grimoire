@@ -72,9 +72,9 @@ describe('PSNRow', () => {
     expect(screen.getByText('Not connected')).toBeInTheDocument();
   });
 
-  it('shows "Connected" status when connected', () => {
-    renderRow({ connected: true });
-    expect(screen.getByText('Connected')).toBeInTheDocument();
+  it('shows a fresh "Synced" status when connected and recently synced', () => {
+    renderRow({ connected: true, lastSyncAt: new Date() });
+    expect(screen.getByText(/synced just now/i)).toBeInTheDocument();
   });
 
   it('shows the Connect button when not connected and input is hidden', () => {
@@ -113,15 +113,15 @@ describe('PSNRow', () => {
     expect(screen.queryByText('Syncing library…')).not.toBeInTheDocument();
   });
 
-  it('shows last sync time when connected and lastSyncAt is set', () => {
-    const date = new Date('2025-03-15T14:30:00Z');
+  it('flags a stale sync with its relative age', () => {
+    const date = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     renderRow({ connected: true, lastSyncAt: date });
-    expect(screen.getByText(/last synced/i)).toBeInTheDocument();
+    expect(screen.getByText(/synced 1 month ago/i)).toBeInTheDocument();
   });
 
   it('does not show last sync time when not connected', () => {
     renderRow({ connected: false, lastSyncAt: new Date() });
-    expect(screen.queryByText(/last synced/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^synced/i)).not.toBeInTheDocument();
   });
 
   it('dispatches syncPSN thunk when Sync button is clicked', async () => {

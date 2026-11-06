@@ -53,17 +53,5 @@ export const getAnthropicTools = (): AnthropicToolDefinition[] =>
 export function getEnrichedToolsWithUsersContext(ctx: RecommendationContext) {
   const tools = getTools();
 
-  // for (const tool of tools) {
-  //   const { name } = tool.function;
-  //
-  //   switch (name) {
-  //     case ToolName.HIGHLIGHT_GAME:
-  //       const gamesIDs = ctx.games.map((game) => game.gameID);
-  //
-  //       tool.function.description += ` Available games ids: [${gamesIDs.join(', ')}]`;
-  //       tool.function.parameters.properties.gameID.enum = gamesIDs;
-  //   }
-  // }
-
   return tools;
 }

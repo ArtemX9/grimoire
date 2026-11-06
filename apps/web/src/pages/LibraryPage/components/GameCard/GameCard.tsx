@@ -1,18 +1,11 @@
-import { GameStatus, UserGame } from '@grimoire/shared';
+import { UserGame } from '@grimoire/shared';
 import { Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
+import { GAME_STATUS_LABELS, GAME_STATUS_STYLES } from '@/constants/gameStatus';
 import { getGameDetailsURL } from '@/constants/routes';
 import { cn } from '@/utils/cn';
-
-const STATUS_STYLES: Record<GameStatus, string> = {
-  PLAYING: 'bg-grimoire-status-playing-bg   text-grimoire-status-playing-text',
-  BACKLOG: 'bg-grimoire-status-backlog-bg   text-grimoire-status-backlog-text',
-  COMPLETED: 'bg-grimoire-status-completed-bg text-grimoire-status-completed-text',
-  DROPPED: 'bg-grimoire-status-dropped-bg   text-grimoire-status-dropped-text',
-  WISHLIST: 'bg-grimoire-status-wishlist-bg  text-grimoire-status-wishlist-text',
-};
 
 interface IGameCard {
   game: UserGame;
@@ -47,13 +40,16 @@ function GameCard({ game, isHighlighted }: IGameCard) {
           />
         ) : (
           <div className='flex h-full w-full items-center justify-center'>
-            <span className='font-grimoire text-3xl text-grimoire-faint select-none'>G</span>
+            <span className='font-grimoire text-3xl text-grimoire-muted select-none'>G</span>
           </div>
         )}
         <span
-          className={cn('absolute right-2 top-2 rounded-full px-2 py-0.5 font-sans text-[10px] font-medium', STATUS_STYLES[game.status])}
+          className={cn(
+            'absolute right-2 top-2 rounded-full px-2 py-0.5 font-sans text-[11px] font-medium shadow-[0_0_0_1px_rgba(13,12,11,0.6)]',
+            GAME_STATUS_STYLES[game.status],
+          )}
         >
-          {game.status}
+          {GAME_STATUS_LABELS[game.status]}
         </span>
       </div>
     );

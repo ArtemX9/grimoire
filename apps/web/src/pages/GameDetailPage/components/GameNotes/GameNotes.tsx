@@ -37,7 +37,7 @@ function GameNotes({ notes, isSaving, onSave }: IGameNotes) {
   function renderToolbar() {
     return (
       <div className='flex items-center justify-between'>
-        <h2 className='font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>Notes</h2>
+        <h2 className='font-grimoire text-base leading-snug text-grimoire-ink'>Notes</h2>
         {!editing && (
           <button onClick={handleStartEdit} className='font-sans text-xs text-grimoire-muted transition-colors hover:text-grimoire-ink'>
             Edit
@@ -69,7 +69,7 @@ function GameNotes({ notes, isSaving, onSave }: IGameNotes) {
         {notes ? (
           <p className='font-grimoire text-sm leading-relaxed text-grimoire-ink'>{notes}</p>
         ) : (
-          <p className='font-sans text-sm text-grimoire-faint'>Click to add notes…</p>
+          <p className='font-sans text-sm text-grimoire-muted'>Click to add notes…</p>
         )}
       </div>
     );

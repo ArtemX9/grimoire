@@ -39,6 +39,12 @@
     border-color: theme('colors.grimoire.border');
   }
 
+  html,
+  body {
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     background-color: theme('colors.grimoire.deep');
     color: theme('colors.grimoire.ink');

@@ -5,11 +5,19 @@ import { toast } from '@/components/ui/use-toast';
 import { ROUTES } from '@/constants/routes';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { selectSession } from '@/store/state/auth/selectors';
-import { selectIsSteamConnected, selectIsSteamConnecting, selectIsSteamFetching, selectIsSteamSyncing, selectSteamStatus } from '@/store/state/steam/selectors';
+import {
+  selectIsSteamConnected,
+  selectIsSteamConnecting,
+  selectIsSteamFetching,
+  selectIsSteamSyncing,
+  selectSteamStatus,
+} from '@/store/state/steam/selectors';
 import { selectCurrentUser, selectIsUserLoading, selectIsUserUpdating } from '@/store/state/users/selectors';
 import { signOut } from '@/store/thunks/auth/index';
+import { exportGames } from '@/store/thunks/games/index';
 import { connectSteam, getSteamStatus, syncSteam } from '@/store/thunks/steam/index';
 import { getMe, updateMe } from '@/store/thunks/users/index';
+import { ExportFormat, downloadLibrary } from '@/utils/exportLibrary';
 
 import { SettingsPage } from './SettingsPage';
 
@@ -35,6 +43,7 @@ function SettingsPageContainer() {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [steamIdInput, setSteamIdInput] = useState('');
   const [showSteamInput, setShowSteamInput] = useState(false);
+  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
 
   useEffect(function fetchUserOnMount() {
     dispatch(getMe());
@@ -102,6 +111,18 @@ function SettingsPageContainer() {
     }
   }
 
+  async function handleExport(format: ExportFormat) {
+    setExportingFormat(format);
+    try {
+      const games = await dispatch(exportGames());
+      downloadLibrary(games, format);
+    } catch {
+      toast({ title: 'Export failed', variant: 'destructive' });
+    } finally {
+      setExportingFormat(null);
+    }
+  }
+
   return (
     <SettingsPage
       user={user}
@@ -128,6 +149,8 @@ function SettingsPageContainer() {
       onSteamIdChange={setSteamIdInput}
       onSteamConnect={handleSteamConnect}
       onSteamSync={handleSteamSync}
+      exportingFormat={exportingFormat}
+      onExport={handleExport}
     />
   );
 }

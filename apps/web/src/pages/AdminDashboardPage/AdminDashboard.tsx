@@ -1,11 +1,9 @@
 import { Platform, Role } from '@grimoire/shared';
-import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ROUTES } from '@/constants/routes';
 import { CreateUserDialogContainer } from '@/pages/AdminDashboardPage/components/CreateUserDialog/CreateUserDialogContainer';
 import PlatformRow from '@/pages/AdminDashboardPage/components/PlatformRow/PlatformRow';
 import { UserRow } from '@/pages/AdminDashboardPage/components/UserRow/UserRow';
@@ -47,7 +45,7 @@ export function AdminDashboard({
   onPlatformTokenUpdate,
 }: IAdminDashboard) {
   return (
-    <div className='flex flex-col gap-6 p-6'>
+    <div className='flex flex-col gap-6 p-5'>
       {renderHeader()}
       {renderAiGlobalToggle()}
       {renderUsers()}
@@ -60,7 +58,6 @@ export function AdminDashboard({
     return (
       <div className='flex items-center justify-between'>
         <h1 className='font-grimoire text-xl text-grimoire-ink'>Admin</h1>
-        <Link to={ROUTES.DEFAULT} className='font-sans text-sm text-grimoire-muted transition-colors hover:text-grimoire-ink'>Dashboard</Link>
       </div>
     );
   }

@@ -139,7 +139,7 @@ function IGDBGameSearchDialog({
 
     return (
       <div className='h-20 w-14 sm:h-24 sm:w-16 rounded bg-grimoire-hover shrink-0 flex items-center justify-center'>
-        <span className='font-grimoire text-xs text-grimoire-faint'>G</span>
+        <span className='font-grimoire text-xs text-grimoire-muted'>G</span>
       </div>
     );
   }
@@ -193,7 +193,7 @@ function IGDBGameSearchDialog({
 
     return (
       <div className='h-28 w-20 sm:h-36 sm:w-24 rounded bg-grimoire-hover shrink-0 flex items-center justify-center'>
-        <span className='font-grimoire text-xs text-grimoire-faint'>G</span>
+        <span className='font-grimoire text-xs text-grimoire-muted'>G</span>
       </div>
     );
   }

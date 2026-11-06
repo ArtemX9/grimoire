@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
 import { useIsMobile } from '@/hooks/useMobile';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { selectAiEnabled } from '@/store/state/auth/selectors';
+import { selectAiEnabled, selectIsAdmin } from '@/store/state/auth/selectors';
 import { toggleAIDrawer } from '@/store/state/ui/index';
 import { selectIsAIDrawerOpen } from '@/store/state/ui/selectors';
 import { selectUnmappedGamesCount } from '@/store/state/unmappedGames/selectors';
@@ -17,6 +17,7 @@ function SidebarContainer() {
   const isMobile = useIsMobile();
   const isAIDrawerOpen = useAppSelector(selectIsAIDrawerOpen);
   const aiEnabled = useAppSelector(selectAiEnabled);
+  const isAdmin = useAppSelector(selectIsAdmin);
   const unresolvedCount = useAppSelector(selectUnmappedGamesCount);
   const navigate = useNavigate();
   const location = useLocation();
@@ -37,6 +38,7 @@ function SidebarContainer() {
       isMobile={isMobile}
       isAIDrawerOpen={isAIDrawerOpen}
       aiEnabled={aiEnabled}
+      isAdmin={isAdmin}
       unresolvedCount={unresolvedCount}
       onAIClick={handleAIClick}
     />

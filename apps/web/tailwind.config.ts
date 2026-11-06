@@ -17,7 +17,7 @@ export default {
           border: '#2a2520',
           'border-lg': '#3a3530',
           ink: '#f0ece4',
-          muted: '#6b6560',
+          muted: '#8f877f', // was #6b6560 (3.25:1 on card) — now 5.3:1
           faint: '#3a3530',
           gold: '#b8922a',
           'gold-dim': '#7a6020',
@@ -26,7 +26,7 @@ export default {
             'playing-bg': '#1a2e20',
             'playing-text': '#6ab882',
             'backlog-bg': '#1c1916',
-            'backlog-text': '#6b6560',
+            'backlog-text': '#8f877f',
             'completed-bg': '#1a2030',
             'completed-text': '#6a92b8',
             'dropped-bg': '#2e1a16',

@@ -1,12 +1,14 @@
 import { Platform, User } from '@grimoire/shared';
-import { AlertCircle, CheckCircle2, Loader2, LogOut, RefreshCw } from 'lucide-react';
+import { Download, Loader2, LogOut, RefreshCw } from 'lucide-react';
 
 import PlatformIcon from '@/components/PlatformIcon/PlatformIcon';
+import PlatformSyncStatus from '@/components/PlatformSyncStatus/PlatformSyncStatus';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/utils/cn';
+import { ExportFormat } from '@/utils/exportLibrary';
 
 import PSNRowContainer from './components/PSNRowContainer';
 import XboxRowContainer from './components/XboxRowContainer';
@@ -47,6 +49,8 @@ interface ISettingsPage {
   onSteamIdChange: (value: string) => void;
   onSteamConnect: () => void;
   onSteamSync: () => void;
+  exportingFormat: ExportFormat | null;
+  onExport: (format: ExportFormat) => void;
 }
 
 export function SettingsPage({
@@ -74,6 +78,8 @@ export function SettingsPage({
   onSteamIdChange,
   onSteamConnect,
   onSteamSync,
+  exportingFormat,
+  onExport,
 }: ISettingsPage) {
   return (
     <ScrollArea className='h-full'>
@@ -84,6 +90,7 @@ export function SettingsPage({
         <div className='mt-6 flex flex-col gap-6'>
           {renderProfileSection()}
           {renderPlatformsSection()}
+          {renderDataSection()}
         </div>
       </div>
     </ScrollArea>
@@ -182,6 +189,35 @@ export function SettingsPage({
     );
   }
 
+  function renderDataSection() {
+    return (
+      <section>
+        <h2 className='mb-3 font-sans text-xs font-medium uppercase tracking-wide text-grimoire-muted'>Your data</h2>
+        <div className='flex flex-col gap-3 rounded-lg border border-grimoire-border bg-grimoire-card p-4 sm:flex-row sm:items-center sm:justify-between'>
+          <div>
+            <p className='font-sans text-sm text-grimoire-ink'>Export library</p>
+            <p className='font-sans text-xs text-grimoire-muted'>Every game with status, playtime, rating, moods and notes</p>
+          </div>
+          <div className='flex gap-2'>
+            {renderExportButton(ExportFormat.JSON, 'JSON')}
+            {renderExportButton(ExportFormat.CSV, 'CSV')}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  function renderExportButton(format: ExportFormat, label: string) {
+    const isExporting = exportingFormat === format;
+
+    return (
+      <Button variant='outline' size='sm' onClick={onExport.bind(null, format)} disabled={exportingFormat !== null}>
+        {isExporting ? <Loader2 className='h-3.5 w-3.5 animate-spin' /> : <Download className='h-3.5 w-3.5' />}
+        {label}
+      </Button>
+    );
+  }
+
   function renderPlatformsSection() {
     return (
       <section>
@@ -201,7 +237,6 @@ export function SettingsPage({
       <div className='flex flex-col gap-3 px-4 py-4'>
         {renderSteamHeader()}
         {renderSteamExternalID()}
-        {renderSteamSyncMeta()}
         {renderSteamConnectInput()}
       </div>
     );
@@ -221,46 +256,29 @@ export function SettingsPage({
   }
 
   function renderSteamConnectionStatus() {
-    if (isSteamLoading) return <Skeleton className='h-4 w-16 rounded' />;
-    if (isSteamConnected) {
-      return (
-        <span className='flex items-center gap-1 font-sans text-xs text-grimoire-status-playing-text'>
-          <CheckCircle2 className='h-3 w-3' />
-          Connected
-        </span>
-      );
-    }
     return (
-      <span className='flex items-center gap-1 font-sans text-xs text-grimoire-muted'>
-        <AlertCircle className='h-3 w-3' />
-        Not connected
-      </span>
+      <PlatformSyncStatus
+        isLoading={isSteamLoading}
+        connected={isSteamConnected}
+        isSyncing={Boolean(steamStatus?.isSyncing) || isSteamSyncing}
+        lastSyncAt={steamStatus?.lastSyncAt}
+      />
     );
   }
-
   function renderSteamActions() {
     if (isSteamConnected) {
       return (
-        <button
-          onClick={onSteamSync}
-          disabled={isSteamSyncing}
-          className={cn(
-            'flex items-center gap-1.5 rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink disabled:opacity-50',
-          )}
-        >
+        <Button variant='outline' size='sm' onClick={onSteamSync} disabled={isSteamSyncing}>
           <RefreshCw className={cn('h-3.5 w-3.5', isSteamSyncing && 'animate-spin')} />
           {isSteamSyncing ? 'Syncing…' : 'Sync'}
-        </button>
+        </Button>
       );
     }
     if (!showSteamInput) {
       return (
-        <button
-          onClick={onShowSteamInput}
-          className='rounded border border-grimoire-border px-3 py-1.5 font-sans text-xs text-grimoire-muted transition-colors hover:border-grimoire-border-lg hover:text-grimoire-ink'
-        >
+        <Button variant='outline' size='sm' onClick={onShowSteamInput}>
           Connect
-        </button>
+        </Button>
       );
     }
     return null;
@@ -271,31 +289,6 @@ export function SettingsPage({
     return (
       <p className='font-sans text-xs text-grimoire-muted'>
         Account: <span className='text-grimoire-ink'>{steamStatus.externalID}</span>
-      </p>
-    );
-  }
-
-  function renderSteamSyncMeta() {
-    if (!isSteamConnected) return null;
-    if (steamStatus?.isSyncing) {
-      return (
-        <p className='flex items-center gap-1.5 font-sans text-xs text-grimoire-muted'>
-          <Loader2 className='h-3 w-3 animate-spin' />
-          Syncing library…
-        </p>
-      );
-    }
-    if (!steamStatus?.lastSyncAt) return null;
-    return (
-      <p className='font-sans text-xs text-grimoire-muted'>
-        Last synced:{' '}
-        {new Date(steamStatus.lastSyncAt).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })}
       </p>
     );
   }
@@ -328,7 +321,7 @@ export function SettingsPage({
           {platform && <PlatformIcon platform={platform} className='h-4 w-4' />}
           <span className='font-sans text-sm text-grimoire-ink'>{label}</span>
         </div>
-        <span className='font-sans text-xs text-grimoire-faint'>Coming soon</span>
+        <span className='font-sans text-xs text-grimoire-muted'>Coming soon</span>
       </div>
     );
   }

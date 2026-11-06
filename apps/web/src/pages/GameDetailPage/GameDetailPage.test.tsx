@@ -62,7 +62,7 @@ describe('GameDetailPage', () => {
   it('does not render platforms section when platforms is empty', () => {
     const game = generateUserGame({ platforms: [] });
     const { queryByText } = renderPage(game);
-    expect(queryByText('Owned on')).toBeNull();
+    expect(queryByText(Platform.STEAM)).toBeNull();
   });
 
   it('renders platform badges for each owned platform', () => {
@@ -70,7 +70,6 @@ describe('GameDetailPage', () => {
       platforms: [{ platformID: 1, platformName: Platform.STEAM, externalID: '1234', externalTitle: 'Elden Ring' }],
     });
     const { getByText } = renderPage(game);
-    expect(getByText('Owned on')).toBeInTheDocument();
     expect(getByText(Platform.STEAM)).toBeInTheDocument();
   });
 

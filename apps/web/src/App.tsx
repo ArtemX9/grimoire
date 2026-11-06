@@ -39,16 +39,15 @@ export default function App() {
           <Route path={ROUTES.CHANGE_PASSWORD} element={<ChangePasswordPageContainer />} />
         </Route>
 
-        <Route element={<AdminRoute />}>
-          <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboardPage />} />
-        </Route>
-
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route path={ROUTES.DEFAULT} element={<LibraryPageContainer />} />
             <Route path={ROUTES.GAME_DETAILS} element={<GameDetailPageContainer />} />
             <Route path={ROUTES.UNMAPPED_GAMES} element={<UnmappedGamesPageContainer />} />
             <Route path={ROUTES.USER_SETTINGS} element={<SettingsPageContainer />} />
+            <Route element={<AdminRoute />}>
+              <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboardPage />} />
+            </Route>
           </Route>
         </Route>
       </Routes>
